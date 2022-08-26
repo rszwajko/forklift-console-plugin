@@ -1,6 +1,25 @@
 {
+  "AddProvider": "Add Provider",
+  "Any": "Any",
+  "FilterByName": "Filter by name",
+  "FilterByStatus": "Filter by status",
+  "FilterByType": "Filter by type",
+  "FilterByUrl": "Filter by endpoint",
   "Mappings for VM Import": "Mappings for VM Import",
+  "Name": "Name",
+  "No": "No",
+  "Openshift": "Openshift",
+  "Ovirt": "oVirt",
   "Plans for VM Import": "Plans for VM Import",
   "Providers for VM Import": "Providers for VM Import",
   "Virtualization": "Virtualization"
+  "Ready": "Ready",
+  "SelectFilter": "Select Filter",
+  "Status": "Status",
+  "Success": "Success",
+  "Type": "Type",
+  "Url": "Endpoint",
+  "Virtualization": "Virtualization",
+  "Vsphere": "vSphere",
+  "Yes": "Yes"
 }
