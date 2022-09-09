@@ -97,6 +97,7 @@ export interface FilterDef {
 export interface Field {
   id: string;
   tKey: string;
+  isVisible?: boolean;
   sortable?: boolean;
   filter: FilterDef;
   toValue: (provider: ProviderResource) => string;

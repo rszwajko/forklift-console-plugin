@@ -14,11 +14,12 @@ import {
   ToolbarContent,
   ToolbarToggleGroup,
 } from '@patternfly/react-core';
-import { FilterIcon } from '@patternfly/react-icons/dist/esm/icons';
+import { FilterIcon } from '@patternfly/react-icons';
 
 import AttributeValueFilter from './components/AttributeValueFilter';
 import EnumFilter from './components/EnumFilter';
 import FreetextFilter from './components/FreetextFilter';
+import { ManageColumnsToolbar } from './components/ManageColumnsToolbar';
 import PrimaryFilters from './components/PrimaryFilters';
 import ProviderRow from './components/ProviderRow';
 import { createMetaMatcher, Field } from './components/shared';
@@ -48,10 +49,11 @@ const useProviders = ({ kind, namespace }) => {
   return [providers, loaded, error];
 };
 
-const fields: Field[] = [
+const defaultFields: Field[] = [
   {
     id: NAME,
     tKey: 'plugin__forklift-console-plugin~Name',
+    isVisible: true,
     filter: {
       type: 'freetext',
       placeholderKey: 'plugin__forklift-console-plugin~FilterByName',
@@ -62,6 +64,7 @@ const fields: Field[] = [
   {
     id: READY,
     tKey: 'plugin__forklift-console-plugin~Ready',
+    isVisible: true,
     filter: {
       type: 'enum',
       primary: true,
@@ -81,6 +84,7 @@ const fields: Field[] = [
   {
     id: URL,
     tKey: 'plugin__forklift-console-plugin~Url',
+    isVisible: true,
     filter: {
       type: 'freetext',
       placeholderKey: 'plugin__forklift-console-plugin~FilterByUrl',
@@ -91,6 +95,7 @@ const fields: Field[] = [
   {
     id: TYPE,
     tKey: 'plugin__forklift-console-plugin~Type',
+    isVisible: true,
     filter: {
       type: 'enum',
       primary: true,
@@ -110,8 +115,9 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
   const { t } = useTranslation();
   const [providers, loaded, error] = useProviders({ kind, namespace });
   const [selectedFilters, setSelectedFilters] = useState({});
+  const [fields, setFields] = useState(defaultFields);
 
-  console.error('Providers', providers, fields, selectedFilters);
+  console.error('Providers', defaultFields, fields);
 
   return (
     <>
@@ -145,6 +151,11 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
                 selectedFilters={selectedFilters}
                 supportedFilters={{ freetext: FreetextFilter }}
               />
+              <ManageColumnsToolbar
+                fields={fields}
+                defaultFields={defaultFields}
+                setFields={setFields}
+              />
             </ToolbarToggleGroup>
           </ToolbarContent>
         </Toolbar>
@@ -157,6 +168,7 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
               createMetaMatcher(selectedFilters, fields),
             )}
             fields={fields}
+            visibleFields={fields.filter(({ isVisible }) => isVisible)}
             aria-label={t('plugin__forklift-console-plugin~Providers')}
             Row={ProviderRow}
           />
