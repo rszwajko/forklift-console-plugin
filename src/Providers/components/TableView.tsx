@@ -24,6 +24,7 @@ const find = (fields: Field[], id: string): Field =>
 
 function TableView<T>({
   fields,
+  visibleFields: columns,
   resources,
   'aria-label': ariaLabel,
   nameColumnId = NAME,
@@ -37,9 +38,6 @@ function TableView<T>({
     tKey: find(fields, nameColumnId)?.tKey ?? nameColumnId,
   });
 
-  // in future handle column re-ordering and hiding
-  const columns = fields;
-
   resources.sort(
     compareWith(
       activeSort,
@@ -49,12 +47,7 @@ function TableView<T>({
   );
 
   return (
-    <TableComposable
-      aria-label={ariaLabel}
-      variant="compact"
-      // isStriped
-      isStickyHeader
-    >
+    <TableComposable aria-label={ariaLabel} variant="compact" isStickyHeader>
       <Thead>
         <Tr>
           {columns.map(({ id, tKey, sortable }, columnIndex) => (
@@ -95,6 +88,7 @@ export interface RowProps<T> {
 
 interface TableViewProps<T> {
   fields: Field[];
+  visibleFields: Field[];
   resources: T[];
   'aria-label': string;
   nameColumnId?: string;

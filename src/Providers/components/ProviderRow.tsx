@@ -13,11 +13,9 @@ import { RowProps } from './TableView';
 interface CellProps {
   value: string;
   resource: ProviderResource;
+  t(key: string): string;
 }
-
-const StatusCell = ({ value, resource }: CellProps) => {
-  const { t } = useTranslation();
-
+const StatusCell = ({ value, resource, t }: CellProps) => {
   return (
     <Popover
       hasAutoWidth
@@ -64,7 +62,7 @@ const ProviderRow = ({ columns, resource }: RowProps<ProviderResource>) => {
     <Tr>
       {columns.map(({ id, tKey, toValue }) => (
         <Td key={id} dataLabel={t(tKey)}>
-          {cellCreator?.[id]({ value: toValue(resource), resource }) ?? null}
+          {cellCreator?.[id]({ t, value: toValue(resource), resource }) ?? null}
         </Td>
       ))}
     </Tr>
