@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'src/internal/i18n';
 import { ProviderResource } from 'src/internal/k8s';
 
@@ -23,7 +23,7 @@ import { ManageColumnsToolbar } from './components/ManageColumnsToolbar';
 import PrimaryFilters from './components/PrimaryFilters';
 import ProviderRow from './components/ProviderRow';
 import { createMetaMatcher, Field } from './components/shared';
-import { NAME, READY, TYPE, URL } from './components/shared';
+import { NAME, NAMESPACE, READY, TYPE, URL } from './components/shared';
 import TableView from './components/TableView';
 
 const isMock = process.env.DATA_SOURCE === 'mock';
@@ -54,12 +54,25 @@ const defaultFields: Field[] = [
     id: NAME,
     tKey: 'plugin__forklift-console-plugin~Name',
     isVisible: true,
+    isIdentity: true,
     filter: {
       type: 'freetext',
       placeholderKey: 'plugin__forklift-console-plugin~FilterByName',
     },
     sortable: true,
     toValue: (provider) => provider?.metadata?.name ?? '',
+  },
+  {
+    id: NAMESPACE,
+    tKey: 'plugin__forklift-console-plugin~Namespace',
+    isVisible: true,
+    isIdentity: true,
+    filter: {
+      type: 'freetext',
+      placeholderKey: 'plugin__forklift-console-plugin~FilterByNamespace',
+    },
+    sortable: true,
+    toValue: (provider) => provider?.metadata?.namespace ?? '',
   },
   {
     id: READY,
@@ -111,13 +124,27 @@ const defaultFields: Field[] = [
   },
 ];
 
+const useFields = (namespace, defaultFields) => {
+  const [fields, setFields] = useState(defaultFields);
+  const namespaceAwareFields = useMemo(
+    () =>
+      fields.map(({ id, isVisible, ...rest }) => ({
+        id,
+        ...rest,
+        isVisible: id === NAMESPACE ? !namespace : isVisible,
+      })),
+    [namespace, fields],
+  );
+  return [namespaceAwareFields, setFields];
+};
+
 export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
   const { t } = useTranslation();
   const [providers, loaded, error] = useProviders({ kind, namespace });
   const [selectedFilters, setSelectedFilters] = useState({});
-  const [fields, setFields] = useState(defaultFields);
+  const [fields, setFields] = useFields(namespace, defaultFields);
 
-  console.error('Providers', defaultFields, fields);
+  console.error('Providers', defaultFields, fields, namespace, kind);
 
   return (
     <>
@@ -155,6 +182,7 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
                 fields={fields}
                 defaultFields={defaultFields}
                 setFields={setFields}
+                key={namespace ?? ''}
               />
             </ToolbarToggleGroup>
           </ToolbarContent>
@@ -170,7 +198,7 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
             fields={fields}
             visibleFields={fields.filter(({ isVisible }) => isVisible)}
             aria-label={t('plugin__forklift-console-plugin~Providers')}
-            Row={ProviderRow}
+            Row={ProviderRow(kind)}
           />
         )}
       </PageSection>

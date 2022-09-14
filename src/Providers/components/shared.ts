@@ -98,6 +98,7 @@ export interface Field {
   id: string;
   tKey: string;
   isVisible?: boolean;
+  isIdentity?: boolean;
   sortable?: boolean;
   filter: FilterDef;
   toValue: (provider: ProviderResource) => string;
@@ -122,3 +123,4 @@ export const NAME = 'name';
 export const READY = 'ready';
 export const TYPE = 'type';
 export const URL = 'url';
+export const NAMESPACE = 'namespace';

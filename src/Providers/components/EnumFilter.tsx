@@ -66,8 +66,6 @@ export const useUnique = ({
     ...new Set(selectedEnumIds.map((id) => idToLabel[id]).filter(Boolean)),
   ] as string[];
 
-  console.warn('non-unique', supportedEnumValues, selectedEnumIds);
-  console.warn('unique', filterNames, selectedFilters, idToLabel, labelToIds);
   return { filterNames, onFilterUpdate, selectedFilters };
 };
 
@@ -119,7 +117,6 @@ const EnumFilter = ({
           if (isPlaceholder) {
             return;
           }
-          console.error('select!', hasFilter(option), option);
           hasFilter(option) ? deleteFilter(option) : addFilter(option);
         }}
         selections={selectedFilters}
