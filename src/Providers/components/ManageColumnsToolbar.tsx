@@ -140,7 +140,7 @@ const ManageColumns = ({
             id="table-column-management"
             isCompact
           >
-            {editedColumns.map(({ id, isVisible, tKey }) => (
+            {editedColumns.map(({ id, isVisible, isIdentity, tKey }) => (
               <Draggable key={id} hasNoWrapper>
                 <DataListItem
                   aria-labelledby={`draggable-${id}`}
@@ -158,6 +158,7 @@ const ManageColumns = ({
                         aria-labelledby={`draggable-${id}`}
                         name={id}
                         checked={isVisible}
+                        isDisabled={isIdentity}
                         onChange={(value) => onSelect(id, value)}
                         otherControls
                       />
