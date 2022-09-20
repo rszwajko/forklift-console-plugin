@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'src/internal/i18n';
 import { ProviderResource } from 'src/internal/k8s';
+import { useMockableK8sWatchResource } from 'src/utils/fetch';
 
 import { MOCK_CLUSTER_PROVIDERS } from '@app/queries/mocks/providers.mock';
-import { useK8sWatchResource } from '@openshift-console/dynamic-plugin-sdk';
 import {
   Button,
   Level,
@@ -26,17 +26,11 @@ import { createMetaMatcher, Field } from './components/shared';
 import { NAME, NAMESPACE, READY, TYPE, URL } from './components/shared';
 import TableView from './components/TableView';
 
-const isMock = process.env.DATA_SOURCE === 'mock';
-
 const useProviders = ({ kind, namespace }) => {
-  const [providers, loaded, error] = isMock
-    ? [MOCK_CLUSTER_PROVIDERS, true, false]
-    : useK8sWatchResource<ProviderResource[]>({
-        kind,
-        isList: true,
-        namespaced: true,
-        namespace,
-      });
+  const [providers, loaded, error] = useMockableK8sWatchResource(
+    { kind, namespace },
+    MOCK_CLUSTER_PROVIDERS,
+  );
 
   // const inventoryProvidersQuery = useInventoryProvidersQuery();
   // providers.map(p => enhanceWithInventory(inventoryProvidersQuery))
