@@ -22,17 +22,24 @@ import {
   VM_COUNT,
 } from 'src/utils/constants';
 
+import { RedExclamationCircleIcon } from '@openshift-console/dynamic-plugin-sdk';
 import {
   Button,
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateIcon,
+  EmptyStatePrimary,
   Level,
   LevelItem,
   PageSection,
+  Spinner,
   Title,
   Toolbar,
   ToolbarContent,
   ToolbarToggleGroup,
 } from '@patternfly/react-core';
 import { FilterIcon } from '@patternfly/react-icons';
+import { SearchIcon } from '@patternfly/react-icons';
 
 import { MergedProvider, useProvidersWithInventory } from './data';
 import ProviderRow from './ProviderRow';
@@ -155,9 +162,14 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
     namespace,
   });
   const [selectedFilters, setSelectedFilters] = useState({});
+  const clearAllFilters = () => setSelectedFilters({});
   const [fields, setFields] = useFields(namespace, fieldsMetadata);
 
   console.error('Providers', providers, fields, namespace, kind);
+
+  const filteredProviders = providers.filter(
+    createMetaMatcher(selectedFilters, fields),
+  );
 
   return (
     <>
@@ -174,7 +186,10 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
         </Level>
       </PageSection>
       <PageSection>
-        <Toolbar clearAllFilters={() => setSelectedFilters({})}>
+        <Toolbar
+          clearAllFilters={clearAllFilters}
+          clearFiltersButtonText={t('ClearAllFilters')}
+        >
           <ToolbarContent>
             <ToolbarToggleGroup toggleIcon={<FilterIcon />} breakpoint="xl">
               <PrimaryFilters
@@ -200,28 +215,87 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
             </ToolbarToggleGroup>
           </ToolbarContent>
         </Toolbar>
-
-        {loaded && error && <Errors />}
-        {!loaded && <Loading />}
-        {loaded && !error && (
-          <TableView<MergedProvider>
-            entities={providers.filter(
-              createMetaMatcher(selectedFilters, fields),
-            )}
-            allColumns={fields}
-            visibleColumns={fields.filter(({ isVisible }) => isVisible)}
-            aria-label={t('Providers')}
-            Row={ProviderRow(kind)}
-          />
-        )}
+        <TableView<MergedProvider>
+          entities={filteredProviders}
+          allColumns={fields}
+          visibleColumns={fields.filter(({ isVisible }) => isVisible)}
+          aria-label={t('Providers')}
+          Row={ProviderRow}
+        >
+          {[
+            !loaded && <Loading />,
+            loaded && error && <ErrorState />,
+            loaded && !error && providers.length == 0 && <NoResultsFound />,
+            loaded &&
+              !error &&
+              filteredProviders.length === 0 &&
+              providers.length > 0 && (
+                <NoResultsMatchFilter clearAllFilters={clearAllFilters} />
+              ),
+          ].filter(Boolean)}
+        </TableView>
       </PageSection>
     </>
   );
 };
 
-const Errors = () => <> Erorrs!</>;
+const ErrorState = () => {
+  const { t } = useTranslation();
+  return (
+    <EmptyState>
+      <EmptyStateIcon icon={RedExclamationCircleIcon} />
+      <Title headingLevel="h4" size="lg">
+        {t('UnableToRetrieve')}
+      </Title>
+    </EmptyState>
+  );
+};
 
-const Loading = () => <> Loading!</>;
+const Loading = () => {
+  const { t } = useTranslation();
+  return (
+    <EmptyState>
+      <EmptyStateIcon variant="container" component={Spinner} />
+      <Title size="lg" headingLevel="h4">
+        {t('Loading')}
+      </Title>
+    </EmptyState>
+  );
+};
+
+const NoResultsFound = () => {
+  const { t } = useTranslation();
+  return (
+    <EmptyState>
+      <EmptyStateIcon icon={SearchIcon} />
+      <Title size="lg" headingLevel="h4">
+        {t('NoResultsFound')}
+      </Title>
+    </EmptyState>
+  );
+};
+
+const NoResultsMatchFilter = ({
+  clearAllFilters,
+}: {
+  clearAllFilters: () => void;
+}) => {
+  const { t } = useTranslation();
+  return (
+    <EmptyState>
+      <EmptyStateIcon icon={SearchIcon} />
+      <Title size="lg" headingLevel="h4">
+        {t('NoResultsFound')}
+      </Title>
+      <EmptyStateBody>{t('NoResultsMatchFilter')}</EmptyStateBody>
+      <EmptyStatePrimary>
+        <Button variant="link" onClick={clearAllFilters}>
+          {t('ClearAllFilters')}
+        </Button>
+      </EmptyStatePrimary>
+    </EmptyState>
+  );
+};
 
 type ProvidersPageProps = {
   kind: string;

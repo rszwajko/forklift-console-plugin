@@ -3,6 +3,7 @@ import { ProviderResource } from 'src/internal/k8s';
 import {
   CONNECTED,
   INVENTORY,
+  KIND,
   NAME,
   NAMESPACE,
   READY,
@@ -36,6 +37,7 @@ interface SupportedConditions {
 }
 
 interface FlattenedProvider {
+  [KIND]: string;
   [NAME]: string;
   [NAMESPACE]: string;
   [URL]: string;
@@ -75,6 +77,7 @@ const mergeData = (
         metadata: { name, namespace, uid } = {},
         status: { conditions = [] } = {},
         spec: { url, type } = {},
+        kind,
       }): [
         FlattenedProvider,
         IVMwareProvider & IRHVProvider & IOpenShiftProvider,
@@ -86,6 +89,7 @@ const mergeData = (
           url,
           type,
           uid,
+          kind,
         },
         inventory?.[type].find(({ uid: otherUid }) => otherUid === uid) ?? {},
         Object.fromEntries(

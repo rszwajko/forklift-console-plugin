@@ -1,8 +1,16 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { useTranslation } from 'src/internal/i18n';
 import { UID } from 'src/utils/constants';
 
-import { TableComposable, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
+import { Bullseye } from '@patternfly/react-core';
+import {
+  TableComposable,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+} from '@patternfly/react-table';
 
 import { Field } from '../types';
 
@@ -16,6 +24,7 @@ export function TableView<T>({
   entities,
   'aria-label': ariaLabel,
   Row,
+  children,
 }: TableViewProps<T>) {
   const { t } = useTranslation();
 
@@ -46,13 +55,21 @@ export function TableView<T>({
         </Tr>
       </Thead>
       <Tbody>
-        {entities.map((entity, index) => (
-          <Row
-            key={entity?.[uidFieldId] ?? index}
-            entity={entity}
-            columns={visibleColumns}
-          />
-        ))}
+        {children.length > 0 && (
+          <Tr>
+            <Td colSpan={visibleColumns.length || 1}>
+              <Bullseye>{children}</Bullseye>
+            </Td>
+          </Tr>
+        )}
+        {children.length === 0 &&
+          entities.map((entity, index) => (
+            <Row
+              key={entity?.[uidFieldId] ?? index}
+              entity={entity}
+              columns={visibleColumns}
+            />
+          ))}
       </Tbody>
     </TableComposable>
   );
@@ -65,4 +82,5 @@ interface TableViewProps<T> {
   'aria-label': string;
   uidFieldId?: string;
   Row(props: RowProps<T>): JSX.Element;
+  children?: ReactNode[];
 }
