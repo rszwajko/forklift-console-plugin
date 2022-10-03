@@ -1,8 +1,8 @@
 export interface FilterDef {
   type: string;
-  placeholderKey: string;
-  values?: { id: string; tKey: string }[];
-  tKey?: string;
+  toPlaceholderLabel(t: (key: string) => string): string;
+  values?: { id: string; toLabel(t: (key: string) => string): string }[];
+  toLabel?(t: (key: string) => string): string;
   primary?: boolean;
 }
 
@@ -13,14 +13,17 @@ export interface FieldFilterProps {
   selectedFilters: string[];
   showFilter: boolean;
   title: string;
-  supportedValues?: { id: string; tKey?: string }[];
+  supportedValues?: {
+    id: string;
+    toLabel(t: (key: string) => string): string;
+  }[];
 }
 
 export interface MetaFilterProps {
   selectedFilters: { [id: string]: string[] };
   filterTypes: {
     id: string;
-    tKey: string;
+    toLabel(t: (key: string) => string): string;
     filter: FilterDef;
   }[];
   onFilterUpdate(filters: { [id: string]: string[] }): void;

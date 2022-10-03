@@ -28,6 +28,12 @@ const StatusCell = ({ value, entity: { conditions } }: CellProps) => {
   const existingConditions = Object.values(conditions).filter(Boolean);
   const toState = (value) =>
     value === 'True' ? 'Ok' : value === 'False' ? 'Error' : 'Unknown';
+  const label =
+    value === 'True'
+      ? t('True')
+      : value === 'False'
+      ? t('False')
+      : t('Unknown');
   return (
     <Popover
       hasAutoWidth
@@ -43,12 +49,12 @@ const StatusCell = ({ value, entity: { conditions } }: CellProps) => {
                   />
                 );
               })
-            : 'No information'}
+            : t('No information')}
         </div>
       }
     >
-      <Button variant="link" isInline aria-label={t(value)}>
-        <StatusIcon status={toState(value)} label={t(value)} />
+      <Button variant="link" isInline aria-label={label}>
+        <StatusIcon status={toState(value)} label={label} />
       </Button>
     </Popover>
   );
@@ -74,7 +80,7 @@ const ProviderRow = ({ columns, entity }: RowProps<MergedProvider>) => {
   const { t } = useTranslation();
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  console.warn('Modal open?', isDeleteModalOpen, entity);
+
   const toggleDeleteModal = () => setIsDeleteModalOpen(!isDeleteModalOpen);
   const deleteProviderMutation = useDeleteProviderMutation(
     entity.type as ProviderType,
@@ -102,13 +108,13 @@ const ProviderRow = ({ columns, entity }: RowProps<MergedProvider>) => {
           isPlain
           dropdownItems={[
             <DropdownItem key="edit" onClick={editProvider}>
-              {t('EditProvider')}
+              {t('Edit Provider')}
             </DropdownItem>,
             <DropdownItem key="delete" onClick={toggleDeleteModal}>
-              {t('DeleteProvider')}
+              {t('Delete Provider')}
             </DropdownItem>,
             <DropdownItem key="selectNetwork" onClick={selectNetwork}>
-              {t('SelectMigrationNetwork')}
+              {t('Select migration network')}
             </DropdownItem>,
           ]}
         />
@@ -130,15 +136,26 @@ const ProviderRow = ({ columns, entity }: RowProps<MergedProvider>) => {
             })
           }
           mutateResult={deleteProviderMutation}
-          title={t('PermanentlyDeleteProvider')}
-          body={t(
+          title={t('Permanently delete provider?')}
+          body={
             isTarget(entity.type as ProviderType)
-              ? 'ProviderNoLongerSelectableAsTarget'
-              : 'ProviderNoLongerSelectableAsSource',
-            { type: entity.type, name: entity.name },
-          )}
+              ? t(
+                  '{{type}} provider {{name}} will no longer be selectable as a migration target.',
+                  {
+                    type: entity.type,
+                    name: entity.name,
+                  },
+                )
+              : t(
+                  '{{type}} provider {{name}} will no longer be selectable as a migration source.',
+                  {
+                    type: entity.type,
+                    name: entity.name,
+                  },
+                )
+          }
           confirmButtonText={t('Delete')}
-          errorText={t('CannotDeleteProvider')}
+          errorText={t('Cannot remove provider')}
           cancelButtonText={t('Cancel')}
         />
       </Td>

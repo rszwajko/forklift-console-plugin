@@ -2,7 +2,7 @@ import { Field } from '../types';
 
 export interface Column {
   id: string;
-  tKey: string;
+  toLabel(t: (key: string) => string): string;
   sortable?: boolean;
 }
 

@@ -15,7 +15,7 @@ export const PrimaryFilters = ({
 
   return (
     <ToolbarGroup variant="filter-group">
-      {filterTypes.map(({ id, tKey: fieldKey, filter }) => {
+      {filterTypes.map(({ id, toLabel: toFieldLabel, filter }) => {
         const FieldFilter = supportedFilters[filter.type];
         return (
           FieldFilter && (
@@ -27,9 +27,9 @@ export const PrimaryFilters = ({
                   [id]: values,
                 })
               }
-              placeholderLabel={t(filter.placeholderKey)}
+              placeholderLabel={filter.toPlaceholderLabel(t)}
               selectedFilters={selectedFilters[id] ?? []}
-              title={t(filter.tKey ?? fieldKey)}
+              title={filter?.toLabel?.(t) ?? toFieldLabel(t)}
               showFilter={true}
               supportedValues={filter.values}
             />

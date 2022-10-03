@@ -37,7 +37,7 @@ export const useSort = (
   const [activeSort, setActiveSort] = useState<SortType>({
     isAsc: false,
     id: firstField?.id,
-    tKey: firstField?.tKey,
+    toLabel: firstField?.toLabel,
   });
 
   const comparator = compareWith(

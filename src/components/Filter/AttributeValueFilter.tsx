@@ -50,19 +50,19 @@ export const AttributeValueFilter = ({
           onToggle={setExpanded}
           isOpen={expanded}
           variant={SelectVariant.single}
-          aria-label={t('SelectFilter')}
+          aria-label={t('Select Filter')}
           selections={toSelectOption(
             currentFilterType.id,
-            t(currentFilterType.tKey),
+            currentFilterType.toLabel(t),
           )}
         >
-          {filterTypes.map(({ id, tKey }) => (
-            <SelectOption key={id} value={toSelectOption(id, t(tKey))} />
+          {filterTypes.map(({ id, toLabel }) => (
+            <SelectOption key={id} value={toSelectOption(id, toLabel(t))} />
           ))}
         </Select>
       </ToolbarItem>
 
-      {filterTypes.map(({ id, tKey: fieldKey, filter }) => {
+      {filterTypes.map(({ id, toLabel: toFieldLabel, filter }) => {
         const FieldFilter = supportedFilters[filter.type];
         return (
           FieldFilter && (
@@ -74,10 +74,10 @@ export const AttributeValueFilter = ({
                   [id]: values,
                 })
               }
-              placeholderLabel={t(filter.placeholderKey)}
+              placeholderLabel={filter.toPlaceholderLabel(t)}
               selectedFilters={selectedFilters[id] ?? []}
               showFilter={currentFilterType?.id === id}
-              title={t(filter.tKey ?? fieldKey)}
+              title={filter?.toLabel?.(t) ?? toFieldLabel(t)}
               supportedValues={filter.values}
             />
           )

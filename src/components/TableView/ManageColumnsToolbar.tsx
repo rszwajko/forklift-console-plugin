@@ -38,11 +38,11 @@ export const ManageColumnsToolbar = ({
   const [manageColumns, setManageColumns] = useState(false);
   return (
     <ToolbarItem>
-      <Tooltip content={t('plugin__forklift-console-plugin~ManageColumns')}>
+      <Tooltip content={t('Manage Columns')}>
         <Button
           variant="plain"
           onClick={() => setManageColumns(true)}
-          aria-label={t('plugin__forklift-console-plugin~ManageColumns')}
+          aria-label={t('Manage Columns')}
         >
           <ColumnsIcon />
         </Button>
@@ -50,7 +50,7 @@ export const ManageColumnsToolbar = ({
       <ManageColumns
         showModal={manageColumns}
         onClose={() => setManageColumns(false)}
-        description="Selected columns will be displayed in the table."
+        description={t('Selected columns will be displayed in the table.')}
         columns={columns}
         onChange={setColumns}
         defaultColumns={defaultColumns}
@@ -105,7 +105,7 @@ const ManageColumns = ({
 
   return (
     <Modal
-      title={t('plugin__forklift-console-plugin~ManageColumns')}
+      title={t('Manage Columns')}
       isOpen={showModal}
       variant="small"
       description={
@@ -121,26 +121,24 @@ const ManageColumns = ({
           isDisabled={columns === editedColumns}
           onClick={onSave}
         >
-          {t('plugin__forklift-console-plugin~Save')}
+          {t('Save')}
         </Button>,
         <Button key="cancel" variant="secondary" onClick={onClose}>
-          {t('plugin__forklift-console-plugin~Cancel')}
+          {t('Cancel')}
         </Button>,
         <Button key="restore" variant="link" onClick={restoreDefaults}>
-          {t('plugin__forklift-console-plugin~RestoreDefaultColums')}
+          {t('Restore default colums')}
         </Button>,
       ]}
     >
       <DragDrop onDrop={onDrop}>
         <Droppable hasNoWrapper>
           <DataList
-            aria-label={t(
-              'plugin__forklift-console-plugin~TableColumnManagement',
-            )}
+            aria-label={t('Table column management')}
             id="table-column-management"
             isCompact
           >
-            {editedColumns.map(({ id, isVisible, isIdentity, tKey }) => (
+            {editedColumns.map(({ id, isVisible, isIdentity, toLabel }) => (
               <Draggable key={id} hasNoWrapper>
                 <DataListItem
                   aria-labelledby={`draggable-${id}`}
@@ -149,9 +147,7 @@ const ManageColumns = ({
                   <DataListItemRow>
                     <DataListControl>
                       <DataListDragButton
-                        aria-label={t(
-                          'plugin__forklift-console-plugin~Reorder',
-                        )}
+                        aria-label={t('Reorder')}
                         aria-labelledby={`draggable-${id}`}
                       />
                       <DataListCheck
@@ -166,7 +162,7 @@ const ManageColumns = ({
                     <DataListItemCells
                       dataListCells={[
                         <DataListCell key={id}>
-                          <span id={`draggable-${id}`}>{t(tKey)}</span>
+                          <span id={`draggable-${id}`}>{toLabel(t)}</span>
                         </DataListCell>,
                       ]}
                     />

@@ -17,15 +17,22 @@ export const useUnique = ({
   supportedEnumValues,
   onSelectedEnumIdsChange,
   selectedEnumIds,
+}: {
+  supportedEnumValues: {
+    id: string;
+    toLabel(t: (key: string) => string): string;
+  }[];
+  onSelectedEnumIdsChange: (values: string[]) => void;
+  selectedEnumIds: string[];
 }) => {
   const { t, i18n } = useTranslation();
 
   const translated = useMemo(
     () =>
-      supportedEnumValues.map(({ id, tKey }) => ({
+      supportedEnumValues.map((it) => ({
         // fallback to ID
-        label: tKey ? t(tKey) : id,
-        id,
+        label: it.toLabel?.(t) ?? it.id,
+        id: it.id,
       })),
 
     [supportedEnumValues],

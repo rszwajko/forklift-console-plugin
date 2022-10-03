@@ -47,95 +47,98 @@ import ProviderRow from './ProviderRow';
 const fieldsMetadata: Field[] = [
   {
     id: NAME,
-    tKey: 'Name',
+    toLabel: (t) => t('Name'),
     isVisible: true,
     isIdentity: true,
     filter: {
       type: 'freetext',
-      placeholderKey: 'FilterByName',
+      toPlaceholderLabel: (t) => t('Filter by name'),
     },
     sortable: true,
   },
   {
     id: NAMESPACE,
-    tKey: 'Namespace',
+    toLabel: (t) => t('Namespace'),
     isVisible: true,
     isIdentity: true,
     filter: {
       type: 'freetext',
-      placeholderKey: 'FilterByNamespace',
+      toPlaceholderLabel: (t) => t('Filter by namespace'),
     },
     sortable: true,
   },
   {
     id: READY,
-    tKey: 'Ready',
+    toLabel: (t) => t('Ready'),
     isVisible: true,
     filter: {
       type: 'enum',
       primary: true,
-      placeholderKey: 'Ready',
+      toPlaceholderLabel: (t) => t('Ready'),
       values: [
-        { id: 'True', tKey: 'True' },
-        { id: 'False', tKey: 'False' },
-        { id: 'Unknown', tKey: 'Unknown' },
+        { id: 'True', toLabel: (t) => t('True') },
+        { id: 'False', toLabel: (t) => t('False') },
+        { id: 'Unknown', toLabel: (t) => t('Unknown') },
       ],
     },
     sortable: true,
   },
   {
     id: URL,
-    tKey: 'Url',
+    toLabel: (t) => t('Endpoint'),
     isVisible: true,
     filter: {
       type: 'freetext',
-      placeholderKey: 'FilterByUrl',
+      toPlaceholderLabel: (t) => t('Filter by endpoint'),
     },
     sortable: true,
   },
   {
     id: TYPE,
-    tKey: 'Type',
+    toLabel: (t) => t('Type'),
     isVisible: true,
     filter: {
       type: 'enum',
       primary: true,
-      placeholderKey: 'Type',
+      toPlaceholderLabel: (t) => t('Type'),
       values: [
-        { id: 'vsphere', tKey: 'Vsphere' },
-        { id: 'ovirt', tKey: 'Ovirt' },
-        { id: 'openshift', tKey: 'Openshift' },
+        // t('VMware')
+        { id: 'vsphere', toLabel: (t) => t('VMware') },
+        // t('oVirt')
+        { id: 'ovirt', toLabel: (t) => t('oVirt') },
+        // t('KubeVirt')
+        { id: 'openshift', toLabel: (t) => t('KubeVirt') },
       ],
     },
     sortable: true,
   },
   {
     id: VM_COUNT,
-    tKey: 'VMs',
+    toLabel: (t) => t('VMs'),
     isVisible: true,
     sortable: true,
   },
   {
     id: NETWORK_COUNT,
-    tKey: 'Networks',
+    toLabel: (t) => t('Networks'),
     isVisible: true,
     sortable: true,
   },
   {
     id: CLUSTER_COUNT,
-    tKey: 'Clusters',
+    toLabel: (t) => t('Clusters'),
     isVisible: true,
     sortable: true,
   },
   {
     id: HOST_COUNT,
-    tKey: 'Hosts',
+    toLabel: (t) => t('Hosts'),
     isVisible: false,
     sortable: true,
   },
   {
     id: STORAGE_COUNT,
-    tKey: 'Storage',
+    toLabel: (t) => t('Storage'),
     isVisible: false,
     sortable: true,
   },
@@ -171,6 +174,11 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
     createMetaMatcher(selectedFilters, fields),
   );
 
+  const errorFetchingData = loaded && error;
+  const noResults = loaded && !error && providers.length == 0;
+  const noMatchingResults =
+    loaded && !error && filteredProviders.length === 0 && providers.length > 0;
+
   return (
     <>
       <PageSection variant="light">
@@ -180,7 +188,7 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
           </LevelItem>
           <LevelItem>
             <Button variant="primary" onClick={() => ''}>
-              {t('AddProvider')}
+              {t('Add Provider')}
             </Button>
           </LevelItem>
         </Level>
@@ -188,7 +196,7 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
       <PageSection>
         <Toolbar
           clearAllFilters={clearAllFilters}
-          clearFiltersButtonText={t('ClearAllFilters')}
+          clearFiltersButtonText={t('Clear all filters')}
         >
           <ToolbarContent>
             <ToolbarToggleGroup toggleIcon={<FilterIcon />} breakpoint="xl">
@@ -224,14 +232,11 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
         >
           {[
             !loaded && <Loading />,
-            loaded && error && <ErrorState />,
-            loaded && !error && providers.length == 0 && <NoResultsFound />,
-            loaded &&
-              !error &&
-              filteredProviders.length === 0 &&
-              providers.length > 0 && (
-                <NoResultsMatchFilter clearAllFilters={clearAllFilters} />
-              ),
+            errorFetchingData && <ErrorState />,
+            noResults && <NoResultsFound />,
+            noMatchingResults && (
+              <NoResultsMatchFilter clearAllFilters={clearAllFilters} />
+            ),
           ].filter(Boolean)}
         </TableView>
       </PageSection>
@@ -245,7 +250,7 @@ const ErrorState = () => {
     <EmptyState>
       <EmptyStateIcon icon={RedExclamationCircleIcon} />
       <Title headingLevel="h4" size="lg">
-        {t('UnableToRetrieve')}
+        {t('Unable to retrieve data')}
       </Title>
     </EmptyState>
   );
@@ -269,7 +274,7 @@ const NoResultsFound = () => {
     <EmptyState>
       <EmptyStateIcon icon={SearchIcon} />
       <Title size="lg" headingLevel="h4">
-        {t('NoResultsFound')}
+        {t('No results found')}
       </Title>
     </EmptyState>
   );
@@ -285,12 +290,16 @@ const NoResultsMatchFilter = ({
     <EmptyState>
       <EmptyStateIcon icon={SearchIcon} />
       <Title size="lg" headingLevel="h4">
-        {t('NoResultsFound')}
+        {t('No results found')}
       </Title>
-      <EmptyStateBody>{t('NoResultsMatchFilter')}</EmptyStateBody>
+      <EmptyStateBody>
+        {t(
+          'No results match the filter criteria. Clear all filters and try again.',
+        )}
+      </EmptyStateBody>
       <EmptyStatePrimary>
         <Button variant="link" onClick={clearAllFilters}>
-          {t('ClearAllFilters')}
+          {t('Clear all filters')}
         </Button>
       </EmptyStatePrimary>
     </EmptyState>

@@ -36,7 +36,7 @@ export function TableView<T>({
     <TableComposable aria-label={ariaLabel} variant="compact" isStickyHeader>
       <Thead>
         <Tr>
-          {visibleColumns.map(({ id, tKey, sortable }, columnIndex) => (
+          {visibleColumns.map(({ id, toLabel, sortable }, columnIndex) => (
             <Th
               key={id}
               sort={
@@ -49,7 +49,7 @@ export function TableView<T>({
                 })
               }
             >
-              {t(tKey)}
+              {toLabel(t)}
             </Th>
           ))}
         </Tr>
