@@ -19,13 +19,15 @@ export interface FieldFilterProps {
   }[];
 }
 
+export type FilterType = {
+  id: string;
+  toLabel(t: (key: string) => string): string;
+  filter: FilterDef;
+};
+
 export interface MetaFilterProps {
   selectedFilters: { [id: string]: string[] };
-  filterTypes: {
-    id: string;
-    toLabel(t: (key: string) => string): string;
-    filter: FilterDef;
-  }[];
+  filterTypes: FilterType[];
   onFilterUpdate(filters: { [id: string]: string[] }): void;
   supportedFilters: {
     [type: string]: (props: FieldFilterProps) => JSX.Element;

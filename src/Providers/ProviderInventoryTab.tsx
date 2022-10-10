@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { ErrorState, Loading } from 'src/components/StandardPage';
 import { useTranslation } from 'src/internal/i18n';
 import { ProviderResource } from 'src/internal/k8s';
 
@@ -11,7 +12,6 @@ import {
 } from '@patternfly/react-core';
 
 import { useProvidersWithInventory } from './data';
-import { ErrorState, Loading } from './ProvidersPage';
 
 interface ProviderDetailPageProps {
   obj: ProviderResource;
@@ -24,7 +24,6 @@ const ProviderInventoryTab = ({ obj }: ProviderDetailPageProps) => {
     name: obj?.metadata?.name ?? '',
   });
   const { t } = useTranslation();
-  console.warn('providers', provider, loaded, error);
   return (
     <PageSection>
       {!loaded && <Loading />}

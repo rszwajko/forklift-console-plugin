@@ -1,12 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import {
-  AttributeValueFilter,
-  createMetaMatcher,
-  EnumFilter,
-  FreetextFilter,
-  PrimaryFilters,
-} from 'src/components/Filter';
-import { ManageColumnsToolbar, TableView } from 'src/components/TableView';
+import React from 'react';
+import { StandardPage } from 'src/components/StandardPage';
 import { Field } from 'src/components/types';
 import { useTranslation } from 'src/internal/i18n';
 import { ResourceConsolePageProps } from 'src/internal/k8s';
@@ -23,24 +16,7 @@ import {
   VM_COUNT,
 } from 'src/utils/constants';
 
-import { RedExclamationCircleIcon } from '@openshift-console/dynamic-plugin-sdk';
-import {
-  Button,
-  EmptyState,
-  EmptyStateBody,
-  EmptyStateIcon,
-  EmptyStatePrimary,
-  Level,
-  LevelItem,
-  PageSection,
-  Spinner,
-  Title,
-  Toolbar,
-  ToolbarContent,
-  ToolbarToggleGroup,
-} from '@patternfly/react-core';
-import { FilterIcon } from '@patternfly/react-icons';
-import { SearchIcon } from '@patternfly/react-icons';
+import { Button } from '@patternfly/react-core';
 
 import { MergedProvider, useProvidersWithInventory } from './data';
 import ProviderRow from './ProviderRow';
@@ -145,168 +121,29 @@ const fieldsMetadata: Field[] = [
   },
 ];
 
-const useFields = (namespace, defaultFields) => {
-  const [fields, setFields] = useState(defaultFields);
-  const namespaceAwareFields = useMemo(
-    () =>
-      fields.map(({ id, isVisible, ...rest }) => ({
-        id,
-        ...rest,
-        isVisible: id === NAMESPACE ? !namespace : isVisible,
-      })),
-    [namespace, fields],
-  );
-  return [namespaceAwareFields, setFields];
-};
-
 export const ProvidersPage = ({
   namespace,
   kind,
 }: ResourceConsolePageProps) => {
   const { t } = useTranslation();
-  const [providers, loaded, error] = useProvidersWithInventory({
+  const dataSource = useProvidersWithInventory({
     kind,
     namespace,
   });
-  const [selectedFilters, setSelectedFilters] = useState({});
-  const clearAllFilters = () => setSelectedFilters({});
-  const [fields, setFields] = useFields(namespace, fieldsMetadata);
-
-  console.error('Providers', providers, fields, namespace, kind);
-
-  const filteredProviders = providers.filter(
-    createMetaMatcher(selectedFilters, fields),
-  );
-
-  const errorFetchingData = loaded && error;
-  const noResults = loaded && !error && providers.length == 0;
-  const noMatchingResults =
-    loaded && !error && filteredProviders.length === 0 && providers.length > 0;
 
   return (
-    <>
-      <PageSection variant="light">
-        <Level>
-          <LevelItem>
-            <Title headingLevel="h1">{t('Providers')}</Title>
-          </LevelItem>
-          <LevelItem>
-            <Button variant="primary" onClick={() => ''}>
-              {t('Add Provider')}
-            </Button>
-          </LevelItem>
-        </Level>
-      </PageSection>
-      <PageSection>
-        <Toolbar
-          clearAllFilters={clearAllFilters}
-          clearFiltersButtonText={t('Clear all filters')}
-        >
-          <ToolbarContent>
-            <ToolbarToggleGroup toggleIcon={<FilterIcon />} breakpoint="xl">
-              <PrimaryFilters
-                filterTypes={fields.filter((field) => field.filter?.primary)}
-                onFilterUpdate={setSelectedFilters}
-                selectedFilters={selectedFilters}
-                supportedFilters={{ enum: EnumFilter }}
-              />
-              <AttributeValueFilter
-                filterTypes={fields.filter(
-                  ({ filter }) => filter && !filter.primary,
-                )}
-                onFilterUpdate={setSelectedFilters}
-                selectedFilters={selectedFilters}
-                supportedFilters={{ freetext: FreetextFilter }}
-              />
-              <ManageColumnsToolbar
-                columns={fields}
-                defaultColumns={fieldsMetadata}
-                setColumns={setFields}
-                key={namespace ?? ''}
-              />
-            </ToolbarToggleGroup>
-          </ToolbarContent>
-        </Toolbar>
-        <TableView<MergedProvider>
-          entities={filteredProviders}
-          allColumns={fields}
-          visibleColumns={fields.filter(({ isVisible }) => isVisible)}
-          aria-label={t('Providers')}
-          Row={ProviderRow}
-        >
-          {[
-            !loaded && <Loading />,
-            errorFetchingData && <ErrorState />,
-            noResults && <NoResultsFound />,
-            noMatchingResults && (
-              <NoResultsMatchFilter clearAllFilters={clearAllFilters} />
-            ),
-          ].filter(Boolean)}
-        </TableView>
-      </PageSection>
-    </>
-  );
-};
-
-export const ErrorState = () => {
-  const { t } = useTranslation();
-  return (
-    <EmptyState>
-      <EmptyStateIcon icon={RedExclamationCircleIcon} />
-      <Title headingLevel="h4" size="lg">
-        {t('Unable to retrieve data')}
-      </Title>
-    </EmptyState>
-  );
-};
-
-export const Loading = () => {
-  const { t } = useTranslation();
-  return (
-    <EmptyState>
-      <EmptyStateIcon variant="container" component={Spinner} />
-      <Title size="lg" headingLevel="h4">
-        {t('Loading')}
-      </Title>
-    </EmptyState>
-  );
-};
-
-const NoResultsFound = () => {
-  const { t } = useTranslation();
-  return (
-    <EmptyState>
-      <EmptyStateIcon icon={SearchIcon} />
-      <Title size="lg" headingLevel="h4">
-        {t('No results found')}
-      </Title>
-    </EmptyState>
-  );
-};
-
-const NoResultsMatchFilter = ({
-  clearAllFilters,
-}: {
-  clearAllFilters: () => void;
-}) => {
-  const { t } = useTranslation();
-  return (
-    <EmptyState>
-      <EmptyStateIcon icon={SearchIcon} />
-      <Title size="lg" headingLevel="h4">
-        {t('No results found')}
-      </Title>
-      <EmptyStateBody>
-        {t(
-          'No results match the filter criteria. Clear all filters and try again.',
-        )}
-      </EmptyStateBody>
-      <EmptyStatePrimary>
-        <Button variant="link" onClick={clearAllFilters}>
-          {t('Clear all filters')}
+    <StandardPage<MergedProvider>
+      addButton={
+        <Button variant="primary" onClick={() => ''}>
+          {t('Add Provider')}
         </Button>
-      </EmptyStatePrimary>
-    </EmptyState>
+      }
+      dataSource={dataSource}
+      RowMapper={ProviderRow}
+      fieldsMetadata={fieldsMetadata}
+      namespace={namespace}
+      title={t('Providers')}
+    />
   );
 };
 
