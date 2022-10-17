@@ -1,6 +1,7 @@
 {
   "{{type}} provider {{name}} will no longer be selectable as a migration source.": "{{type}} provider {{name}} will no longer be selectable as a migration source.",
   "{{type}} provider {{name}} will no longer be selectable as a migration target.": "{{type}} provider {{name}} will no longer be selectable as a migration target.",
+  "Actions": "Actions",
   "Add Provider": "Add Provider",
   "Cancel": "Cancel",
   "Cannot remove provider": "Cannot remove provider",
