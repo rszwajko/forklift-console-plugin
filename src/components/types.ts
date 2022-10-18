@@ -13,6 +13,7 @@ export interface Field {
   isIdentity?: boolean;
   sortable?: boolean;
   filter?: FilterDef;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   comparator?: (a: any, b: any, locale: string) => number;
 }
 

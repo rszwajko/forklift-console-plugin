@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'src/internal/i18n';
 
-import { RedExclamationCircleIcon } from '@openshift-console/dynamic-plugin-sdk';
 import {
   Button,
   EmptyState,
@@ -11,13 +10,13 @@ import {
   Spinner,
   Title,
 } from '@patternfly/react-core';
-import { SearchIcon } from '@patternfly/react-icons';
+import { ExclamationCircleIcon, SearchIcon } from '@patternfly/react-icons';
 
 export const ErrorState = () => {
   const { t } = useTranslation();
   return (
     <EmptyState>
-      <EmptyStateIcon icon={RedExclamationCircleIcon} />
+      <EmptyStateIcon icon={ExclamationCircleIcon} color="#C9190B" />
       <Title headingLevel="h4" size="lg">
         {t('Unable to retrieve data')}
       </Title>

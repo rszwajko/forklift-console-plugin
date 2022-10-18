@@ -17,17 +17,19 @@ export const createMatcher =
       .filter(({ filter }) => filter?.type === filterType)
       .filter(({ id }) => selectedFilters[id] && selectedFilters[id]?.length)
       .map(({ id }) => ({
-        value: entity[id],
+        value: entity?.[id],
         filters: selectedFilters[id],
       }))
       .map(({ value, filters }) => filters.some(matchValue(value)))
       .every(Boolean);
 
+export const freetextMatcher = {
+  filterType: 'freetext',
+  matchValue: (value: string) => (filter: string) => value?.includes(filter),
+};
+
 const defaultValueMatchers = [
-  {
-    filterType: 'freetext',
-    matchValue: (value: string) => (filter: string) => value?.includes(filter),
-  },
+  freetextMatcher,
   {
     filterType: 'enum',
     matchValue: (value: string) => (filter: string) => value === filter,

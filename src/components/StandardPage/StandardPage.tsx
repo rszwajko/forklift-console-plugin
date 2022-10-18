@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   AttributeValueFilter,
   createMetaMatcher,
@@ -14,7 +14,6 @@ import {
 } from 'src/components/TableView';
 import { Field } from 'src/components/types';
 import { useTranslation } from 'src/internal/i18n';
-import { NAMESPACE } from 'src/utils/constants';
 
 import {
   Level,
@@ -33,32 +32,7 @@ import {
   NoResultsFound,
   NoResultsMatchFilter,
 } from './ResultStates';
-
-/**
- * Keeps the list of fields. Toggles the visibility of the namespace field based on currently used namspace.
- *
- * @param currentNamespace
- * @param defaultFields used for initialization
- * @returns [fields, setFields]
- */
-export const useFields = (
-  currentNamespace: string,
-  defaultFields: Field[],
-): [Field[], React.Dispatch<React.SetStateAction<Field[]>>] => {
-  const [fields, setFields] = useState<Field[]>(
-    defaultFields.map((it) => ({ ...it })),
-  );
-  const namespaceAwareFields: Field[] = useMemo(
-    () =>
-      fields.map(({ id, isVisible, ...rest }) => ({
-        id,
-        ...rest,
-        isVisible: id === NAMESPACE ? !currentNamespace : isVisible,
-      })),
-    [currentNamespace, fields],
-  );
-  return [namespaceAwareFields, setFields];
-};
+import { useFields } from './useFields';
 
 export interface StandardPageProps<T> {
   addButton?: JSX.Element;
@@ -151,11 +125,14 @@ export function StandardPage<T>({
           Row={RowMapper}
         >
           {[
-            !loaded && <Loading />,
-            errorFetchingData && <ErrorState />,
-            noResults && <NoResultsFound />,
+            !loaded && <Loading key="loading" />,
+            errorFetchingData && <ErrorState key="error" />,
+            noResults && <NoResultsFound key="no_result" />,
             noMatchingResults && (
-              <NoResultsMatchFilter clearAllFilters={clearAllFilters} />
+              <NoResultsMatchFilter
+                key="no_match"
+                clearAllFilters={clearAllFilters}
+              />
             ),
           ].filter(Boolean)}
         </TableView>

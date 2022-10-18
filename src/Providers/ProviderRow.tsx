@@ -69,10 +69,11 @@ const cellCreator = {
 };
 
 const ProviderRow = ({ columns, entity }: RowProps<MergedProvider>) => {
+  const { t } = useTranslation();
   return (
     <Tr>
-      {columns.map(({ id }) => (
-        <Td key={id} dataLabel="foo">
+      {columns.map(({ id, toLabel }) => (
+        <Td key={id} dataLabel={toLabel(t)}>
           {cellCreator?.[id]?.({
             value: entity[id],
             entity,

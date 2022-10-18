@@ -20,6 +20,7 @@ export const PrimaryFilters = ({
         return (
           FieldFilter && (
             <FieldFilter
+              key={id}
               filterId={id}
               onFilterUpdate={(values) =>
                 onFilterUpdate({

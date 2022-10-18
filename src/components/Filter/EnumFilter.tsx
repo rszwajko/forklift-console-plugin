@@ -66,12 +66,22 @@ export const useUnique = ({
     [labelToIds],
   );
 
-  const onFilterUpdate = (labels: string[]): void =>
-    onSelectedEnumIdsChange(labels.flatMap((label) => labelToIds[label] ?? []));
+  const onFilterUpdate = useMemo(
+    () =>
+      (labels: string[]): void =>
+        onSelectedEnumIdsChange(
+          labels.flatMap((label) => labelToIds[label] ?? []),
+        ),
+    [onSelectedEnumIdsChange, labelToIds],
+  );
 
-  const selectedFilters = [
-    ...new Set(selectedEnumIds.map((id) => idToLabel[id]).filter(Boolean)),
-  ] as string[];
+  const selectedFilters = useMemo(
+    () =>
+      [
+        ...new Set(selectedEnumIds.map((id) => idToLabel[id]).filter(Boolean)),
+      ] as string[],
+    [selectedEnumIds, idToLabel],
+  );
 
   return { filterNames, onFilterUpdate, selectedFilters };
 };

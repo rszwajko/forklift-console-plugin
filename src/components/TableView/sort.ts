@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'src/internal/i18n';
 import { localeCompare } from 'src/utils/helpers';
 
@@ -9,17 +9,24 @@ import { Field, SortType } from '../types';
 import { Column } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const universalComparator = (a: any, b: any, locale: string) =>
+export const universalComparator = (a: any, b: any, locale: string) =>
   localeCompare(String(a ?? ''), String(b ?? ''), locale);
 
-export function compareWith<T>(
+export function compareWith(
   sortType: SortType,
   locale: string,
-  fieldComparator: (a: T, b: T, locale: string) => number,
-): (a: T, b: T) => number {
-  return (a: T, b: T) => {
+  fieldComparator: (a, b, locale: string) => number,
+): (a, b) => number {
+  return (a, b) => {
+    if (!sortType.id) {
+      return 0;
+    }
     const comparator = fieldComparator ?? universalComparator;
-    const compareValue = comparator(a[sortType.id], b[sortType.id], locale);
+    const compareValue = comparator(
+      a?.[sortType.id],
+      b?.[sortType.id],
+      locale ?? 'en',
+    );
     return sortType.isAsc ? compareValue : -compareValue;
   };
 }
@@ -40,10 +47,14 @@ export const useSort = (
     toLabel: firstField?.toLabel,
   });
 
-  const comparator = compareWith(
-    activeSort,
-    i18n.resolvedLanguage,
-    fields.find((field) => field.id === activeSort.id)?.comparator,
+  const comparator = useMemo(
+    () =>
+      compareWith(
+        activeSort,
+        i18n.resolvedLanguage,
+        fields.find((field) => field.id === activeSort.id)?.comparator,
+      ),
+    [fields],
   );
 
   return [activeSort, setActiveSort, comparator];
@@ -61,7 +72,9 @@ export const buildSort = ({
   setActiveSort: (sort: SortType) => void;
 }): ThSortType => ({
   sortBy: {
-    index: columns.findIndex(({ id }) => id === activeSort.id),
+    index:
+      columns.find(({ id }) => id === activeSort.id) &&
+      columns.findIndex(({ id }) => id === activeSort.id),
     direction: activeSort.isAsc ? 'asc' : 'desc',
   },
   onSort: (_event, index, direction) => {

@@ -29,7 +29,7 @@ export const AttributeValueFilter = ({
   supportedFilters = {},
 }: MetaFilterProps) => {
   const { t } = useTranslation();
-  const [currentFilterType, setCurrentFilterType] = useState(filterTypes[0]);
+  const [currentFilterType, setCurrentFilterType] = useState(filterTypes?.[0]);
   const [expanded, setExpanded] = useState(false);
 
   const selectOptionToFilter = (selectedId) =>
@@ -51,10 +51,10 @@ export const AttributeValueFilter = ({
           isOpen={expanded}
           variant={SelectVariant.single}
           aria-label={t('Select Filter')}
-          selections={toSelectOption(
-            currentFilterType.id,
-            currentFilterType.toLabel(t),
-          )}
+          selections={
+            currentFilterType &&
+            toSelectOption(currentFilterType.id, currentFilterType.toLabel(t))
+          }
         >
           {filterTypes.map(({ id, toLabel }) => (
             <SelectOption key={id} value={toSelectOption(id, toLabel(t))} />
@@ -67,6 +67,7 @@ export const AttributeValueFilter = ({
         return (
           FieldFilter && (
             <FieldFilter
+              key={id}
               filterId={id}
               onFilterUpdate={(values) =>
                 onFilterUpdate({
