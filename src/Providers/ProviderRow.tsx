@@ -1,23 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { RowProps } from 'src/components/TableView';
 import { useTranslation } from 'src/internal/i18n';
 import { NAME, NAMESPACE, READY, TYPE, URL } from 'src/utils/constants';
 
-import { ConfirmModal } from '@app/common/components/ConfirmModal';
-import { ProviderType } from '@app/common/constants';
-import { useDeleteProviderMutation } from '@app/queries';
 import { StatusIcon } from '@migtools/lib-ui';
 import { ResourceLink } from '@openshift-console/dynamic-plugin-sdk';
-import {
-  Button,
-  Dropdown,
-  DropdownItem,
-  KebabToggle,
-  Popover,
-} from '@patternfly/react-core';
+import { Button, Popover } from '@patternfly/react-core';
 import { Td, Tr } from '@patternfly/react-table';
 
 import { MergedProvider } from './data';
+import { ProviderActions } from './providerActions';
 
 interface CellProps {
   value: string;
@@ -77,18 +69,6 @@ const cellCreator = {
 };
 
 const ProviderRow = ({ columns, entity }: RowProps<MergedProvider>) => {
-  const { t } = useTranslation();
-  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-  const toggleDeleteModal = () => setIsDeleteModalOpen(!isDeleteModalOpen);
-  const deleteProviderMutation = useDeleteProviderMutation(
-    entity.type as ProviderType,
-    toggleDeleteModal,
-  );
-  const editProvider = () => '';
-  const selectNetwork = () => '';
-  const isTarget = (type: ProviderType) => type !== 'openshift';
   return (
     <Tr>
       {columns.map(({ id }) => (
@@ -100,64 +80,7 @@ const ProviderRow = ({ columns, entity }: RowProps<MergedProvider>) => {
         </Td>
       ))}
       <Td modifier="fitContent">
-        <Dropdown
-          position="right"
-          onSelect={() => setIsActionMenuOpen(!isActionMenuOpen)}
-          toggle={<KebabToggle onToggle={setIsActionMenuOpen} />}
-          isOpen={isActionMenuOpen}
-          isPlain
-          dropdownItems={[
-            <DropdownItem key="edit" onClick={editProvider}>
-              {t('Edit Provider')}
-            </DropdownItem>,
-            <DropdownItem key="delete" onClick={toggleDeleteModal}>
-              {t('Delete Provider')}
-            </DropdownItem>,
-            <DropdownItem key="selectNetwork" onClick={selectNetwork}>
-              {t('Select migration network')}
-            </DropdownItem>,
-          ]}
-        />
-        <ConfirmModal
-          titleIconVariant="warning"
-          confirmButtonVariant="danger"
-          position="top"
-          isOpen={isDeleteModalOpen}
-          toggleOpen={toggleDeleteModal}
-          mutateFn={() =>
-            deleteProviderMutation.mutate({
-              metadata: {
-                name: entity.name,
-                namespace: entity.namespace,
-              },
-              spec: { type: entity.type as ProviderType },
-              kind: '',
-              apiVersion: '',
-            })
-          }
-          mutateResult={deleteProviderMutation}
-          title={t('Permanently delete provider?')}
-          body={
-            isTarget(entity.type as ProviderType)
-              ? t(
-                  '{{type}} provider {{name}} will no longer be selectable as a migration target.',
-                  {
-                    type: entity.type,
-                    name: entity.name,
-                  },
-                )
-              : t(
-                  '{{type}} provider {{name}} will no longer be selectable as a migration source.',
-                  {
-                    type: entity.type,
-                    name: entity.name,
-                  },
-                )
-          }
-          confirmButtonText={t('Delete')}
-          errorText={t('Cannot remove provider')}
-          cancelButtonText={t('Cancel')}
-        />
+        <ProviderActions entity={entity} />
       </Td>
     </Tr>
   );

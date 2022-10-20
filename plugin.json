@@ -12,7 +12,9 @@
     "VMMigrationDetails": "./extensions/VMMigrationDetailsWrapper",
     "ProvidersRes": "./extensions/NewProvidersWrapper",
     "ProviderInventoryTab": "./extensions/ProviderInventoryTabWrapper",
-    "EmptyDetailPage": "./extensions/EmptyDetailPageWrapper"
+    "EmptyDetailPage": "./extensions/EmptyDetailPageWrapper",
+    "useMergedProviders": "./extensions/UseMergedProviders",
+    "useProviders": "./extensions/UseProviders"
   },
   "dependencies": {
     "@console/pluginAPI": "*"

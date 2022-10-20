@@ -1,8 +1,10 @@
 import type { EncodedExtension } from '@openshift/dynamic-plugin-sdk';
 import type {
+  ActionProvider,
   HorizontalNavTab,
   HrefNavItem,
   NavSection,
+  ResourceActionProvider,
   ResourceDetailsPage,
   ResourceListPage,
   ResourceNSNavItem,
@@ -104,6 +106,29 @@ const extensions: EncodedExtension[] = [
       },
     },
   } as EncodedExtension<HorizontalNavTab>,
+
+  {
+    type: 'console.action/provider',
+    properties: {
+      contextId: 'mergedProvider',
+      provider: {
+        $codeRef: 'useMergedProviders',
+      },
+    },
+  } as EncodedExtension<ActionProvider>,
+  {
+    type: 'console.action/resource-provider',
+    properties: {
+      model: {
+        group: 'forklift.konveyor.io',
+        kind: 'Provider',
+        version: 'v1beta1',
+      },
+      provider: {
+        $codeRef: 'useProviders',
+      },
+    },
+  } as EncodedExtension<ResourceActionProvider>,
 
   {
     type: 'console.navigation/href',
