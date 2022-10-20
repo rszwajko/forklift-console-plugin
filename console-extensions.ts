@@ -1,7 +1,9 @@
 import type { EncodedExtension } from '@openshift/dynamic-plugin-sdk';
 import type {
+  HorizontalNavTab,
   HrefNavItem,
   NavSection,
+  ResourceDetailsPage,
   ResourceListPage,
   ResourceNSNavItem,
   RoutePage,
@@ -56,6 +58,7 @@ const extensions: EncodedExtension[] = [
       },
     },
   } as EncodedExtension<ResourceNSNavItem>,
+
   {
     type: 'console.page/resource/list',
     properties: {
@@ -69,6 +72,38 @@ const extensions: EncodedExtension[] = [
       },
     },
   } as EncodedExtension<ResourceListPage>,
+
+  {
+    type: 'console.page/resource/details',
+    properties: {
+      model: {
+        group: 'forklift.konveyor.io',
+        kind: 'Provider',
+        version: 'v1beta1',
+      },
+      component: {
+        $codeRef: 'EmptyDetailPage',
+      },
+    },
+  } as EncodedExtension<ResourceDetailsPage>,
+
+  {
+    type: 'console.tab/horizontalNav',
+    properties: {
+      model: {
+        group: 'forklift.konveyor.io',
+        kind: 'Provider',
+        version: 'v1beta1',
+      },
+      page: {
+        name: 'Inventory',
+        href: 'inventory',
+      },
+      component: {
+        $codeRef: 'ProviderInventoryTab',
+      },
+    },
+  } as EncodedExtension<HorizontalNavTab>,
 
   {
     type: 'console.navigation/href',

@@ -10,7 +10,9 @@
     "HostsPage": "./extensions/HostsPageWrapper",
     "PlanWizard": "./extensions/PlanWizardWrapper",
     "VMMigrationDetails": "./extensions/VMMigrationDetailsWrapper",
-    "ProvidersRes": "./extensions/NewProvidersWrapper"
+    "ProvidersRes": "./extensions/NewProvidersWrapper",
+    "ProviderInventoryTab": "./extensions/ProviderInventoryTabWrapper",
+    "EmptyDetailPage": "./extensions/EmptyDetailPageWrapper"
   },
   "dependencies": {
     "@console/pluginAPI": "*"

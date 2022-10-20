@@ -132,8 +132,9 @@ const mergeData = (
 export const useProvidersWithInventory = ({
   kind,
   namespace,
+  name = undefined,
 }): [MergedProvider[], boolean, boolean] => {
-  const [resources, loaded, error] = useProviders({ kind, namespace });
+  const [resources, loaded, error] = useProviders({ kind, namespace, name });
   const { data, isSuccess, isError } = useInventoryProvidersQuery();
   const providersWithInventory = useMemo(
     () => (resources && data ? mergeData(resources, data) : []),

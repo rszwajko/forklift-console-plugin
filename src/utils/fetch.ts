@@ -9,7 +9,7 @@ import {
 const isMock = process.env.DATA_SOURCE === 'mock';
 
 export function useMockableK8sWatchResource<T>(
-  { kind, namespace },
+  { kind, namespace, name },
   mockData: T[] = [],
 ): WatchK8sResult<T[]> {
   return isMock
@@ -19,11 +19,14 @@ export function useMockableK8sWatchResource<T>(
         isList: true,
         namespaced: true,
         namespace,
+        name,
       });
 }
 
-export const useProviders = ({ kind, namespace }) =>
+export const useProviders = ({ kind, namespace, name }) =>
   useMockableK8sWatchResource<ProviderResource>(
-    { kind, namespace },
-    MOCK_CLUSTER_PROVIDERS as ProviderResource[],
+    { kind, namespace, name },
+    MOCK_CLUSTER_PROVIDERS?.filter(
+      (provider) => !name || provider?.metadata?.name === name,
+    ) as ProviderResource[],
   );

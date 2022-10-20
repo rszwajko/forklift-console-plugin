@@ -9,6 +9,7 @@ import {
 import { ManageColumnsToolbar, TableView } from 'src/components/TableView';
 import { Field } from 'src/components/types';
 import { useTranslation } from 'src/internal/i18n';
+import { ResourceConsolePageProps } from 'src/internal/k8s';
 import {
   CLUSTER_COUNT,
   HOST_COUNT,
@@ -158,7 +159,10 @@ const useFields = (namespace, defaultFields) => {
   return [namespaceAwareFields, setFields];
 };
 
-export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
+export const ProvidersPage = ({
+  namespace,
+  kind,
+}: ResourceConsolePageProps) => {
   const { t } = useTranslation();
   const [providers, loaded, error] = useProvidersWithInventory({
     kind,
@@ -244,7 +248,7 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
   );
 };
 
-const ErrorState = () => {
+export const ErrorState = () => {
   const { t } = useTranslation();
   return (
     <EmptyState>
@@ -256,7 +260,7 @@ const ErrorState = () => {
   );
 };
 
-const Loading = () => {
+export const Loading = () => {
   const { t } = useTranslation();
   return (
     <EmptyState>
@@ -304,11 +308,6 @@ const NoResultsMatchFilter = ({
       </EmptyStatePrimary>
     </EmptyState>
   );
-};
-
-type ProvidersPageProps = {
-  kind: string;
-  namespace: string;
 };
 
 export default ProvidersPage;
