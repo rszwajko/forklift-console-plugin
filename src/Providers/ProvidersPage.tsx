@@ -1,9 +1,27 @@
 import React, { useMemo, useState } from 'react';
+import {
+  AttributeValueFilter,
+  createMetaMatcher,
+  EnumFilter,
+  FreetextFilter,
+  PrimaryFilters,
+} from 'src/components/Filter';
+import { ManageColumnsToolbar, TableView } from 'src/components/TableView';
+import { Field } from 'src/components/types';
 import { useTranslation } from 'src/internal/i18n';
-import { ProviderResource } from 'src/internal/k8s';
-import { useMockableK8sWatchResource } from 'src/utils/fetch';
+import {
+  CLUSTER_COUNT,
+  HOST_COUNT,
+  NAME,
+  NAMESPACE,
+  NETWORK_COUNT,
+  READY,
+  STORAGE_COUNT,
+  TYPE,
+  URL,
+  VM_COUNT,
+} from 'src/utils/constants';
 
-import { MOCK_CLUSTER_PROVIDERS } from '@app/queries/mocks/providers.mock';
 import {
   Button,
   Level,
@@ -16,105 +34,103 @@ import {
 } from '@patternfly/react-core';
 import { FilterIcon } from '@patternfly/react-icons';
 
-import AttributeValueFilter from './components/AttributeValueFilter';
-import EnumFilter from './components/EnumFilter';
-import FreetextFilter from './components/FreetextFilter';
-import { ManageColumnsToolbar } from './components/ManageColumnsToolbar';
-import PrimaryFilters from './components/PrimaryFilters';
-import ProviderRow from './components/ProviderRow';
-import { createMetaMatcher, Field } from './components/shared';
-import { NAME, NAMESPACE, READY, TYPE, URL } from './components/shared';
-import TableView from './components/TableView';
+import { MergedProvider, useProvidersWithInventory } from './data';
+import ProviderRow from './ProviderRow';
 
-const useProviders = ({ kind, namespace }) => {
-  const [providers, loaded, error] = useMockableK8sWatchResource(
-    { kind, namespace },
-    MOCK_CLUSTER_PROVIDERS,
-  );
-
-  // const inventoryProvidersQuery = useInventoryProvidersQuery();
-  // providers.map(p => enhanceWithInventory(inventoryProvidersQuery))
-
-  // const allErrorTitles = [
-  //   'Cannot load providers from cluster API',
-  //   'Cannot load providers from inventory API',
-  // ];
-
-  return [providers, loaded, error];
-};
-
-const defaultFields: Field[] = [
+const fieldsMetadata: Field[] = [
   {
     id: NAME,
-    tKey: 'plugin__forklift-console-plugin~Name',
+    tKey: 'Name',
     isVisible: true,
     isIdentity: true,
     filter: {
       type: 'freetext',
-      placeholderKey: 'plugin__forklift-console-plugin~FilterByName',
+      placeholderKey: 'FilterByName',
     },
     sortable: true,
-    toValue: (provider) => provider?.metadata?.name ?? '',
   },
   {
     id: NAMESPACE,
-    tKey: 'plugin__forklift-console-plugin~Namespace',
+    tKey: 'Namespace',
     isVisible: true,
     isIdentity: true,
     filter: {
       type: 'freetext',
-      placeholderKey: 'plugin__forklift-console-plugin~FilterByNamespace',
+      placeholderKey: 'FilterByNamespace',
     },
     sortable: true,
-    toValue: (provider) => provider?.metadata?.namespace ?? '',
   },
   {
     id: READY,
-    tKey: 'plugin__forklift-console-plugin~Ready',
+    tKey: 'Ready',
     isVisible: true,
     filter: {
       type: 'enum',
       primary: true,
-      placeholderKey: 'plugin__forklift-console-plugin~Ready',
+      placeholderKey: 'Ready',
       values: [
-        { id: 'Yes', tKey: 'plugin__forklift-console-plugin~Yes' },
-        { id: 'No', tKey: 'plugin__forklift-console-plugin~No' },
+        { id: 'True', tKey: 'True' },
+        { id: 'False', tKey: 'False' },
+        { id: 'Unknown', tKey: 'Unknown' },
       ],
     },
     sortable: true,
-    toValue: (provider) =>
-      provider?.status?.conditions?.find(({ type }) => type === 'Ready')
-        ?.status === 'True'
-        ? 'Yes'
-        : 'No',
   },
   {
     id: URL,
-    tKey: 'plugin__forklift-console-plugin~Url',
+    tKey: 'Url',
     isVisible: true,
     filter: {
       type: 'freetext',
-      placeholderKey: 'plugin__forklift-console-plugin~FilterByUrl',
+      placeholderKey: 'FilterByUrl',
     },
     sortable: true,
-    toValue: (provider) => provider?.spec?.url ?? '',
   },
   {
     id: TYPE,
-    tKey: 'plugin__forklift-console-plugin~Type',
+    tKey: 'Type',
     isVisible: true,
     filter: {
       type: 'enum',
       primary: true,
-      placeholderKey: 'plugin__forklift-console-plugin~Type',
+      placeholderKey: 'Type',
       values: [
-        { id: 'vsphere', tKey: 'plugin__forklift-console-plugin~Vsphere' },
-        { id: 'ovirt', tKey: 'plugin__forklift-console-plugin~Ovirt' },
-        { id: 'openshift', tKey: 'plugin__forklift-console-plugin~Openshift' },
+        { id: 'vsphere', tKey: 'Vsphere' },
+        { id: 'ovirt', tKey: 'Ovirt' },
+        { id: 'openshift', tKey: 'Openshift' },
       ],
     },
     sortable: true,
-    toValue: (provider) => provider?.spec?.type ?? '',
+  },
+  {
+    id: VM_COUNT,
+    tKey: 'VMs',
+    isVisible: true,
+    sortable: true,
+  },
+  {
+    id: NETWORK_COUNT,
+    tKey: 'Networks',
+    isVisible: true,
+    sortable: true,
+  },
+  {
+    id: CLUSTER_COUNT,
+    tKey: 'Clusters',
+    isVisible: true,
+    sortable: true,
+  },
+  {
+    id: HOST_COUNT,
+    tKey: 'Hosts',
+    isVisible: false,
+    sortable: true,
+  },
+  {
+    id: STORAGE_COUNT,
+    tKey: 'Storage',
+    isVisible: false,
+    sortable: true,
   },
 ];
 
@@ -134,24 +150,25 @@ const useFields = (namespace, defaultFields) => {
 
 export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
   const { t } = useTranslation();
-  const [providers, loaded, error] = useProviders({ kind, namespace });
+  const [providers, loaded, error] = useProvidersWithInventory({
+    kind,
+    namespace,
+  });
   const [selectedFilters, setSelectedFilters] = useState({});
-  const [fields, setFields] = useFields(namespace, defaultFields);
+  const [fields, setFields] = useFields(namespace, fieldsMetadata);
 
-  console.error('Providers', defaultFields, fields, namespace, kind);
+  console.error('Providers', providers, fields, namespace, kind);
 
   return (
     <>
       <PageSection variant="light">
         <Level>
           <LevelItem>
-            <Title headingLevel="h1">
-              {t('plugin__forklift-console-plugin~Providers')}
-            </Title>
+            <Title headingLevel="h1">{t('Providers')}</Title>
           </LevelItem>
           <LevelItem>
             <Button variant="primary" onClick={() => ''}>
-              {t('plugin__forklift-console-plugin~AddProvider')}
+              {t('AddProvider')}
             </Button>
           </LevelItem>
         </Level>
@@ -161,21 +178,23 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
           <ToolbarContent>
             <ToolbarToggleGroup toggleIcon={<FilterIcon />} breakpoint="xl">
               <PrimaryFilters
-                filterTypes={fields.filter((field) => field.filter.primary)}
+                filterTypes={fields.filter((field) => field.filter?.primary)}
                 onFilterUpdate={setSelectedFilters}
                 selectedFilters={selectedFilters}
                 supportedFilters={{ enum: EnumFilter }}
               />
               <AttributeValueFilter
-                filterTypes={fields.filter((field) => !field.filter.primary)}
+                filterTypes={fields.filter(
+                  ({ filter }) => filter && !filter.primary,
+                )}
                 onFilterUpdate={setSelectedFilters}
                 selectedFilters={selectedFilters}
                 supportedFilters={{ freetext: FreetextFilter }}
               />
               <ManageColumnsToolbar
-                fields={fields}
-                defaultFields={defaultFields}
-                setFields={setFields}
+                columns={fields}
+                defaultColumns={fieldsMetadata}
+                setColumns={setFields}
                 key={namespace ?? ''}
               />
             </ToolbarToggleGroup>
@@ -185,13 +204,13 @@ export const ProvidersPage = ({ namespace, kind }: ProvidersPageProps) => {
         {loaded && error && <Errors />}
         {!loaded && <Loading />}
         {loaded && !error && (
-          <TableView<ProviderResource>
-            resources={providers.filter(
+          <TableView<MergedProvider>
+            entities={providers.filter(
               createMetaMatcher(selectedFilters, fields),
             )}
-            fields={fields}
-            visibleFields={fields.filter(({ isVisible }) => isVisible)}
-            aria-label={t('plugin__forklift-console-plugin~Providers')}
+            allColumns={fields}
+            visibleColumns={fields.filter(({ isVisible }) => isVisible)}
+            aria-label={t('Providers')}
             Row={ProviderRow(kind)}
           />
         )}

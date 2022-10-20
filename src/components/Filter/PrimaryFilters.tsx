@@ -3,9 +3,9 @@ import { useTranslation } from 'src/internal/i18n';
 
 import { ToolbarGroup } from '@patternfly/react-core';
 
-import { MetaFilterProps } from './AttributeValueFilter';
+import { MetaFilterProps } from './types';
 
-const PrimaryFilters = ({
+export const PrimaryFilters = ({
   selectedFilters,
   onFilterUpdate,
   filterTypes,
@@ -39,5 +39,3 @@ const PrimaryFilters = ({
     </ToolbarGroup>
   );
 };
-
-export default PrimaryFilters;

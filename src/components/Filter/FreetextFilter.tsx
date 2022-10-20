@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 
 import { InputGroup, SearchInput, ToolbarFilter } from '@patternfly/react-core';
 
-import { FieldFilterProps } from './AttributeValueFilter';
+import { FieldFilterProps } from './types';
 
-const FreetextFilter = ({
+export const FreetextFilter = ({
   filterId,
   selectedFilters,
   onFilterUpdate,
@@ -45,5 +45,3 @@ const FreetextFilter = ({
     </ToolbarFilter>
   );
 };
-
-export default FreetextFilter;

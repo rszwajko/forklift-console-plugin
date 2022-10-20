@@ -23,16 +23,16 @@ import {
 } from '@patternfly/react-core';
 import { ColumnsIcon } from '@patternfly/react-icons';
 
-import { Field } from './shared';
+import { Field } from '../types';
 
 export const ManageColumnsToolbar = ({
-  fields,
-  setFields,
-  defaultFields,
+  columns,
+  setColumns,
+  defaultColumns,
 }: {
-  fields: Field[];
-  defaultFields: Field[];
-  setFields(fileds: Field[]): void;
+  columns: Field[];
+  defaultColumns: Field[];
+  setColumns(columns: Field[]): void;
 }) => {
   const { t } = useTranslation();
   const [manageColumns, setManageColumns] = useState(false);
@@ -51,9 +51,9 @@ export const ManageColumnsToolbar = ({
         showModal={manageColumns}
         onClose={() => setManageColumns(false)}
         description="Selected columns will be displayed in the table."
-        columns={fields}
-        onChange={setFields}
-        defaultColumns={defaultFields}
+        columns={columns}
+        onChange={setColumns}
+        defaultColumns={defaultColumns}
       />
     </ToolbarItem>
   );

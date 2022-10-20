@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'src/internal/i18n';
+import { localeCompare } from 'src/utils/helpers';
 
 import {
   Select,
@@ -10,8 +11,7 @@ import {
   ToolbarFilter,
 } from '@patternfly/react-core';
 
-import { FieldFilterProps } from './AttributeValueFilter';
-import { localeCompare } from './shared';
+import { FieldFilterProps } from './types';
 
 export const useUnique = ({
   supportedEnumValues,
@@ -69,7 +69,7 @@ export const useUnique = ({
   return { filterNames, onFilterUpdate, selectedFilters };
 };
 
-const EnumFilter = ({
+export const EnumFilter = ({
   selectedFilters: selectedEnumIds = [],
   onFilterUpdate: onSelectedEnumIdsChange,
   supportedValues: supportedEnumValues = [],
@@ -131,5 +131,3 @@ const EnumFilter = ({
     </ToolbarFilter>
   );
 };
-
-export default EnumFilter;
