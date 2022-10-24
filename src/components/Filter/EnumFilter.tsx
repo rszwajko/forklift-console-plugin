@@ -11,8 +11,14 @@ import {
   ToolbarFilter,
 } from '@patternfly/react-core';
 
-import { FieldFilterProps } from './types';
+import { FilterTypeProps } from './types';
 
+/**
+ * One label may map to multiple enum ids due to translation or by design (i.e. "Unknown")
+ * Aggregate enums with the same label and display them as a single option.
+ *
+ * @returns { uniqueEnumLabels, onUniqueFilterUpdate, selectedUniqueEnumLabels };
+ */
 export const useUnique = ({
   supportedEnumValues,
   onSelectedEnumIdsChange,
@@ -24,10 +30,14 @@ export const useUnique = ({
   }[];
   onSelectedEnumIdsChange: (values: string[]) => void;
   selectedEnumIds: string[];
-}) => {
+}): {
+  uniqueEnumLabels: string[];
+  onUniqueFilterUpdate: (selectedEnumLabels: string[]) => void;
+  selectedUniqueEnumLabels: string[];
+} => {
   const { t, i18n } = useTranslation();
 
-  const translated = useMemo(
+  const translatedEnums = useMemo(
     () =>
       supportedEnumValues.map((it) => ({
         // fallback to ID
@@ -38,27 +48,27 @@ export const useUnique = ({
     [supportedEnumValues],
   );
 
-  // one label may map to multiple filter ids i.e. "Unknown"
-  // aggregate filters with the same label
+  // group filters with the same label
   const labelToIds = useMemo(
     () =>
-      translated.reduce((acc, { label, id }) => {
+      translatedEnums.reduce((acc, { label, id }) => {
         acc[label] = [...(acc?.[label] ?? []), id];
         return acc;
       }, {}),
-    [translated],
+    [translatedEnums],
   );
 
+  // for easy reverse lookup
   const idToLabel = useMemo(
     () =>
-      translated.reduce((acc, { label, id }) => {
+      translatedEnums.reduce((acc, { label, id }) => {
         acc[id] = label;
         return acc;
       }, {}),
-    [translated],
+    [translatedEnums],
   );
 
-  const filterNames = useMemo(
+  const uniqueEnumLabels = useMemo(
     () =>
       Object.entries(labelToIds)
         .map(([label]) => label)
@@ -66,7 +76,7 @@ export const useUnique = ({
     [labelToIds],
   );
 
-  const onFilterUpdate = useMemo(
+  const onUniqueFilterUpdate = useMemo(
     () =>
       (labels: string[]): void =>
         onSelectedEnumIdsChange(
@@ -75,7 +85,7 @@ export const useUnique = ({
     [onSelectedEnumIdsChange, labelToIds],
   );
 
-  const selectedFilters = useMemo(
+  const selectedUniqueEnumLabels = useMemo(
     () =>
       [
         ...new Set(selectedEnumIds.map((id) => idToLabel[id]).filter(Boolean)),
@@ -83,9 +93,16 @@ export const useUnique = ({
     [selectedEnumIds, idToLabel],
   );
 
-  return { filterNames, onFilterUpdate, selectedFilters };
+  return { uniqueEnumLabels, onUniqueFilterUpdate, selectedUniqueEnumLabels };
 };
 
+/**
+ * Select one or many enum values from the list.
+ * FilterTypeProps are interpeted as follows:
+ * 1) selectedFilters - selected enum IDs (not translated constant identifiers)
+ * 2) onFilterUpdate - accepts the list of selected enum IDs
+ * 3) supportedValues - supported enum values
+ */
 export const EnumFilter = ({
   selectedFilters: selectedEnumIds = [],
   onFilterUpdate: onSelectedEnumIdsChange,
@@ -94,36 +111,37 @@ export const EnumFilter = ({
   placeholderLabel,
   filterId,
   showFilter,
-}: FieldFilterProps) => {
+}: FilterTypeProps) => {
   const [isExpanded, setExpanded] = useState(false);
-  const { filterNames, onFilterUpdate, selectedFilters } = useUnique({
-    supportedEnumValues,
-    onSelectedEnumIdsChange,
-    selectedEnumIds,
-  });
+  const { uniqueEnumLabels, onUniqueFilterUpdate, selectedUniqueEnumLabels } =
+    useUnique({
+      supportedEnumValues,
+      onSelectedEnumIdsChange,
+      selectedEnumIds,
+    });
 
   const deleteFilter = (
     label: string | ToolbarChip | SelectOptionObject,
   ): void =>
-    onFilterUpdate(
-      selectedFilters.filter((filterName) => filterName !== label),
+    onUniqueFilterUpdate(
+      selectedUniqueEnumLabels.filter((filterLabel) => filterLabel !== label),
     );
 
   const hasFilter = (label: string | SelectOptionObject): boolean =>
-    !!selectedFilters.find((filterName) => filterName === label);
+    !!selectedUniqueEnumLabels.find((filterLabel) => filterLabel === label);
 
   const addFilter = (label: string | SelectOptionObject): void => {
     if (typeof label === 'string') {
-      onFilterUpdate([...selectedFilters, label]);
+      onUniqueFilterUpdate([...selectedUniqueEnumLabels, label]);
     }
   };
 
   return (
     <ToolbarFilter
       key={filterId}
-      chips={selectedFilters}
+      chips={selectedUniqueEnumLabels}
       deleteChip={(category, option) => deleteFilter(option)}
-      deleteChipGroup={() => onFilterUpdate([])}
+      deleteChipGroup={() => onUniqueFilterUpdate([])}
       categoryName={title}
       showToolbarItem={showFilter}
     >
@@ -136,12 +154,12 @@ export const EnumFilter = ({
           }
           hasFilter(option) ? deleteFilter(option) : addFilter(option);
         }}
-        selections={selectedFilters}
+        selections={selectedUniqueEnumLabels}
         placeholderText={placeholderLabel}
         isOpen={isExpanded}
         onToggle={setExpanded}
       >
-        {filterNames.map((label) => (
+        {uniqueEnumLabels.map((label) => (
           <SelectOption key={label} value={label} />
         ))}
       </Select>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   AttributeValueFilter,
   createMetaMatcher,
@@ -6,7 +6,7 @@ import {
   FreetextFilter,
   PrimaryFilters,
 } from 'src/components/Filter';
-import { FieldFilterProps, FilterType } from 'src/components/Filter/types';
+import { FilterTypeProps } from 'src/components/Filter/types';
 import {
   ManageColumnsToolbar,
   RowProps,
@@ -26,6 +26,8 @@ import {
 } from '@patternfly/react-core';
 import { FilterIcon } from '@patternfly/react-icons';
 
+import { toFieldFilter } from '../Filter/helpers';
+
 import {
   ErrorState,
   Loading,
@@ -34,18 +36,54 @@ import {
 } from './ResultStates';
 import { useFields } from './useFields';
 
+/**
+ * @param T type to be displayed in the list
+ */
 export interface StandardPageProps<T> {
+  /**
+   * Component displayed close to the top right corner. By convention it's usually "add" or "create" button.
+   */
   addButton?: JSX.Element;
+  /**
+   * Source of data. Tuple should consist of:
+   * @param T[] array of items
+   * @param loading flag that indicates if loading is in progress
+   * @param error flag indicating error
+   */
   dataSource: [T[], boolean, boolean];
+  /**
+   * Fields to be displayed (from the provided type T).
+   */
   fieldsMetadata: Field[];
+  /**
+   * Currently used namespace.
+   */
   namespace: string;
+  /**
+   * Maps entity of type T to a table row.
+   */
   RowMapper: React.FunctionComponent<RowProps<T>>;
+  /**
+   * Filter types that will be used.
+   * Default are: EnumFilter and FreetextFilter
+   */
   supportedFilters?: {
-    [type: string]: (props: FieldFilterProps) => JSX.Element;
+    [type: string]: (props: FilterTypeProps) => JSX.Element;
   };
   title: string;
+  /**
+   * Information displayed when the data source returned no items.
+   */
+  customNoResultsFound?: JSX.Element;
+  /**
+   * Information displayed when the data source returned some items but due to applied filters no items can be shown.
+   */
+  customNoResultsMatchFilter?: JSX.Element;
 }
 
+/**
+ * Standard list page.
+ */
 export function StandardPage<T>({
   namespace,
   dataSource: [flattenData, loaded, error],
@@ -57,14 +95,17 @@ export function StandardPage<T>({
     enum: EnumFilter,
     freetext: FreetextFilter,
   },
+  customNoResultsFound,
+  customNoResultsMatchFilter,
 }: StandardPageProps<T>) {
   const { t } = useTranslation();
   const [selectedFilters, setSelectedFilters] = useState({});
   const clearAllFilters = () => setSelectedFilters({});
   const [fields, setFields] = useFields(namespace, fieldsMetadata);
 
-  const filteredData = flattenData.filter(
-    createMetaMatcher(selectedFilters, fields),
+  const filteredData = useMemo(
+    () => flattenData.filter(createMetaMatcher(selectedFilters, fields)),
+    [flattenData, selectedFilters, fields],
   );
 
   const errorFetchingData = loaded && error;
@@ -90,24 +131,20 @@ export function StandardPage<T>({
           <ToolbarContent>
             <ToolbarToggleGroup toggleIcon={<FilterIcon />} breakpoint="xl">
               <PrimaryFilters
-                filterTypes={
-                  fields.filter(
-                    (field) => field.filter?.primary,
-                  ) as FilterType[]
-                }
+                fieldFilters={fields
+                  .filter((field) => field.filter?.primary)
+                  .map(toFieldFilter)}
                 onFilterUpdate={setSelectedFilters}
                 selectedFilters={selectedFilters}
-                supportedFilters={supportedFilters}
+                supportedFilterTypes={supportedFilters}
               />
               <AttributeValueFilter
-                filterTypes={
-                  fields.filter(
-                    ({ filter }) => filter && !filter.primary,
-                  ) as FilterType[]
-                }
+                fieldFilters={fields
+                  .filter(({ filter }) => filter && !filter.primary)
+                  .map(toFieldFilter)}
                 onFilterUpdate={setSelectedFilters}
                 selectedFilters={selectedFilters}
-                supportedFilters={supportedFilters}
+                supportedFilterTypes={supportedFilters}
               />
               <ManageColumnsToolbar
                 columns={fields}
@@ -127,13 +164,15 @@ export function StandardPage<T>({
           {[
             !loaded && <Loading key="loading" />,
             errorFetchingData && <ErrorState key="error" />,
-            noResults && <NoResultsFound key="no_result" />,
-            noMatchingResults && (
-              <NoResultsMatchFilter
-                key="no_match"
-                clearAllFilters={clearAllFilters}
-              />
-            ),
+            noResults &&
+              (customNoResultsFound ?? <NoResultsFound key="no_result" />),
+            noMatchingResults &&
+              (customNoResultsMatchFilter ?? (
+                <NoResultsMatchFilter
+                  key="no_match"
+                  clearAllFilters={clearAllFilters}
+                />
+              )),
           ].filter(Boolean)}
         </TableView>
       </PageSection>

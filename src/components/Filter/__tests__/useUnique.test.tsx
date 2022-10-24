@@ -15,7 +15,11 @@ describe('aggregate filters with the same labels', () => {
     const onSelectedEnumIdsChange = jest.fn();
     const {
       result: {
-        current: { filterNames, onFilterUpdate, selectedFilters },
+        current: {
+          uniqueEnumLabels,
+          onUniqueFilterUpdate,
+          selectedUniqueEnumLabels,
+        },
       },
     } = renderHook(() =>
       useUnique({
@@ -24,9 +28,12 @@ describe('aggregate filters with the same labels', () => {
         selectedEnumIds: [],
       }),
     );
-    expect(filterNames).toStrictEqual(['FalseTranslated', 'TrueTranslated']);
-    expect(selectedFilters).toStrictEqual([]);
-    onFilterUpdate(['TrueTranslated']);
+    expect(uniqueEnumLabels).toStrictEqual([
+      'FalseTranslated',
+      'TrueTranslated',
+    ]);
+    expect(selectedUniqueEnumLabels).toStrictEqual([]);
+    onUniqueFilterUpdate(['TrueTranslated']);
     expect(onSelectedEnumIdsChange).toBeCalledWith(['True', 'AlsoTrue']);
   });
 
@@ -34,7 +41,11 @@ describe('aggregate filters with the same labels', () => {
     const onSelectedEnumIdsChange = jest.fn();
     const {
       result: {
-        current: { filterNames, onFilterUpdate, selectedFilters },
+        current: {
+          uniqueEnumLabels,
+          onUniqueFilterUpdate,
+          selectedUniqueEnumLabels,
+        },
       },
     } = renderHook(() =>
       useUnique({
@@ -43,9 +54,12 @@ describe('aggregate filters with the same labels', () => {
         selectedEnumIds: ['True', 'AlsoTrue'],
       }),
     );
-    expect(filterNames).toStrictEqual(['FalseTranslated', 'TrueTranslated']);
-    expect(selectedFilters).toStrictEqual(['TrueTranslated']);
-    onFilterUpdate(['TrueTranslated', 'FalseTranslated']);
+    expect(uniqueEnumLabels).toStrictEqual([
+      'FalseTranslated',
+      'TrueTranslated',
+    ]);
+    expect(selectedUniqueEnumLabels).toStrictEqual(['TrueTranslated']);
+    onUniqueFilterUpdate(['TrueTranslated', 'FalseTranslated']);
     expect(onSelectedEnumIdsChange).toBeCalledWith([
       'True',
       'AlsoTrue',

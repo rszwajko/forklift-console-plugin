@@ -17,6 +17,14 @@ import { Field } from '../types';
 import { buildSort, useSort } from './sort';
 import { RowProps } from './types';
 
+/**
+ * Displays provided list of entities as table. Supported features:
+ * 1) sorting via arrow buttons in the header
+ * 2) stable row keys based on entity[uidFieldId]
+ * 3) (if present) display nodes passed via children prop instead of entities (extension point to handle empty state end related corner cases)
+ *
+ * @see useSort
+ */
 export function TableView<T>({
   uidFieldId = UID,
   allColumns,
@@ -76,11 +84,24 @@ export function TableView<T>({
 }
 
 interface TableViewProps<T> {
+  /**
+   * Both visible and hidden columns. Note that hidden columns are required for maintaining sort order.
+   */
   allColumns: Field[];
   visibleColumns: Field[];
   entities: T[];
   'aria-label': string;
+  /**
+   * entity[uidFieldId] is used to uniquely identify a row. Defaults to UID column.
+   */
   uidFieldId?: string;
+  /**
+   * Maps entities to table rows.
+   */
   Row(props: RowProps<T>): JSX.Element;
+  /**
+   * Nodes to be displayed instead of the entities.
+   * Extension point to handle empty state and related cases.
+   */
   children?: ReactNode[];
 }

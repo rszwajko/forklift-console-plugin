@@ -1,5 +1,13 @@
 import { Field } from '../types';
 
+/**
+ * Create matcher for one filter type.
+ * Features:
+ * 1) fields that use different filter type are skipped
+ * 2) positive match if there are no selected filter values or no fields support the chosen filter type (vacuous truth)
+ * 3) all fields need to pass the test (AND condition)
+ * 4) a field is accepted if at least one filter value returns positive match (OR condtion)
+ */
 export const createMatcher =
   ({
     selectedFilters,
@@ -23,19 +31,31 @@ export const createMatcher =
       .map(({ value, filters }) => filters.some(matchValue(value)))
       .every(Boolean);
 
+/**
+ * The value is accepted if it contains the filter as substring.
+ */
 export const freetextMatcher = {
   filterType: 'freetext',
   matchValue: (value: string) => (filter: string) => value?.includes(filter),
 };
 
-const defaultValueMatchers = [
-  freetextMatcher,
-  {
-    filterType: 'enum',
-    matchValue: (value: string) => (filter: string) => value === filter,
-  },
-];
+/**
+ * The value is accepted if it matches exactly the filter (both are constants)
+ */
+const enumMatcher = {
+  filterType: 'enum',
+  matchValue: (value: string) => (filter: string) => value === filter,
+};
 
+const defaultValueMatchers = [freetextMatcher, enumMatcher];
+
+/**
+ * Create matcher for multiple filter types.
+ * Positive match requires that all sub-matchers (per filter type) return positve result (AND condtion).
+ * No filter values or no filter types also yields a positve result(vacuous truth).
+ *
+ * @see createMatcher
+ */
 export const createMetaMatcher =
   (
     selectedFilters: { [id: string]: string[] },

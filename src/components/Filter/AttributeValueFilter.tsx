@@ -22,22 +22,28 @@ const toSelectOption = (id: string, label: string): IdOption => ({
   toString: () => label,
 });
 
+/**
+ * Implementation of PatternFly 4 attribute-value filter pattern.
+ * Accepts any filter matching FilterTypeProps interface.
+ *
+ * @see FilterTypeProps
+ */
 export const AttributeValueFilter = ({
   selectedFilters,
   onFilterUpdate,
-  filterTypes,
-  supportedFilters = {},
+  fieldFilters,
+  supportedFilterTypes = {},
 }: MetaFilterProps) => {
   const { t } = useTranslation();
-  const [currentFilterType, setCurrentFilterType] = useState(filterTypes?.[0]);
+  const [currentFilter, setCurrentFilter] = useState(fieldFilters?.[0]);
   const [expanded, setExpanded] = useState(false);
 
   const selectOptionToFilter = (selectedId) =>
-    filterTypes.find(({ id }) => id === selectedId) ?? currentFilterType;
+    fieldFilters.find(({ fieldId }) => fieldId === selectedId) ?? currentFilter;
 
   const onFilterTypeSelect = (event, value, isPlaceholder) => {
     if (!isPlaceholder) {
-      setCurrentFilterType(selectOptionToFilter(value?.id));
+      setCurrentFilter(selectOptionToFilter(value?.id));
       setExpanded(!expanded);
     }
   };
@@ -52,21 +58,24 @@ export const AttributeValueFilter = ({
           variant={SelectVariant.single}
           aria-label={t('Select Filter')}
           selections={
-            currentFilterType &&
-            toSelectOption(currentFilterType.id, currentFilterType.toLabel(t))
+            currentFilter &&
+            toSelectOption(currentFilter.fieldId, currentFilter.toFieldLabel(t))
           }
         >
-          {filterTypes.map(({ id, toLabel }) => (
-            <SelectOption key={id} value={toSelectOption(id, toLabel(t))} />
+          {fieldFilters.map(({ fieldId, toFieldLabel }) => (
+            <SelectOption
+              key={fieldId}
+              value={toSelectOption(fieldId, toFieldLabel(t))}
+            />
           ))}
         </Select>
       </ToolbarItem>
 
-      {filterTypes.map(({ id, toLabel: toFieldLabel, filter }) => {
-        const FieldFilter = supportedFilters[filter.type];
+      {fieldFilters.map(({ fieldId: id, toFieldLabel, filterDef: filter }) => {
+        const FilterType = supportedFilterTypes[filter.type];
         return (
-          FieldFilter && (
-            <FieldFilter
+          FilterType && (
+            <FilterType
               key={id}
               filterId={id}
               onFilterUpdate={(values) =>
@@ -77,7 +86,7 @@ export const AttributeValueFilter = ({
               }
               placeholderLabel={filter.toPlaceholderLabel(t)}
               selectedFilters={selectedFilters[id] ?? []}
-              showFilter={currentFilterType?.id === id}
+              showFilter={currentFilter?.fieldId === id}
               title={filter?.toLabel?.(t) ?? toFieldLabel(t)}
               supportedValues={filter.values}
             />

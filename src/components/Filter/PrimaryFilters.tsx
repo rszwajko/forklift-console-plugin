@@ -5,21 +5,27 @@ import { ToolbarGroup } from '@patternfly/react-core';
 
 import { MetaFilterProps } from './types';
 
+/**
+ * Implementation of PatternFly 4 filter group pattern.
+ * Extended to use any filter matching FilterTypeProps interface(not only enum based selection).
+ *
+ * @see FilterTypeProps
+ */
 export const PrimaryFilters = ({
   selectedFilters,
   onFilterUpdate,
-  filterTypes,
-  supportedFilters = {},
+  fieldFilters,
+  supportedFilterTypes = {},
 }: MetaFilterProps) => {
   const { t } = useTranslation();
 
   return (
     <ToolbarGroup variant="filter-group">
-      {filterTypes.map(({ id, toLabel: toFieldLabel, filter }) => {
-        const FieldFilter = supportedFilters[filter.type];
+      {fieldFilters.map(({ fieldId: id, toFieldLabel, filterDef: filter }) => {
+        const FilterType = supportedFilterTypes[filter.type];
         return (
-          FieldFilter && (
-            <FieldFilter
+          FilterType && (
+            <FilterType
               key={id}
               filterId={id}
               onFilterUpdate={(values) =>

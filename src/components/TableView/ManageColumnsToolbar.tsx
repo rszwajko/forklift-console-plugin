@@ -25,31 +25,39 @@ import { ColumnsIcon } from '@patternfly/react-icons';
 
 import { Field } from '../types';
 
+export interface ManageColumnsToolbarProps {
+  /** Read only. State maintained by parent component. */
+  columns: Field[];
+  /** Read only. The defaults used for initialization.*/
+  defaultColumns: Field[];
+  /** Setter to modify state in the parent.*/
+  setColumns(columns: Field[]): void;
+}
+
+/**
+ * Toggles a modal dialog for managing columns visibility and order.
+ */
 export const ManageColumnsToolbar = ({
   columns,
   setColumns,
   defaultColumns,
-}: {
-  columns: Field[];
-  defaultColumns: Field[];
-  setColumns(columns: Field[]): void;
-}) => {
+}: ManageColumnsToolbarProps) => {
   const { t } = useTranslation();
-  const [manageColumns, setManageColumns] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   return (
     <ToolbarItem>
       <Tooltip content={t('Manage Columns')}>
         <Button
           variant="plain"
-          onClick={() => setManageColumns(true)}
+          onClick={() => setIsOpen(true)}
           aria-label={t('Manage Columns')}
         >
           <ColumnsIcon />
         </Button>
       </Tooltip>
       <ManageColumns
-        showModal={manageColumns}
-        onClose={() => setManageColumns(false)}
+        showModal={isOpen}
+        onClose={() => setIsOpen(false)}
         description={t('Selected columns will be displayed in the table.')}
         columns={columns}
         onChange={setColumns}
@@ -63,11 +71,19 @@ interface ManagedColumnsProps {
   showModal: boolean;
   description: string;
   onClose(): void;
+  /** Setter to modify state in the parent.*/
   onChange(colums: Field[]): void;
+  /** Read only. State maintained by parent component. */
   columns: Field[];
+  /** Read only. The defaults used for initialization.*/
   defaultColumns: Field[];
 }
-
+/**
+ * Modal dialog for managing columns.
+ * Supported features:
+ * 1. toggle column visibility (disabled for identity columns that should always be displayed to uniquely identify a row)
+ * 2. re-order the columns using drag and drop
+ */
 const ManageColumns = ({
   showModal,
   description,
@@ -80,11 +96,15 @@ const ManageColumns = ({
   const [editedColumns, setEditedColumns] = useState(columns);
   const restoreDefaults = () => setEditedColumns([...defaultColumns]);
   const onDrop = (source: { index: number }, dest: { index: number }) => {
-    const target = editedColumns[source.index];
-    const base = editedColumns.filter(({ id }) => id !== target?.id);
+    const draggedItem = editedColumns[source?.index];
+    const itemCurrentlyAtDestination = editedColumns[dest?.index];
+    if (!draggedItem || !itemCurrentlyAtDestination) {
+      return false;
+    }
+    const base = editedColumns.filter(({ id }) => id !== draggedItem?.id);
     setEditedColumns([
       ...base.slice(0, dest.index),
-      target,
+      draggedItem,
       ...base.slice(dest.index, base.length),
     ]);
     return true;
