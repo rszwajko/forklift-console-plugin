@@ -7,11 +7,7 @@ import {
   PrimaryFilters,
 } from 'src/components/Filter';
 import { FilterTypeProps } from 'src/components/Filter/types';
-import {
-  ManageColumnsToolbar,
-  RowProps,
-  TableView,
-} from 'src/components/TableView';
+import { ManageColumnsToolbar, RowProps, TableView } from 'src/components/TableView';
 import { Field } from 'src/components/types';
 import { useTranslation } from 'src/internal/i18n';
 
@@ -28,12 +24,7 @@ import { FilterIcon } from '@patternfly/react-icons';
 
 import { toFieldFilter } from '../Filter/helpers';
 
-import {
-  ErrorState,
-  Loading,
-  NoResultsFound,
-  NoResultsMatchFilter,
-} from './ResultStates';
+import { ErrorState, Loading, NoResultsFound, NoResultsMatchFilter } from './ResultStates';
 import { useFields } from './useFields';
 
 /**
@@ -110,8 +101,7 @@ export function StandardPage<T>({
 
   const errorFetchingData = loaded && error;
   const noResults = loaded && !error && flattenData.length == 0;
-  const noMatchingResults =
-    loaded && !error && filteredData.length === 0 && flattenData.length > 0;
+  const noMatchingResults = loaded && !error && filteredData.length === 0 && flattenData.length > 0;
 
   return (
     <>
@@ -124,16 +114,11 @@ export function StandardPage<T>({
         </Level>
       </PageSection>
       <PageSection>
-        <Toolbar
-          clearAllFilters={clearAllFilters}
-          clearFiltersButtonText={t('Clear all filters')}
-        >
+        <Toolbar clearAllFilters={clearAllFilters} clearFiltersButtonText={t('Clear all filters')}>
           <ToolbarContent>
             <ToolbarToggleGroup toggleIcon={<FilterIcon />} breakpoint="xl">
               <PrimaryFilters
-                fieldFilters={fields
-                  .filter((field) => field.filter?.primary)
-                  .map(toFieldFilter)}
+                fieldFilters={fields.filter((field) => field.filter?.primary).map(toFieldFilter)}
                 onFilterUpdate={setSelectedFilters}
                 selectedFilters={selectedFilters}
                 supportedFilterTypes={supportedFilters}
@@ -164,14 +149,10 @@ export function StandardPage<T>({
           {[
             !loaded && <Loading key="loading" />,
             errorFetchingData && <ErrorState key="error" />,
-            noResults &&
-              (customNoResultsFound ?? <NoResultsFound key="no_result" />),
+            noResults && (customNoResultsFound ?? <NoResultsFound key="no_result" />),
             noMatchingResults &&
               (customNoResultsMatchFilter ?? (
-                <NoResultsMatchFilter
-                  key="no_match"
-                  clearAllFilters={clearAllFilters}
-                />
+                <NoResultsMatchFilter key="no_match" clearAllFilters={clearAllFilters} />
               )),
           ].filter(Boolean)}
         </TableView>

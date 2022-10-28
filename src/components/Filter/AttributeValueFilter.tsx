@@ -58,15 +58,11 @@ export const AttributeValueFilter = ({
           variant={SelectVariant.single}
           aria-label={t('Select Filter')}
           selections={
-            currentFilter &&
-            toSelectOption(currentFilter.fieldId, currentFilter.toFieldLabel(t))
+            currentFilter && toSelectOption(currentFilter.fieldId, currentFilter.toFieldLabel(t))
           }
         >
           {fieldFilters.map(({ fieldId, toFieldLabel }) => (
-            <SelectOption
-              key={fieldId}
-              value={toSelectOption(fieldId, toFieldLabel(t))}
-            />
+            <SelectOption key={fieldId} value={toSelectOption(fieldId, toFieldLabel(t))} />
           ))}
         </Select>
       </ToolbarItem>

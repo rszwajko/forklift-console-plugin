@@ -33,9 +33,7 @@ export const FreetextFilter = ({
       key={filterId}
       chips={selectedFilters ?? []}
       deleteChip={(category, option) =>
-        onFilterUpdate(
-          selectedFilters?.filter((value) => value !== option) ?? [],
-        )
+        onFilterUpdate(selectedFilters?.filter((value) => value !== option) ?? [])
       }
       deleteChipGroup={() => onFilterUpdate([])}
       categoryName={title}

@@ -14,9 +14,7 @@ export const useFields = (
   currentNamespace: string,
   defaultFields: Field[],
 ): [Field[], React.Dispatch<React.SetStateAction<Field[]>>] => {
-  const [fields, setFields] = useState<Field[]>(
-    defaultFields.map((it) => ({ ...it })),
-  );
+  const [fields, setFields] = useState<Field[]>(defaultFields.map((it) => ({ ...it })));
   const namespaceAwareFields: Field[] = useMemo(
     () =>
       fields.map(({ id, isVisible = false, ...rest }) => ({

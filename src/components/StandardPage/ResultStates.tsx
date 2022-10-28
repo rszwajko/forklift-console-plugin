@@ -48,11 +48,7 @@ export const NoResultsFound = () => {
   );
 };
 
-export const NoResultsMatchFilter = ({
-  clearAllFilters,
-}: {
-  clearAllFilters: () => void;
-}) => {
+export const NoResultsMatchFilter = ({ clearAllFilters }: { clearAllFilters: () => void }) => {
   const { t } = useTranslation();
   return (
     <EmptyState>
@@ -61,9 +57,7 @@ export const NoResultsMatchFilter = ({
         {t('No results found')}
       </Title>
       <EmptyStateBody>
-        {t(
-          'No results match the filter criteria. Clear all filters and try again.',
-        )}
+        {t('No results match the filter criteria. Clear all filters and try again.')}
       </EmptyStateBody>
       <EmptyStatePrimary>
         <Button variant="link" onClick={clearAllFilters}>

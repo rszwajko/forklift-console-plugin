@@ -47,11 +47,7 @@ export const ManageColumnsToolbar = ({
   return (
     <ToolbarItem>
       <Tooltip content={t('Manage Columns')}>
-        <Button
-          variant="plain"
-          onClick={() => setIsOpen(true)}
-          aria-label={t('Manage Columns')}
-        >
+        <Button variant="plain" onClick={() => setIsOpen(true)} aria-label={t('Manage Columns')}>
           <ColumnsIcon />
         </Button>
       </Tooltip>
@@ -160,10 +156,7 @@ const ManageColumns = ({
           >
             {editedColumns.map(({ id, isVisible, isIdentity, toLabel }) => (
               <Draggable key={id} hasNoWrapper>
-                <DataListItem
-                  aria-labelledby={`draggable-${id}`}
-                  ref={React.createRef()}
-                >
+                <DataListItem aria-labelledby={`draggable-${id}`} ref={React.createRef()}>
                   <DataListItemRow>
                     <DataListControl>
                       <DataListDragButton

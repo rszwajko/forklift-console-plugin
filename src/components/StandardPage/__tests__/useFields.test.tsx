@@ -12,9 +12,7 @@ describe('manage fields', () => {
       result: {
         current: [fields],
       },
-    } = renderHook(() =>
-      useFields(undefined, [{ id: NAME, toLabel: () => '' }]),
-    );
+    } = renderHook(() => useFields(undefined, [{ id: NAME, toLabel: () => '' }]));
     expect(fields).toMatchObject([{ id: NAME, isVisible: false }]);
   });
   it('enables namespace column visibility if no namespace is chosen', () => {

@@ -18,14 +18,8 @@ interface CellProps {
 const StatusCell = ({ value, entity: { conditions } }: CellProps) => {
   const { t } = useTranslation();
   const existingConditions = Object.values(conditions).filter(Boolean);
-  const toState = (value) =>
-    value === 'True' ? 'Ok' : value === 'False' ? 'Error' : 'Unknown';
-  const label =
-    value === 'True'
-      ? t('True')
-      : value === 'False'
-      ? t('False')
-      : t('Unknown');
+  const toState = (value) => (value === 'True' ? 'Ok' : value === 'False' ? 'Error' : 'Unknown');
+  const label = value === 'True' ? t('True') : value === 'False' ? t('False') : t('Unknown');
   return (
     <Popover
       hasAutoWidth
@@ -33,13 +27,7 @@ const StatusCell = ({ value, entity: { conditions } }: CellProps) => {
         <div>
           {existingConditions.length > 0
             ? existingConditions.map(({ message, status }) => {
-                return (
-                  <StatusIcon
-                    key={message}
-                    status={toState(status)}
-                    label={message}
-                  />
-                );
+                return <StatusIcon key={message} status={toState(status)} label={message} />;
               })
             : t('No information')}
         </div>
@@ -63,9 +51,7 @@ const cellCreator = {
   [READY]: StatusCell,
   [URL]: TextCell,
   [TYPE]: TextCell,
-  [NAMESPACE]: ({ value }: CellProps) => (
-    <ResourceLink kind="Namespace" name={value} />
-  ),
+  [NAMESPACE]: ({ value }: CellProps) => <ResourceLink kind="Namespace" name={value} />,
 };
 
 const ProviderRow = ({ columns, entity }: RowProps<MergedProvider>) => {

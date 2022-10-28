@@ -26,21 +26,13 @@ describe('compareWith comparator factory', () => {
 
   it('works for nullish entities', () => {
     expect(
-      compareWith(
-        { id: NAME, isAsc: true, toLabel: () => NAME },
-        'en',
-        undefined,
-      )(null, undefined),
+      compareWith({ id: NAME, isAsc: true, toLabel: () => NAME }, 'en', undefined)(null, undefined),
     ).toBe(0);
   });
 
   it('treats all values equal if sortType is not defined', () => {
     expect(
-      compareWith(
-        { id: undefined, isAsc: false, toLabel: undefined },
-        'en',
-        undefined,
-      )('a', 'b'),
+      compareWith({ id: undefined, isAsc: false, toLabel: undefined }, 'en', undefined)('a', 'b'),
     ).toBe(0);
   });
 

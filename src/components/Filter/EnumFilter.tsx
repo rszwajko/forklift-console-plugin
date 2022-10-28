@@ -79,17 +79,12 @@ export const useUnique = ({
   const onUniqueFilterUpdate = useMemo(
     () =>
       (labels: string[]): void =>
-        onSelectedEnumIdsChange(
-          labels.flatMap((label) => labelToIds[label] ?? []),
-        ),
+        onSelectedEnumIdsChange(labels.flatMap((label) => labelToIds[label] ?? [])),
     [onSelectedEnumIdsChange, labelToIds],
   );
 
   const selectedUniqueEnumLabels = useMemo(
-    () =>
-      [
-        ...new Set(selectedEnumIds.map((id) => idToLabel[id]).filter(Boolean)),
-      ] as string[],
+    () => [...new Set(selectedEnumIds.map((id) => idToLabel[id]).filter(Boolean))] as string[],
     [selectedEnumIds, idToLabel],
   );
 
@@ -113,19 +108,14 @@ export const EnumFilter = ({
   showFilter,
 }: FilterTypeProps) => {
   const [isExpanded, setExpanded] = useState(false);
-  const { uniqueEnumLabels, onUniqueFilterUpdate, selectedUniqueEnumLabels } =
-    useUnique({
-      supportedEnumValues,
-      onSelectedEnumIdsChange,
-      selectedEnumIds,
-    });
+  const { uniqueEnumLabels, onUniqueFilterUpdate, selectedUniqueEnumLabels } = useUnique({
+    supportedEnumValues,
+    onSelectedEnumIdsChange,
+    selectedEnumIds,
+  });
 
-  const deleteFilter = (
-    label: string | ToolbarChip | SelectOptionObject,
-  ): void =>
-    onUniqueFilterUpdate(
-      selectedUniqueEnumLabels.filter((filterLabel) => filterLabel !== label),
-    );
+  const deleteFilter = (label: string | ToolbarChip | SelectOptionObject): void =>
+    onUniqueFilterUpdate(selectedUniqueEnumLabels.filter((filterLabel) => filterLabel !== label));
 
   const hasFilter = (label: string | SelectOptionObject): boolean =>
     !!selectedUniqueEnumLabels.find((filterLabel) => filterLabel === label);

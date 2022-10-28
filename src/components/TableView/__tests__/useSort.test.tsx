@@ -13,9 +13,7 @@ describe('useSort hook', () => {
       result: {
         current: [activeSort],
       },
-    } = renderHook(() =>
-      useSort([{ id: 'Foo', toLabel: () => '' }, NameColumn]),
-    );
+    } = renderHook(() => useSort([{ id: 'Foo', toLabel: () => '' }, NameColumn]));
 
     expect(activeSort).toMatchObject({
       id: NAME,

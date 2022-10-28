@@ -63,14 +63,9 @@ interface MergedInventory {
   storageCount: number;
 }
 
-export type MergedProvider = FlattenedProvider &
-  MergedInventory &
-  FlattenedConditions;
+export type MergedProvider = FlattenedProvider & MergedInventory & FlattenedConditions;
 
-const mergeData = (
-  resources: ProviderResource[],
-  inventory: IProvidersByType,
-) =>
+const mergeData = (resources: ProviderResource[], inventory: IProvidersByType) =>
   resources
     .map(
       ({
@@ -103,14 +98,7 @@ const mergeData = (
     .map(
       ([
         provider,
-        {
-          clusterCount,
-          hostCount,
-          vmCount,
-          networkCount,
-          datastoreCount,
-          storageDomainCount,
-        },
+        { clusterCount, hostCount, vmCount, networkCount, datastoreCount, storageDomainCount },
         { Ready, Validated, ConnectionTested, InventoryCreated },
       ]): MergedProvider => ({
         ...provider,

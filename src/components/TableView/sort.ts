@@ -38,11 +38,7 @@ export function compareWith(
       return 0;
     }
     const comparator = fieldComparator ?? universalComparator;
-    const compareValue = comparator(
-      a?.[currentSort.id],
-      b?.[currentSort.id],
-      locale ?? 'en',
-    );
+    const compareValue = comparator(a?.[currentSort.id], b?.[currentSort.id], locale ?? 'en');
     return currentSort.isAsc ? compareValue : -compareValue;
   };
 }

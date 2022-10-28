@@ -3,14 +3,7 @@ import { useTranslation } from 'src/internal/i18n';
 import { UID } from 'src/utils/constants';
 
 import { Bullseye } from '@patternfly/react-core';
-import {
-  TableComposable,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
-} from '@patternfly/react-table';
+import { TableComposable, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 
 import { Field } from '../types';
 
@@ -72,11 +65,7 @@ export function TableView<T>({
         )}
         {children.length === 0 &&
           entities.map((entity, index) => (
-            <Row
-              key={entity?.[uidFieldId] ?? index}
-              entity={entity}
-              columns={visibleColumns}
-            />
+            <Row key={entity?.[uidFieldId] ?? index} entity={entity} columns={visibleColumns} />
           ))}
       </Tbody>
     </TableComposable>

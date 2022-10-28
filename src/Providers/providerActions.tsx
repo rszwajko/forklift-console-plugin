@@ -93,20 +93,14 @@ const DeleteModal = ({
       title={t('Permanently delete provider?')}
       body={
         isTarget(entity.type as ProviderType)
-          ? t(
-              '{{type}} provider {{name}} will no longer be selectable as a migration target.',
-              {
-                type: entity.type,
-                name: entity.name,
-              },
-            )
-          : t(
-              '{{type}} provider {{name}} will no longer be selectable as a migration source.',
-              {
-                type: entity.type,
-                name: entity.name,
-              },
-            )
+          ? t('{{type}} provider {{name}} will no longer be selectable as a migration target.', {
+              type: entity.type,
+              name: entity.name,
+            })
+          : t('{{type}} provider {{name}} will no longer be selectable as a migration source.', {
+              type: entity.type,
+              name: entity.name,
+            })
       }
       confirmButtonText={t('Delete')}
       errorText={t('Cannot remove provider')}
@@ -119,10 +113,7 @@ export interface ProviderActionsProps {
   variant?: 'kebab' | 'dropdown';
 }
 
-export const ProviderActions = ({
-  entity,
-  variant = 'kebab',
-}: ProviderActionsProps) => {
+export const ProviderActions = ({ entity, variant = 'kebab' }: ProviderActionsProps) => {
   const ActionsComponent = useMemo(() => createActions(variant), [variant]);
   return (
     <ActionServiceProvider context={{ mergedProvider: entity }}>

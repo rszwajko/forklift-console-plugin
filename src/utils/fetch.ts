@@ -1,10 +1,7 @@
 import { ProviderResource } from 'src/internal/k8s';
 
 import { MOCK_CLUSTER_PROVIDERS } from '@app/queries/mocks/providers.mock';
-import {
-  useK8sWatchResource,
-  WatchK8sResult,
-} from '@openshift-console/dynamic-plugin-sdk';
+import { useK8sWatchResource, WatchK8sResult } from '@openshift-console/dynamic-plugin-sdk';
 
 const isMock = process.env.DATA_SOURCE === 'mock';
 

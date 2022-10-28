@@ -1,16 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'src/internal/i18n';
 
-import {
-  ActionService,
-  ActionServiceProvider,
-} from '@openshift-console/dynamic-plugin-sdk';
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownToggle,
-  KebabToggle,
-} from '@patternfly/react-core';
+import { ActionService, ActionServiceProvider } from '@openshift-console/dynamic-plugin-sdk';
+import { Dropdown, DropdownItem, DropdownToggle, KebabToggle } from '@patternfly/react-core';
 
 export interface ResourceActionsProps {
   kind: string;
@@ -27,9 +19,7 @@ export const ResourceActions = ({
 }: ResourceActionsProps) => {
   const ActionsComponent = useMemo(() => createActions(variant), [variant]);
   return (
-    <ActionServiceProvider
-      context={{ [kind]: { kind, metadata: { name, namespace } } }}
-    >
+    <ActionServiceProvider context={{ [kind]: { kind, metadata: { name, namespace } } }}>
       {ActionsComponent}
     </ActionServiceProvider>
   );
@@ -44,9 +34,7 @@ export const createActions = (variant: 'kebab' | 'dropdown') =>
       variant === 'kebab' ? (
         <KebabToggle onToggle={setIsActionMenuOpen} />
       ) : (
-        <DropdownToggle onToggle={setIsActionMenuOpen}>
-          {t('Actions')}
-        </DropdownToggle>
+        <DropdownToggle onToggle={setIsActionMenuOpen}>{t('Actions')}</DropdownToggle>
       );
     return (
       <>
@@ -57,10 +45,7 @@ export const createActions = (variant: 'kebab' | 'dropdown') =>
           isOpen={isActionMenuOpen}
           isPlain={isPlain}
           dropdownItems={actions.map(({ id, label, cta }) => (
-            <DropdownItem
-              key={id}
-              onClick={typeof cta === 'function' ? cta : () => undefined}
-            >
+            <DropdownItem key={id} onClick={typeof cta === 'function' ? cta : () => undefined}>
               {label}
             </DropdownItem>
           ))}

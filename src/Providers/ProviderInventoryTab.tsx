@@ -37,51 +37,35 @@ const ProviderInventoryTab = ({ obj }: ProviderDetailPageProps) => {
         >
           <DescriptionListGroup>
             <DescriptionListTerm>{t('Ready')}</DescriptionListTerm>
-            <DescriptionListDescription>
-              {provider.ready}
-            </DescriptionListDescription>
+            <DescriptionListDescription>{provider.ready}</DescriptionListDescription>
           </DescriptionListGroup>
           <DescriptionListGroup>
             <DescriptionListTerm>{t('Endpoint')}</DescriptionListTerm>
-            <DescriptionListDescription>
-              {provider.url}
-            </DescriptionListDescription>
+            <DescriptionListDescription>{provider.url}</DescriptionListDescription>
           </DescriptionListGroup>
           <DescriptionListGroup>
             <DescriptionListTerm>{t('Type')}</DescriptionListTerm>
-            <DescriptionListDescription>
-              {provider.type}
-            </DescriptionListDescription>
+            <DescriptionListDescription>{provider.type}</DescriptionListDescription>
           </DescriptionListGroup>
           <DescriptionListGroup>
             <DescriptionListTerm>{t('VMs')}</DescriptionListTerm>
-            <DescriptionListDescription>
-              {provider.vmCount}
-            </DescriptionListDescription>
+            <DescriptionListDescription>{provider.vmCount}</DescriptionListDescription>
           </DescriptionListGroup>
           <DescriptionListGroup>
             <DescriptionListTerm>{t('Networks')}</DescriptionListTerm>
-            <DescriptionListDescription>
-              {provider.networkCount}
-            </DescriptionListDescription>
+            <DescriptionListDescription>{provider.networkCount}</DescriptionListDescription>
           </DescriptionListGroup>
           <DescriptionListGroup>
             <DescriptionListTerm>{t('Clusters')}</DescriptionListTerm>
-            <DescriptionListDescription>
-              {provider.clusterCount}
-            </DescriptionListDescription>
+            <DescriptionListDescription>{provider.clusterCount}</DescriptionListDescription>
           </DescriptionListGroup>
           <DescriptionListGroup>
             <DescriptionListTerm>{t('Hosts')}</DescriptionListTerm>
-            <DescriptionListDescription>
-              {provider.hostCount}
-            </DescriptionListDescription>
+            <DescriptionListDescription>{provider.hostCount}</DescriptionListDescription>
           </DescriptionListGroup>
           <DescriptionListGroup>
             <DescriptionListTerm>{t('Storage')}</DescriptionListTerm>
-            <DescriptionListDescription>
-              {provider.storageCount}
-            </DescriptionListDescription>
+            <DescriptionListDescription>{provider.storageCount}</DescriptionListDescription>
           </DescriptionListGroup>
         </DescriptionList>
       )}

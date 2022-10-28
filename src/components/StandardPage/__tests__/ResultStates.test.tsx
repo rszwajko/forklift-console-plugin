@@ -8,9 +8,7 @@ afterEach(cleanup);
 
 test('NoResultsMatchFilter', async () => {
   const clear = jest.fn();
-  const { asFragment, getByRole } = render(
-    <NoResultsMatchFilter clearAllFilters={clear} />,
-  );
+  const { asFragment, getByRole } = render(<NoResultsMatchFilter clearAllFilters={clear} />);
   const firstRender = asFragment();
 
   expect(firstRender).toMatchSnapshot();

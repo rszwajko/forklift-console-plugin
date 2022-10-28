@@ -121,10 +121,7 @@ const fieldsMetadata: Field[] = [
   },
 ];
 
-export const ProvidersPage = ({
-  namespace,
-  kind,
-}: ResourceConsolePageProps) => {
+export const ProvidersPage = ({ namespace, kind }: ResourceConsolePageProps) => {
   const { t } = useTranslation();
   const dataSource = useProvidersWithInventory({
     kind,

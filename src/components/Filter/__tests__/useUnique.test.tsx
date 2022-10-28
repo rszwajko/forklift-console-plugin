@@ -15,11 +15,7 @@ describe('aggregate filters with the same labels', () => {
     const onSelectedEnumIdsChange = jest.fn();
     const {
       result: {
-        current: {
-          uniqueEnumLabels,
-          onUniqueFilterUpdate,
-          selectedUniqueEnumLabels,
-        },
+        current: { uniqueEnumLabels, onUniqueFilterUpdate, selectedUniqueEnumLabels },
       },
     } = renderHook(() =>
       useUnique({
@@ -28,10 +24,7 @@ describe('aggregate filters with the same labels', () => {
         selectedEnumIds: [],
       }),
     );
-    expect(uniqueEnumLabels).toStrictEqual([
-      'FalseTranslated',
-      'TrueTranslated',
-    ]);
+    expect(uniqueEnumLabels).toStrictEqual(['FalseTranslated', 'TrueTranslated']);
     expect(selectedUniqueEnumLabels).toStrictEqual([]);
     onUniqueFilterUpdate(['TrueTranslated']);
     expect(onSelectedEnumIdsChange).toBeCalledWith(['True', 'AlsoTrue']);
@@ -41,11 +34,7 @@ describe('aggregate filters with the same labels', () => {
     const onSelectedEnumIdsChange = jest.fn();
     const {
       result: {
-        current: {
-          uniqueEnumLabels,
-          onUniqueFilterUpdate,
-          selectedUniqueEnumLabels,
-        },
+        current: { uniqueEnumLabels, onUniqueFilterUpdate, selectedUniqueEnumLabels },
       },
     } = renderHook(() =>
       useUnique({
@@ -54,16 +43,9 @@ describe('aggregate filters with the same labels', () => {
         selectedEnumIds: ['True', 'AlsoTrue'],
       }),
     );
-    expect(uniqueEnumLabels).toStrictEqual([
-      'FalseTranslated',
-      'TrueTranslated',
-    ]);
+    expect(uniqueEnumLabels).toStrictEqual(['FalseTranslated', 'TrueTranslated']);
     expect(selectedUniqueEnumLabels).toStrictEqual(['TrueTranslated']);
     onUniqueFilterUpdate(['TrueTranslated', 'FalseTranslated']);
-    expect(onSelectedEnumIdsChange).toBeCalledWith([
-      'True',
-      'AlsoTrue',
-      'False',
-    ]);
+    expect(onSelectedEnumIdsChange).toBeCalledWith(['True', 'AlsoTrue', 'False']);
   });
 });
