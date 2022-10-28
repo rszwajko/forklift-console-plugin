@@ -1,7 +1,13 @@
 import type { EncodedExtension } from '@openshift/dynamic-plugin-sdk';
 import type {
+  ActionProvider,
+  HorizontalNavTab,
   HrefNavItem,
   NavSection,
+  ResourceActionProvider,
+  ResourceDetailsPage,
+  ResourceListPage,
+  ResourceNSNavItem,
   RoutePage,
   Separator,
 } from '@openshift-console/dynamic-plugin-sdk';
@@ -36,6 +42,93 @@ const extensions: EncodedExtension[] = [
       required: ['KUBEVIRT_DYNAMIC'],
     },
   } as EncodedExtension<Separator>,
+
+  {
+    type: 'console.navigation/resource-ns',
+    properties: {
+      id: 'providers',
+      section: 'virtualization',
+      name: '%plugin__forklift-console-plugin~Providers for VM Import%',
+      model: {
+        group: 'forklift.konveyor.io',
+        kind: 'Provider',
+        version: 'v1beta1',
+      },
+      dataAttributes: {
+        'data-quickstart-id': 'qs-nav-providers',
+        'data-test-id': 'providers-nav-item',
+      },
+    },
+  } as EncodedExtension<ResourceNSNavItem>,
+
+  {
+    type: 'console.page/resource/list',
+    properties: {
+      component: {
+        $codeRef: 'ProvidersRes',
+      },
+      model: {
+        group: 'forklift.konveyor.io',
+        kind: 'Provider',
+        version: 'v1beta1',
+      },
+    },
+  } as EncodedExtension<ResourceListPage>,
+
+  {
+    type: 'console.page/resource/details',
+    properties: {
+      model: {
+        group: 'forklift.konveyor.io',
+        kind: 'Provider',
+        version: 'v1beta1',
+      },
+      component: {
+        $codeRef: 'EmptyDetailPage',
+      },
+    },
+  } as EncodedExtension<ResourceDetailsPage>,
+
+  {
+    type: 'console.tab/horizontalNav',
+    properties: {
+      model: {
+        group: 'forklift.konveyor.io',
+        kind: 'Provider',
+        version: 'v1beta1',
+      },
+      page: {
+        name: 'Inventory',
+        href: 'inventory',
+      },
+      component: {
+        $codeRef: 'ProviderInventoryTab',
+      },
+    },
+  } as EncodedExtension<HorizontalNavTab>,
+
+  {
+    type: 'console.action/provider',
+    properties: {
+      contextId: 'mergedProvider',
+      provider: {
+        $codeRef: 'useMergedProviders',
+      },
+    },
+  } as EncodedExtension<ActionProvider>,
+  {
+    type: 'console.action/resource-provider',
+    properties: {
+      model: {
+        group: 'forklift.konveyor.io',
+        kind: 'Provider',
+        version: 'v1beta1',
+      },
+      provider: {
+        $codeRef: 'useProviders',
+      },
+    },
+  } as EncodedExtension<ResourceActionProvider>,
 
   {
     type: 'console.navigation/href',
