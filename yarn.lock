@@ -690,19 +690,19 @@
     typesafe-actions "^4.2.1"
     whatwg-fetch "2.x"
 
-"@openshift/dynamic-plugin-sdk-webpack@~1.0.0-alpha11":
-  version "1.0.0-alpha11"
-  resolved "https://registry.yarnpkg.com/@openshift/dynamic-plugin-sdk-webpack/-/dynamic-plugin-sdk-webpack-1.0.0-alpha11.tgz#c0f4cbbd2db1a56cfa330fbbde61b037e1f19281"
-  integrity sha512-DTbAHLa3MdjOxHqLUkFQdqZn0qM3bQC1gg+2H1vS6csQJPolqnhRBIV5rZvFZ2fAEEL8M1lfQEuOV+ZYcYCYVQ==
+"@openshift/dynamic-plugin-sdk-webpack@~1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@openshift/dynamic-plugin-sdk-webpack/-/dynamic-plugin-sdk-webpack-1.0.0.tgz#665fcda7601bee1c0718b7f8b75126c061e18c32"
+  integrity sha512-yEoqGSDLfaqGYKZseYMY/HvWzQIfUrQpQXjB+aMYv4hxxwF0dw3DAQYmZIauItJObGvMyqlxlCnTRMZCNtIcxg==
   dependencies:
     glob "^7.2.0"
     lodash "^4.17.21"
     yup "^0.32.11"
 
-"@openshift/dynamic-plugin-sdk@~1.0.0-alpha16":
-  version "1.0.0-alpha16"
-  resolved "https://registry.yarnpkg.com/@openshift/dynamic-plugin-sdk/-/dynamic-plugin-sdk-1.0.0-alpha16.tgz#f497c5199badffb592577789b1db099417463190"
-  integrity sha512-7tuDtFXQ8MF7eKZnIYJ31wvOTTW/dYwEAY1kznUoODrint+YwsZxtekbPMga9/TE8yWb20KNCdWfQAgbnvfL5A==
+"@openshift/dynamic-plugin-sdk@~1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@openshift/dynamic-plugin-sdk/-/dynamic-plugin-sdk-1.0.0.tgz#7f05f7023a3eff7973067541fa0c23dcbcefd765"
+  integrity sha512-lkb2ZlbFXziPzVWOykfSAzeA1siGxMlzIDzd1wBh0RikjVr7a07U6gjrOcByaeC45AdUc2SNGRTERWoobj4THQ==
   dependencies:
     lodash-es "^4.17.21"
     semver "^7.3.7"
