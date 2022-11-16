@@ -1,5 +1,10 @@
 import type { EncodedExtension } from '@openshift/dynamic-plugin-sdk';
-import type { HrefNavItem, NavSection, Separator } from '@openshift-console/dynamic-plugin-sdk';
+import type {
+  HrefNavItem,
+  NavSection,
+  ResourceNSNavItem,
+  Separator,
+} from '@openshift-console/dynamic-plugin-sdk';
 
 import { extensions as hostExtensions } from './src/modules/Hosts/dynamic-plugin';
 import { extensions as mappingExtensions } from './src/modules/Mappings/dynamic-plugin';
@@ -39,17 +44,22 @@ const extensions: EncodedExtension[] = [
   } as EncodedExtension<Separator>,
 
   {
-    type: 'console.navigation/href',
+    type: 'console.navigation/resource-ns',
     properties: {
       id: 'providers',
-      insertAfter: 'importSeparator',
-      perspective: 'admin',
       section: 'virtualization',
       name: '%plugin__forklift-console-plugin~Providers for VM Import%',
-      href: '/mtv/providers',
+      model: {
+        group: 'forklift.konveyor.io',
+        kind: 'Provider',
+        version: 'v1beta1',
+      },
+      dataAttributes: {
+        'data-quickstart-id': 'qs-nav-providers',
+        'data-test-id': 'providers-nav-item',
+      },
     },
-  } as EncodedExtension<HrefNavItem>,
-
+  } as EncodedExtension<ResourceNSNavItem>,
   {
     type: 'console.navigation/href',
     properties: {
