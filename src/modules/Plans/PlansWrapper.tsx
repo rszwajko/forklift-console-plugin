@@ -1,13 +1,7 @@
-import React from 'react';
 import withQueryClient from 'src/components/QueryClientHoc';
 
-import { MustGatherContextProvider } from '@app/common/context';
-import { PlansPage } from '@app/Plans/PlansPage';
+import PlansPage from './PlansPage';
 
-const Page = withQueryClient(() => (
-  <MustGatherContextProvider>
-    <PlansPage />
-  </MustGatherContextProvider>
-));
+const Page = withQueryClient(PlansPage);
 
 export default Page;
