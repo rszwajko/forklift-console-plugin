@@ -12,6 +12,7 @@ export const exposedModules: ConsolePluginMetadata['exposedModules'] = {
   PlanWizard: './modules/Plans/PlanWizardWrapper',
   VMMigrationDetails: './modules/Plans/VMMigrationDetailsWrapper',
   usePlanActions: './modules/Plans/UsePlanActions',
+  PlansRedirectPage: './modules/Plans/PlansRedirectPage',
 };
 
 const model = {
@@ -90,4 +91,15 @@ export const extensions: EncodedExtension[] = [
       },
     },
   } as EncodedExtension<ActionProvider>,
+
+  {
+    type: 'console.page/route',
+    properties: {
+      component: {
+        $codeRef: 'PlansRedirectPage',
+      },
+      path: '/mtv/plans',
+      exact: true,
+    },
+  } as EncodedExtension<RoutePage>,
 ];

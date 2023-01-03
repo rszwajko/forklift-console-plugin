@@ -11,7 +11,7 @@ import {
 } from '@patternfly/react-core';
 import spacing from '@patternfly/react-styles/css/utilities/Spacing/spacing';
 import { Breadcrumb, BreadcrumbItem } from '@patternfly/react-core';
-import { useRouteMatch } from 'react-router-dom';
+import { Link, useRouteMatch } from 'react-router-dom';
 import { VMwareProviderHostsTable } from './components/VMwareProviderHostsTable';
 import PlusCircleIcon from '@patternfly/react-icons/dist/esm/icons/plus-circle-icon';
 import { useHostsQuery, useInventoryProvidersQuery } from '@app/queries';
@@ -44,7 +44,9 @@ export const HostsPage: React.FunctionComponent = () => {
         <Level>
           <LevelItem>
             <Breadcrumb>
-              <BreadcrumbItem>Providers</BreadcrumbItem>
+              <BreadcrumbItem>
+                <Link to={`${PATH_PREFIX}/providers`}>Providers</Link>
+              </BreadcrumbItem>
               <BreadcrumbItem>{PROVIDER_TYPE_NAMES.vsphere}</BreadcrumbItem>
               <BreadcrumbItem>{match?.params.providerName}</BreadcrumbItem>
               <BreadcrumbItem isActive>Hosts</BreadcrumbItem>

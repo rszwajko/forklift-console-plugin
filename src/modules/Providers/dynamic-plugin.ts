@@ -11,6 +11,7 @@ export const exposedModules: ConsolePluginMetadata['exposedModules'] = {
   ProvidersPage: './modules/Providers/ProvidersWrapper',
   HostsPage: './modules/Providers/HostsPageWrapper',
   useMergedProviders: './modules/Providers/UseMergedProviders',
+  ProvidersRedirectPage: './modules/Providers/ProvidersRedirectPage',
 };
 
 export const extensions: EncodedExtension[] = [
@@ -57,6 +58,17 @@ export const extensions: EncodedExtension[] = [
       },
       path: '/mtv/providers/vsphere/:providerName',
       exact: false,
+    },
+  } as EncodedExtension<RoutePage>,
+
+  {
+    type: 'console.page/route',
+    properties: {
+      component: {
+        $codeRef: 'ProvidersRedirectPage',
+      },
+      path: '/mtv/providers',
+      exact: true,
     },
   } as EncodedExtension<RoutePage>,
 
