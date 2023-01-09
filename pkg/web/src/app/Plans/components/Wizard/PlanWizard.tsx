@@ -52,7 +52,7 @@ import {
   useInventoryTreeQuery,
   IndexedTree,
 } from '@app/queries';
-import { getAggregateQueryStatus } from '@app/queries/helpers';
+import { createK8sPath, getAggregateQueryStatus } from '@app/queries/helpers';
 import { dnsLabelNameSchema, PATH_PREFIX, PLANS_REFERENCE } from '@app/common/constants';
 import { IKubeList } from '@app/client/types';
 import { LoadingEmptyState } from '@app/common/components/LoadingEmptyState';
@@ -62,7 +62,6 @@ import { PlanHookInstance } from './PlanAddEditHookModal';
 import './PlanWizard.css';
 import { LONG_LOADING_MESSAGE } from '@app/queries/constants';
 import { ResourceLink } from '@openshift-console/dynamic-plugin-sdk';
-import { createK8sPath } from '_/utils/resources';
 
 export type PlanWizardMode = 'create' | 'edit' | 'duplicate';
 
