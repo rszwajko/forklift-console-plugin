@@ -1,6 +1,7 @@
 import { EncodedExtension } from '@openshift/dynamic-plugin-sdk';
 import {
   ActionProvider,
+  ModelMetadata,
   ResourceListPage,
   ResourceNSNavItem,
   RoutePage,
@@ -90,4 +91,13 @@ export const extensions: EncodedExtension[] = [
       },
     },
   } as EncodedExtension<ActionProvider>,
+
+  {
+    type: 'console.model-metadata',
+    properties: {
+      model,
+      color: '#0f930b',
+      abbr: 'PL',
+    },
+  } as EncodedExtension<ModelMetadata>,
 ];

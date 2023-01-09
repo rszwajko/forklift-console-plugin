@@ -4,7 +4,7 @@ import { groupVersionKindForReference } from '_/utils/resources';
 import { loadUserSettings, StandardPage, UserSettings } from 'src/components/StandardPage';
 import { Field } from 'src/components/types';
 import * as C from 'src/utils/constants';
-import { PLAN_STATUS_FILTER, PLAN_TYPE } from 'src/utils/enums';
+import { PLAN_STATUS_FILTER } from 'src/utils/enums';
 import { useTranslation } from 'src/utils/i18n';
 import { ResourceConsolePageProps } from 'src/utils/types';
 
@@ -37,35 +37,6 @@ const fieldsMetadata: Field[] = [
     sortable: true,
   },
   {
-    id: C.DESCRIPTION,
-    toLabel: (t) => t('Description'),
-    isVisible: true,
-  },
-  {
-    id: C.TYPE,
-    toLabel: (t) => t('Type'),
-    isVisible: true,
-    filter: {
-      type: 'enum',
-      primary: true,
-      toPlaceholderLabel: (t) => t('Type'),
-      values: fromI18nEnum(PLAN_TYPE),
-    },
-    sortable: true,
-  },
-  {
-    id: C.STATUS,
-    toLabel: (t) => t('Status'),
-    isVisible: true,
-    filter: {
-      type: 'enum',
-      primary: true,
-      toPlaceholderLabel: (t) => t('Status'),
-      values: fromI18nEnum(PLAN_STATUS_FILTER),
-    },
-    sortable: true,
-  },
-  {
     id: C.SOURCE,
     toLabel: (t) => t('Source provider'),
     isVisible: true,
@@ -90,6 +61,24 @@ const fieldsMetadata: Field[] = [
     toLabel: (t) => t('VMs'),
     isVisible: true,
     sortable: true,
+  },
+  {
+    id: C.STATUS,
+    toLabel: (t) => t('Status'),
+    isVisible: true,
+    filter: {
+      type: 'enum',
+      primary: true,
+      toPlaceholderLabel: (t) => t('Status'),
+      values: fromI18nEnum(PLAN_STATUS_FILTER),
+    },
+    sortable: true,
+  },
+
+  {
+    id: C.DESCRIPTION,
+    toLabel: (t) => t('Description'),
+    isVisible: true,
   },
   {
     id: C.ACTIONS,

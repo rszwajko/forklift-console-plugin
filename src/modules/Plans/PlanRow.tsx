@@ -147,7 +147,11 @@ const PlanRow = ({ columns, entity }: RowProps<FlatPlan>) => {
       {columns.map(({ id, toLabel }) => {
         const Cell = cellCreator[id] ?? TextCell;
         return (
-          <Td key={id} dataLabel={toLabel(t)}>
+          <Td
+            key={id}
+            dataLabel={toLabel(t)}
+            modifier={id === 'description' ? 'breakWord' : undefined}
+          >
             <Cell value={String(entity[id] ?? '')} entity={entity} primaryAction={primaryAction} />
           </Td>
         );

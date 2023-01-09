@@ -112,7 +112,7 @@ const mergeData = (
         {
           metadata: { name, namespace },
           spec: { archived, description, warm, vms },
-          status: { migration },
+          status: { migration = {} } = {},
         },
         plan,
         planState,
