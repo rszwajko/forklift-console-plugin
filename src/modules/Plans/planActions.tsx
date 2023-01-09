@@ -140,7 +140,7 @@ export const useFlatPlanActions = (plan: FlatPlan) => {
           ? t('This plan cannot be archived because it is not completed.')
           : '',
       },
-    [t, launchModal, isPlanCompleted, isPlanArchived],
+    [t, launchModal, isPlanCompleted, isPlanArchived, plan],
   );
 
   const deleteAction = useMemo(
@@ -191,7 +191,7 @@ export const useFlatPlanActions = (plan: FlatPlan) => {
           ? t('This plan cannot be restarted because it is running must gather service')
           : '',
       },
-    [launchModal, plan, t, isPlanGathering],
+    [launchModal, plan, t, isPlanGathering, canRestart],
   );
 
   const cancelCutoverAction = useMemo(
@@ -201,7 +201,7 @@ export const useFlatPlanActions = (plan: FlatPlan) => {
         cta: () => cutoverMutation.mutate({ plan: plan.object, cutover: null }),
         label: t('Cancel scheduled cutover'),
       },
-    [plan, t],
+    [plan, t, cutoverScheduled],
   );
   const actions = useMemo(
     () =>
