@@ -25,7 +25,7 @@ import { ConfirmModal } from '@app/common/components/ConfirmModal';
 import { ConditionalTooltip } from '@app/common/components/ConditionalTooltip';
 import { areAssociatedProvidersReady } from '@app/queries/helpers';
 import { PlanDetailsModal } from './PlanDetailsModal';
-import { PATH_PREFIX, PlanState } from '@app/common/constants';
+import { ENV, PATH_PREFIX, PlanState } from '@app/common/constants';
 import { MigrationConfirmModal } from './MigrationConfirmModal';
 
 interface IPlansActionDropdownProps {
@@ -50,8 +50,11 @@ export const PlanActionsDropdown: React.FunctionComponent<IPlansActionDropdownPr
     toggleRestartModal();
     history.push(`${PATH_PREFIX}/plans/${migration.spec.plan.name}`);
   };
-  const createMigrationMutation = useCreateMigrationMutation(onMigrationStarted);
-  const setCutoverMutation = useSetCutoverMutation();
+  const createMigrationMutation = useCreateMigrationMutation(
+    plan.metadata.namespace,
+    onMigrationStarted
+  );
+  const setCutoverMutation = useSetCutoverMutation(plan.metadata.namespace);
   const [kebabIsOpen, setKebabIsOpen] = React.useState(false);
   const [isDeleteModalOpen, toggleDeleteModal] = React.useReducer((isOpen) => !isOpen, false);
   const [isRestartModalOpen, toggleRestartModal] = React.useReducer((isOpen) => !isOpen, false);
@@ -60,10 +63,13 @@ export const PlanActionsDropdown: React.FunctionComponent<IPlansActionDropdownPr
     (isOpen) => !isOpen,
     false
   );
-  const deletePlanMutation = useDeletePlanMutation(toggleDeleteModal);
-  const archivePlanMutation = useArchivePlanMutation(toggleArchivePlanModal);
+  const deletePlanMutation = useDeletePlanMutation(plan.metadata.namespace, toggleDeleteModal);
+  const archivePlanMutation = useArchivePlanMutation(
+    plan.metadata.namespace,
+    toggleArchivePlanModal
+  );
   const conditions = plan.status?.conditions || [];
-  const clusterProvidersQuery = useClusterProvidersQuery();
+  const clusterProvidersQuery = useClusterProvidersQuery(ENV.NAMESPACE);
   const areProvidersReady = React.useMemo(
     () => kebabIsOpen && areAssociatedProvidersReady(clusterProvidersQuery, plan.spec.provider),
     [kebabIsOpen, clusterProvidersQuery, plan.spec.provider]

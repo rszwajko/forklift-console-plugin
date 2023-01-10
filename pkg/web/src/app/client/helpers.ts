@@ -47,18 +47,16 @@ export enum ForkliftResourceKind {
   Hook = 'hooks',
 }
 
-export const secretResource = new CoreNamespacedResource(
-  CoreNamespacedResourceKind.Secret,
-  ENV.NAMESPACE
-  //are we moving the secrets to the config namespace?
-);
-
-export const providerResource = new ForkliftResource(ForkliftResourceKind.Provider, ENV.NAMESPACE);
+// export const secretResource = new CoreNamespacedResource(
+//   CoreNamespacedResourceKind.Secret,
+//   ENV.NAMESPACE
+// );
 
 export function convertFormValuesToSecret(
   values: AddProviderFormValues,
   createdForResourceType: ForkliftResourceKind,
-  providerBeingEdited: IProviderObject | null
+  providerBeingEdited: IProviderObject | null,
+  namespace: string
 ): ISecret {
   let secretData: ISecret['data'] = {};
   if (values.providerType === 'vsphere') {
@@ -94,7 +92,7 @@ export function convertFormValuesToSecret(
       ...(!providerBeingEdited
         ? {
             generateName: `${values.name}-`,
-            namespace: ENV.NAMESPACE,
+            namespace,
           }
         : nameAndNamespace(providerBeingEdited.spec.secret)),
       labels: {
@@ -132,6 +130,7 @@ export const ovirtHostnameToUrl = (hostname: string): string =>
   `https://${hostname}/ovirt-engine/api`;
 
 export const convertFormValuesToProvider = (
+  namespace: string,
   values: AddProviderFormValues,
   providerType: ProviderType | null
 ): IProviderObject => {
@@ -153,7 +152,7 @@ export const convertFormValuesToProvider = (
     kind: 'Provider',
     metadata: {
       name,
-      namespace: ENV.NAMESPACE,
+      namespace,
     },
     spec: {
       type: values.providerType,
@@ -178,6 +177,10 @@ export const checkIfResourceExists = async (
   resource: ForkliftResource,
   resourceName: string
 ): Promise<void> => {
+  const secretResource = new CoreNamespacedResource(
+    CoreNamespacedResourceKind.Secret,
+    resource.namespace
+  );
   const results = await Q.allSettled([
     client.list(secretResource, getTokenSecretLabelSelector(resourceKind, resourceName)),
     client.get(resource, resourceName),

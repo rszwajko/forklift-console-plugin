@@ -31,18 +31,21 @@ import {
 import { useAuthorizedK8sClient } from './fetchHelpers';
 import {
   ForkliftResourceKind,
-  providerResource,
-  secretResource,
   convertFormValuesToProvider,
   convertFormValuesToSecret,
   checkIfResourceExists,
+  ForkliftResource,
 } from '@app/client/helpers';
 import { AddProviderFormValues } from '@app/Providers/components/AddEditProviderModal/AddEditProviderModal';
 import { dnsLabelNameSchema, ProviderType, SOURCE_PROVIDER_TYPES } from '@app/common/constants';
 import { IKubeList, IKubeResponse, IKubeStatus, KubeClientError } from '@app/client/types';
 import { consoleFetchJSON } from '@openshift-console/dynamic-plugin-sdk';
+import { CoreNamespacedResource, CoreNamespacedResourceKind } from '@migtools/lib-ui';
 
-export const useClusterProvidersQuery = (): UseQueryResult<IKubeList<IProviderObject>> => {
+export const useClusterProvidersQuery = (
+  namespace: string
+): UseQueryResult<IKubeList<IProviderObject>> => {
+  const providerResource = new ForkliftResource(ForkliftResourceKind.Provider, namespace);
   return useMockableQuery<IKubeList<IProviderObject>>(
     {
       queryKey: 'cluster-providers',
@@ -71,6 +74,7 @@ export const useInventoryProvidersQuery = () => {
 };
 
 export const useCreateProviderMutation = (
+  namespace: string,
   providerType: ProviderType | null,
   onSuccess: (navToProviderType?: ProviderType | null) => void
 ): UseMutationResult<
@@ -79,11 +83,14 @@ export const useCreateProviderMutation = (
   AddProviderFormValues,
   unknown // TODO replace `unknown` for TSnapshot? not even sure what this is for
 > => {
-  const client = useAuthorizedK8sClient();
+  const client = useAuthorizedK8sClient(namespace);
   const queryClient = useQueryClient();
+  const providerResource = new ForkliftResource(ForkliftResourceKind.Provider, namespace);
+  const secretResource = new CoreNamespacedResource(CoreNamespacedResourceKind.Secret, namespace);
 
   const postProvider = async (values: AddProviderFormValues) => {
     const providerWithoutSecret: IProviderObject = convertFormValuesToProvider(
+      namespace,
       values,
       providerType
     );
@@ -93,7 +100,12 @@ export const useCreateProviderMutation = (
       providerResource,
       providerWithoutSecret.metadata.name
     );
-    const secret: ISecret = convertFormValuesToSecret(values, ForkliftResourceKind.Provider, null);
+    const secret: ISecret = convertFormValuesToSecret(
+      values,
+      ForkliftResourceKind.Provider,
+      null,
+      namespace
+    );
 
     const providerAddResults: Array<IKubeResponse<ISecret | IProviderObject>> = [];
     const providerSecretAddResult = await client.create<ISecret>(secretResource, secret);
@@ -121,7 +133,8 @@ export const useCreateProviderMutation = (
       const secretWithOwnerRef = convertFormValuesToSecret(
         values,
         ForkliftResourceKind.Provider,
-        providerAddResult.data
+        providerAddResult.data,
+        namespace
       );
       await client.patch<ISecret>(
         secretResource,
@@ -196,6 +209,7 @@ export const useCreateProviderMutation = (
 };
 
 export const usePatchProviderMutation = (
+  namespace: string,
   providerType: ProviderType | null,
   providerBeingEdited: IProviderObject | null,
   onSuccess?: () => void
@@ -205,11 +219,14 @@ export const usePatchProviderMutation = (
   AddProviderFormValues,
   unknown
 > => {
-  const client = useAuthorizedK8sClient();
+  const client = useAuthorizedK8sClient(namespace);
   const queryClient = useQueryClient();
+  const providerResource = new ForkliftResource(ForkliftResourceKind.Provider, namespace);
+  const secretResource = new CoreNamespacedResource(CoreNamespacedResourceKind.Secret, namespace);
 
   const patchProvider = async (values: AddProviderFormValues) => {
     const providerWithoutSecret: IProviderObject = convertFormValuesToProvider(
+      namespace,
       values,
       providerType
     );
@@ -223,7 +240,8 @@ export const usePatchProviderMutation = (
     const secret = convertFormValuesToSecret(
       values,
       ForkliftResourceKind.Provider,
-      providerBeingEdited
+      providerBeingEdited,
+      namespace
     );
     await client.patch(secretResource, (secret.metadata as IMetaObjectMeta).name || '', secret);
     return await client.patch<IProviderObject>(
@@ -248,11 +266,13 @@ export const usePatchProviderMutation = (
 };
 
 export const useDeleteProviderMutation = (
+  namespace: string,
   providerType: ProviderType,
   onSuccess?: () => void
 ): UseMutationResult<IKubeResponse<IKubeStatus>, KubeClientError, IProviderObject, unknown> => {
-  const client = useAuthorizedK8sClient();
+  const client = useAuthorizedK8sClient(namespace);
   const queryClient = useQueryClient();
+  const providerResource = new ForkliftResource(ForkliftResourceKind.Provider, namespace);
   return useMockableMutation<IKubeResponse<IKubeStatus>, KubeClientError, IProviderObject>(
     (provider: IProviderObject) => client.delete(providerResource, provider.metadata.name),
     {
@@ -312,6 +332,7 @@ export interface IProviderMigrationNetworkMutationVars {
 }
 
 export const useOCPMigrationNetworkMutation = (
+  namespace: string,
   onSuccess?: () => void
 ): UseMutationResult<
   IKubeResponse<IProviderObject>,
@@ -319,7 +340,8 @@ export const useOCPMigrationNetworkMutation = (
   IProviderMigrationNetworkMutationVars,
   unknown
 > => {
-  const client = useAuthorizedK8sClient();
+  const client = useAuthorizedK8sClient(namespace);
+  const providerResource = new ForkliftResource(ForkliftResourceKind.Provider, namespace);
   const queryClient = useQueryClient();
   return useMockableMutation<
     IKubeResponse<IProviderObject>,

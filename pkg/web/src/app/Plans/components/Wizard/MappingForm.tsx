@@ -48,7 +48,7 @@ import { ResolvedQueries } from '@app/common/components/ResolvedQuery';
 import { isMappingValid } from '@app/Mappings/components/helpers';
 import { ConditionalTooltip } from '@app/common/components/ConditionalTooltip';
 import { usePausedPollingEffect } from '@app/common/context';
-import { ProviderType } from '@app/common/constants';
+import { ENV, ProviderType } from '@app/common/constants';
 
 interface IMappingFormProps {
   form: PlanWizardFormState['storageMapping'] | PlanWizardFormState['networkMapping'];
@@ -120,7 +120,7 @@ export const MappingForm: React.FunctionComponent<IMappingFormProps> = ({
     nicProfilesQuery?.data,
   ]);
 
-  const mappingsQuery = useMappingsQuery(mappingType);
+  const mappingsQuery = useMappingsQuery(mappingType, ENV.NAMESPACE);
 
   const filteredMappings = filterSharedMappings(mappingsQuery.data?.items).filter(
     ({

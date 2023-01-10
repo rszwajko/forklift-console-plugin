@@ -21,7 +21,7 @@ import {
 } from './helpers';
 
 import { checkIfResourceExists, ForkliftResource, ForkliftResourceKind } from '@app/client/helpers';
-import { dnsLabelNameSchema, ENV } from '@app/common/constants';
+import { dnsLabelNameSchema } from '@app/common/constants';
 import { KubeClientError, IKubeList, IKubeResponse, IKubeStatus } from '@app/client/types';
 import { MOCK_NETWORK_MAPPINGS, MOCK_STORAGE_MAPPINGS } from './mocks/mappings.mock';
 import { usePollingContext } from '@app/common/context';
@@ -37,22 +37,26 @@ import {
 import { consoleFetchJSON } from '@openshift-console/dynamic-plugin-sdk';
 
 export const getMappingResource = (
-  mappingType: MappingType
+  mappingType: MappingType,
+  namespace: string
 ): { kind: ForkliftResourceKind; resource: ForkliftResource } => {
   const kind =
     mappingType === MappingType.Network
       ? ForkliftResourceKind.NetworkMap
       : ForkliftResourceKind.StorageMap;
-  const resource = new ForkliftResource(kind, ENV.NAMESPACE);
+  const resource = new ForkliftResource(kind, namespace);
   return { kind, resource };
 };
 
-export const useMappingsQuery = (mappingType: MappingType): UseQueryResult<IKubeList<Mapping>> => {
+export const useMappingsQuery = (
+  mappingType: MappingType,
+  namespace: string
+): UseQueryResult<IKubeList<Mapping>> => {
   const sortKubeListByNameCallback = React.useCallback(
     (data): IKubeList<Mapping> => sortKubeListByName(data),
     []
   );
-  const { resource } = getMappingResource(mappingType);
+  const { resource } = getMappingResource(mappingType, namespace);
   const result = useMockableQuery<IKubeList<Mapping>>(
     {
       queryKey: ['mappings', mappingType],
@@ -69,6 +73,7 @@ export const useMappingsQuery = (mappingType: MappingType): UseQueryResult<IKube
 
 export const useCreateMappingMutation = (
   mappingType: MappingType,
+  namespace: string,
   onSuccess?: () => void
 ): UseMutationResult<
   IKubeResponse<Mapping>,
@@ -76,11 +81,11 @@ export const useCreateMappingMutation = (
   Mapping,
   unknown // TODO replace `unknown` for TSnapshot? not even sure what this is for
 > => {
-  const client = useAuthorizedK8sClient();
+  const client = useAuthorizedK8sClient(namespace);
   const queryClient = useQueryClient();
   return useMockableMutation<IKubeResponse<Mapping>, KubeClientError, Mapping>(
     async (mapping) => {
-      const { kind, resource } = getMappingResource(mappingType);
+      const { kind, resource } = getMappingResource(mappingType, namespace);
       const existingMappingName = (mapping.metadata as IMetaObjectMeta).name || null;
       if (existingMappingName) {
         await checkIfResourceExists(client, kind, resource, existingMappingName);
@@ -96,23 +101,26 @@ export const useCreateMappingMutation = (
   );
 };
 
-export const useCreateMappingMutations = (): {
+export const useCreateMappingMutations = (
+  namespace: string
+): {
   network: ReturnType<typeof useCreateMappingMutation>;
   storage: ReturnType<typeof useCreateMappingMutation>;
 } => ({
-  network: useCreateMappingMutation(MappingType.Network),
-  storage: useCreateMappingMutation(MappingType.Storage),
+  network: useCreateMappingMutation(MappingType.Network, namespace),
+  storage: useCreateMappingMutation(MappingType.Storage, namespace),
 });
 
 export const usePatchMappingMutation = (
   mappingType: MappingType,
+  namespace: string,
   onSuccess?: () => void
 ): UseMutationResult<IKubeResponse<Mapping>, KubeClientError, Mapping, unknown> => {
-  const client = useAuthorizedK8sClient();
+  const client = useAuthorizedK8sClient(namespace);
   const queryClient = useQueryClient();
   return useMockableMutation<IKubeResponse<Mapping>, KubeClientError, Mapping>(
     async (mapping: Mapping) => {
-      const { resource } = getMappingResource(mappingType);
+      const { resource } = getMappingResource(mappingType, namespace);
       return await client.patch(resource, (mapping.metadata as IMetaObjectMeta).name, mapping);
     },
     {
@@ -124,17 +132,23 @@ export const usePatchMappingMutation = (
   );
 };
 
-export const usePatchMappingMutations = (): {
+export const usePatchMappingMutations = (
+  namespace: string
+): {
   network: ReturnType<typeof usePatchMappingMutation>;
   storage: ReturnType<typeof usePatchMappingMutation>;
 } => ({
-  network: usePatchMappingMutation(MappingType.Network),
-  storage: usePatchMappingMutation(MappingType.Storage),
+  network: usePatchMappingMutation(MappingType.Network, namespace),
+  storage: usePatchMappingMutation(MappingType.Storage, namespace),
 });
 
-export const useDeleteMappingMutation = (mappingType: MappingType, onSuccess?: () => void) => {
-  const client = useAuthorizedK8sClient();
-  const { resource } = getMappingResource(mappingType);
+export const useDeleteMappingMutation = (
+  mappingType: MappingType,
+  namespace: string,
+  onSuccess?: () => void
+) => {
+  const client = useAuthorizedK8sClient(namespace);
+  const { resource } = getMappingResource(mappingType, namespace);
   const queryClient = useQueryClient();
   return useMockableMutation<IKubeResponse<IKubeStatus>, KubeClientError, Mapping>(
     (mapping: Mapping) => client.delete(resource, (mapping.metadata as IMetaObjectMeta).name),

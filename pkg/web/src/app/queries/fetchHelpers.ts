@@ -46,37 +46,41 @@ const authorizedK8sRequest = async <T>({
 };
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const useAuthorizedK8sClient = () => {
+export const useAuthorizedK8sClient = (namespace: string) => {
   /* eslint-disable @typescript-eslint/ban-types */
   return {
     get: <T>(resource: KubeResource, name: string, params?: object) =>
-      authorizedK8sRequest<T>({ method: 'GET', url: namedPath(resource, name), data: params }),
+      authorizedK8sRequest<T>({
+        method: 'GET',
+        url: namedPath(resource, name, namespace),
+        data: params,
+      }),
     list: <T>(resource: KubeResource, params?: object) =>
-      authorizedK8sRequest<T>({ method: 'GET', url: listPath(resource), data: params }),
+      authorizedK8sRequest<T>({ method: 'GET', url: listPath(resource, namespace), data: params }),
     create: <T>(resource: KubeResource, newObject: object, params?: object) =>
       authorizedK8sRequest<T>({
         method: 'POST',
-        url: listPath(resource),
+        url: listPath(resource, namespace),
         data: newObject,
         options: params,
       }),
     delete: <T = IKubeStatus>(resource: KubeResource, name: string, params?: object) =>
       authorizedK8sRequest<T>({
         method: 'DELETE',
-        url: namedPath(resource, name),
+        url: namedPath(resource, name, namespace),
         options: params,
       }),
     patch: <T>(resource: KubeResource, name: string, patch: object, params?: object) =>
       authorizedK8sRequest<T>({
         method: 'PATCH',
-        url: namedPath(resource, name),
+        url: namedPath(resource, name, namespace),
         data: patch,
         options: params,
       }),
     put: <T>(resource: KubeResource, name: string, object: object, params?: object) =>
       authorizedK8sRequest<T>({
         method: 'PUT',
-        url: namedPath(resource, name),
+        url: namedPath(resource, name, namespace),
         data: object,
         options: params,
       }),

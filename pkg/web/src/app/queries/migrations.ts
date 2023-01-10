@@ -23,9 +23,10 @@ import { consoleFetchJSON } from '@openshift-console/dynamic-plugin-sdk';
 const migrationResource = new ForkliftResource(ForkliftResourceKind.Migration, ENV.NAMESPACE);
 
 export const useCreateMigrationMutation = (
+  namespace: string,
   onSuccess?: (migration: IMigration) => void
 ): UseMutationResult<IKubeResponse<IMigration>, KubeClientError, IPlan, unknown> => {
-  const client = useAuthorizedK8sClient();
+  const client = useAuthorizedK8sClient(namespace);
   const queryClient = useQueryClient();
   return useMockableMutation<IKubeResponse<IMigration>, KubeClientError, IPlan>(
     async (plan: IPlan) => {
@@ -101,7 +102,7 @@ export const useCancelVMsMutation = (
   onSuccess?: () => void
 ): UseMutationResult<IKubeResponse<IMigration>, KubeClientError, SourceVM[], unknown> => {
   const latestMigration = useLatestMigrationQuery(plan);
-  const client = useAuthorizedK8sClient();
+  const client = useAuthorizedK8sClient(plan.metadata.namespace);
   const queryClient = useQueryClient();
   return useMockableMutation<IKubeResponse<IMigration>, KubeClientError, SourceVM[]>(
     (vms: SourceVM[]) => {
@@ -149,10 +150,11 @@ export interface ISetCutoverArgs {
 }
 
 export const useSetCutoverMutation = (
+  namespace: string,
   onSuccess?: () => void
 ): UseMutationResult<IKubeResponse<IMigration>, KubeClientError, ISetCutoverArgs, unknown> => {
   const migrationsQuery = useMigrationsQuery();
-  const client = useAuthorizedK8sClient();
+  const client = useAuthorizedK8sClient(namespace);
   const queryClient = useQueryClient();
   return useMockableMutation<IKubeResponse<IMigration>, KubeClientError, ISetCutoverArgs>(
     ({ plan, cutover }) => {

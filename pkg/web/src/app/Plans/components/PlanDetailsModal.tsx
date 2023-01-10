@@ -29,13 +29,13 @@ export const PlanDetailsModal: React.FunctionComponent<IPlanDetailsModalProps> =
 }: IPlanDetailsModalProps) => {
   usePausedPollingEffect();
 
-  const networkMappingsQuery = useMappingsQuery(MappingType.Network);
+  const networkMappingsQuery = useMappingsQuery(MappingType.Network, plan.metadata.namespace);
   const networkMapping =
     networkMappingsQuery.data?.items.find((mapping) =>
       isSameResource(mapping.metadata as IMetaObjectMeta, plan.spec.map.network)
     ) || null;
 
-  const storageMappingsQuery = useMappingsQuery(MappingType.Storage);
+  const storageMappingsQuery = useMappingsQuery(MappingType.Storage, plan.metadata.namespace);
   const storageMapping =
     storageMappingsQuery.data?.items.find((mapping) =>
       isSameResource(mapping.metadata as IMetaObjectMeta, plan.spec.map.storage)

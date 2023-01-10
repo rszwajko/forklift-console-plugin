@@ -21,6 +21,7 @@ import {
   PROVIDER_TYPE_NAMES,
   PROVIDER_TYPES,
   PATH_PREFIX,
+  ENV,
 } from '@app/common/constants';
 import { useClusterProvidersQuery, useInventoryProvidersQuery, usePlansQuery } from '@app/queries';
 
@@ -50,7 +51,7 @@ export const ProvidersPage: React.FunctionComponent = () => {
     sensitive: true,
   });
 
-  const clusterProvidersQuery = useClusterProvidersQuery();
+  const clusterProvidersQuery = useClusterProvidersQuery(ENV.NAMESPACE);
   const inventoryProvidersQuery = useInventoryProvidersQuery();
   const plansQuery = usePlansQuery();
 
@@ -168,6 +169,7 @@ export const ProvidersPage: React.FunctionComponent = () => {
         <AddEditProviderModal
           onClose={toggleModalAndResetEdit}
           providerBeingEdited={providerBeingEdited}
+          namespace={ENV.NAMESPACE}
         />
       ) : null}
     </>

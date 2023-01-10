@@ -14,10 +14,18 @@ import { Dropdown, DropdownItem, DropdownToggle, KebabToggle } from '@patternfly
 export const ActionContext = createContext({ variant: 'kebab', ignoreList: [] });
 
 export function withActionContext<T>(variant: 'kebab' | 'dropdown', contextId: string) {
-  const Enhanced = ({ entity, ignoreList = [] }: { entity: T; ignoreList?: string[] }) => {
+  const Enhanced = ({
+    entity,
+    ignoreList = [],
+    namespace,
+  }: {
+    entity: T;
+    ignoreList?: string[];
+    namespace?: string;
+  }) => {
     return (
       <ActionContext.Provider value={{ variant, ignoreList }}>
-        <ActionServiceProvider context={{ [contextId]: entity }}>
+        <ActionServiceProvider context={{ [contextId]: { entity, namespace } }}>
           {ActionsComponent}
         </ActionServiceProvider>
       </ActionContext.Provider>

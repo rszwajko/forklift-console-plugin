@@ -20,11 +20,11 @@ import {
 import { PlansTable } from './components/PlansTable';
 import { CreatePlanButton } from './components/CreatePlanButton';
 import { ResolvedQueries } from '@app/common/components/ResolvedQuery';
-import { PROVIDER_TYPE_NAMES } from '@app/common/constants';
+import { ENV, PROVIDER_TYPE_NAMES } from '@app/common/constants';
 
 export const PlansPage: React.FunctionComponent = () => {
   const sufficientProvidersQuery = useHasSufficientProvidersQuery();
-  const clusterProvidersQuery = useClusterProvidersQuery();
+  const clusterProvidersQuery = useClusterProvidersQuery(ENV.NAMESPACE);
   const plansQuery = usePlansQuery();
   const migrationsQuery = useMigrationsQuery();
 

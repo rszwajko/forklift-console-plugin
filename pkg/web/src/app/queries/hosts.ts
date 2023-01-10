@@ -16,11 +16,12 @@ import { IHost, IHostConfig, INameNamespaceRef, ISecret, IVMwareProvider } from 
 import { useAuthorizedK8sClient } from './fetchHelpers';
 import { IKubeList, IKubeResponse, KubeClientError } from '@app/client/types';
 import { SelectNetworkFormValues } from '@app/Providers/components/VMwareProviderHostsTable/SelectNetworkModal';
-import { secretResource, ForkliftResource, ForkliftResourceKind } from '@app/client/helpers';
+import { ForkliftResource, ForkliftResourceKind } from '@app/client/helpers';
 import { CLUSTER_API_VERSION, ENV } from '@app/common/constants';
 import { getObjectRef } from '@app/common/helpers';
 import { isManagementNetworkSelected } from '@app/Providers/components/VMwareProviderHostsTable/helpers';
 import { consoleFetchJSON } from '@openshift-console/dynamic-plugin-sdk';
+import { CoreNamespacedResource, CoreNamespacedResourceKind } from '@migtools/lib-ui';
 
 export const hostConfigResource = new ForkliftResource(ForkliftResourceKind.Host, ENV.NAMESPACE);
 
@@ -132,6 +133,7 @@ export const useConfigureHostsMutation = (
   provider: IVMwareProvider,
   selectedHosts: IHost[],
   allHostConfigs: IHostConfig[],
+  namespace: string,
   onSuccess?: () => void
 ): UseMutationResult<
   (IKubeResponse<IHostConfig> | null)[],
@@ -139,8 +141,9 @@ export const useConfigureHostsMutation = (
   SelectNetworkFormValues,
   unknown
 > => {
-  const client = useAuthorizedK8sClient();
+  const client = useAuthorizedK8sClient(namespace);
   const queryClient = useQueryClient();
+  const secretResource = new CoreNamespacedResource(CoreNamespacedResourceKind.Secret, namespace);
 
   const configureHosts = (values: SelectNetworkFormValues) => {
     const existingHostConfigs = getExistingHostConfigs(selectedHosts, allHostConfigs, provider);

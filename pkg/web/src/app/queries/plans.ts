@@ -23,8 +23,7 @@ import { IMetaObjectMeta } from '@app/queries/types/common.types';
 import { consoleFetchJSON } from '@openshift-console/dynamic-plugin-sdk';
 
 const planResource = new ForkliftResource(ForkliftResourceKind.Plan, ENV.NAMESPACE);
-const networkMapResource = getMappingResource(MappingType.Network).resource;
-const storageMapResource = getMappingResource(MappingType.Storage).resource;
+
 const hookResource = new ForkliftResource(ForkliftResourceKind.Hook, ENV.NAMESPACE);
 
 export const usePlansQuery = (): UseQueryResult<IKubeList<IPlan>> => {
@@ -46,10 +45,13 @@ export const usePlansQuery = (): UseQueryResult<IKubeList<IPlan>> => {
 };
 
 export const useCreatePlanMutation = (
+  namespace: string,
   onSuccess?: () => void
 ): UseMutationResult<IKubeResponse<IPlan>, KubeClientError, PlanWizardFormState, unknown> => {
-  const client = useAuthorizedK8sClient();
+  const client = useAuthorizedK8sClient(namespace);
   const queryClient = useQueryClient();
+  const networkMapResource = getMappingResource(MappingType.Network, namespace).resource;
+  const storageMapResource = getMappingResource(MappingType.Storage, namespace).resource;
   return useMockableMutation<IKubeResponse<IPlan>, KubeClientError, PlanWizardFormState>(
     async (forms) => {
       await checkIfResourceExists(
@@ -86,7 +88,7 @@ export const useCreatePlanMutation = (
       // Create plan referencing new mappings and new hooks for plan's VMs
       const planResponse = await client.create<IPlan>(
         planResource,
-        generatePlan(forms, networkMappingRef, storageMappingRef, hooksRef)
+        generatePlan(forms, networkMappingRef, storageMappingRef, namespace, hooksRef)
       );
 
       // Patch mappings with ownerReferences to new plan
@@ -135,10 +137,13 @@ interface IPatchPlanArgs {
 }
 
 export const usePatchPlanMutation = (
+  namespace: string,
   onSuccess?: () => void
 ): UseMutationResult<IKubeResponse<IPlan>, KubeClientError, IPatchPlanArgs, unknown> => {
-  const client = useAuthorizedK8sClient();
+  const client = useAuthorizedK8sClient(namespace);
   const queryClient = useQueryClient();
+  const networkMapResource = getMappingResource(MappingType.Network, namespace).resource;
+  const storageMapResource = getMappingResource(MappingType.Storage, namespace).resource;
 
   return useMockableMutation<IKubeResponse<IPlan>, KubeClientError, IPatchPlanArgs>(
     async ({ planBeingEdited, forms }) => {
@@ -183,7 +188,13 @@ export const usePatchPlanMutation = (
 
       const hooksRef = await Promise.all(updatedHooksRef);
 
-      const updatedPlan = generatePlan(forms, networkMappingRef, storageMappingRef, hooksRef);
+      const updatedPlan = generatePlan(
+        forms,
+        networkMappingRef,
+        storageMappingRef,
+        namespace,
+        hooksRef
+      );
       const [, , planResponse] = await Promise.all([
         networkMapping &&
           client.patch<Mapping>(networkMapResource, networkMappingRef.name, networkMapping),
@@ -240,9 +251,10 @@ export const usePatchPlanMutation = (
 };
 
 export const useDeletePlanMutation = (
+  namespace: string,
   onSuccess?: () => void
 ): UseMutationResult<IKubeResponse<IKubeStatus>, KubeClientError, IPlan, unknown> => {
-  const client = useAuthorizedK8sClient();
+  const client = useAuthorizedK8sClient(namespace);
   const queryClient = useQueryClient();
   return useMockableMutation<IKubeResponse<IKubeStatus>, KubeClientError, IPlan>(
     (plan: IPlan) => client.delete(planResource, plan.metadata.name),
@@ -257,9 +269,10 @@ export const useDeletePlanMutation = (
 };
 
 export const useArchivePlanMutation = (
+  namespace: string,
   onSuccess?: () => void
 ): UseMutationResult<IKubeResponse<IKubeStatus>, KubeClientError, IPlan, unknown> => {
-  const client = useAuthorizedK8sClient();
+  const client = useAuthorizedK8sClient(namespace);
   const queryClient = useQueryClient();
   return useMockableMutation<IKubeResponse<IKubeStatus>, KubeClientError, IPlan>(
     (plan: IPlan) => {

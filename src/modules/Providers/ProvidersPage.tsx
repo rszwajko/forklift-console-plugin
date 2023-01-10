@@ -153,7 +153,7 @@ const Page = ({
   userSettings: UserSettings;
 }) => (
   <StandardPage<MergedProvider>
-    addButton={<AddProviderButton />}
+    addButton={<AddProviderButton namespace={namespace} />}
     dataSource={dataSource}
     RowMapper={ProviderRow}
     fieldsMetadata={fieldsMetadata}
@@ -165,21 +165,36 @@ const Page = ({
 
 const PageMemo = React.memo(Page);
 
-const AddProviderButton = () => {
+const AddProviderButton = ({ namespace }: { namespace: string }) => {
   const { t } = useTranslation();
   const launchModal = useModal();
 
   return (
-    <Button variant="primary" onClick={() => launchModal(withQueryClient(AddProviderModal), {})}>
+    <Button
+      variant="primary"
+      onClick={() =>
+        launchModal(withQueryClient(AddProviderModal), { currentNamespace: namespace })
+      }
+    >
       {t('Add Provider')}
     </Button>
   );
 };
 
-const AddProviderModal = ({ closeModal }: { closeModal: () => void }) => {
+const AddProviderModal = ({
+  closeModal,
+  currentNamespace,
+}: {
+  currentNamespace: string;
+  closeModal: () => void;
+}) => {
   return (
     <EditProviderContext.Provider value={{ openEditProviderModal: () => undefined, plans: [] }}>
-      <AddEditProviderModal onClose={closeModal} providerBeingEdited={null} />
+      <AddEditProviderModal
+        onClose={closeModal}
+        providerBeingEdited={null}
+        namespace={currentNamespace}
+      />
     </EditProviderContext.Provider>
   );
 };

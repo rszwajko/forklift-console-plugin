@@ -510,13 +510,14 @@ export const generatePlan = (
   forms: PlanWizardFormState,
   networkMappingRef: INameNamespaceRef,
   storageMappingRef: INameNamespaceRef,
+  namespace: string,
   hooksRef?: IHookRef[]
 ): IPlan => ({
   apiVersion: CLUSTER_API_VERSION,
   kind: 'Plan',
   metadata: {
     name: forms.general.values.planName,
-    namespace: ENV.NAMESPACE,
+    namespace,
   },
   spec: {
     description: forms.general.values.planDescription,
@@ -567,7 +568,8 @@ interface IPlanWizardPrefillResults {
 export const usePlanWizardPrefillEffect = (
   forms: PlanWizardFormState,
   planBeingPrefilled: IPlan | null,
-  wizardMode: PlanWizardMode
+  wizardMode: PlanWizardMode,
+  namespace: string
 ): IPlanWizardPrefillResults => {
   const providersQuery = useInventoryProvidersQuery();
   const { sourceProvider, targetProvider } = findProvidersByRefs(
@@ -588,8 +590,8 @@ export const usePlanWizardPrefillEffect = (
     MappingType.Storage
   );
 
-  const networkMappingsQuery = useMappingsQuery(MappingType.Network);
-  const storageMappingsQuery = useMappingsQuery(MappingType.Storage);
+  const networkMappingsQuery = useMappingsQuery(MappingType.Network, namespace);
+  const storageMappingsQuery = useMappingsQuery(MappingType.Storage, namespace);
 
   const hooksQuery = useHooksQuery();
   const plansQuery = usePlansQuery();
