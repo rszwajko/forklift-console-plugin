@@ -26,6 +26,7 @@ interface CellProps {
   value: string;
   entity: FlatPlan;
   primaryAction?: string;
+  currentNamespace: string;
 }
 
 const TextCell = ({ value }: CellProps) => <>{value ?? ''}</>;
@@ -72,7 +73,7 @@ const StatusCell = ({ entity: { status, type, vmCount, vmDone, name, object } }:
   }
 };
 
-const Actions = ({ primaryAction, entity }: CellProps) => {
+const Actions = ({ primaryAction, entity, currentNamespace }: CellProps) => {
   const isBeingStarted = entity.status === 'Starting';
   return (
     <Flex
@@ -98,13 +99,20 @@ const Actions = ({ primaryAction, entity }: CellProps) => {
               plan={entity.object}
               buttonType={primaryAction}
               isBeingStarted={isBeingStarted}
+              currentNamespace={currentNamespace}
             />
           )}
         </FlexItem>
       )}
       {(primaryAction || !isBeingStarted) && (
         <FlexItem align={{ default: 'alignRight' }}>
-          <PlanActions {...{ entity, ignoreList: primaryAction ? [primaryAction] : [] }} />
+          <PlanActions
+            {...{
+              entity,
+              ignoreList: primaryAction ? [primaryAction] : [],
+              namespace: currentNamespace,
+            }}
+          />
         </FlexItem>
       )}
     </Flex>
@@ -139,7 +147,7 @@ const cellCreator: Record<string, (props: CellProps) => JSX.Element> = {
   ),
 };
 
-const PlanRow = ({ columns, entity }: RowProps<FlatPlan>) => {
+const PlanRow = ({ columns, entity, currentNamespace }: RowProps<FlatPlan>) => {
   const { t } = useTranslation();
   const primaryAction = getButtonState(entity.status);
   return (
@@ -152,7 +160,12 @@ const PlanRow = ({ columns, entity }: RowProps<FlatPlan>) => {
             dataLabel={toLabel(t)}
             modifier={id === 'description' ? 'breakWord' : undefined}
           >
-            <Cell value={String(entity[id] ?? '')} entity={entity} primaryAction={primaryAction} />
+            <Cell
+              value={String(entity[id] ?? '')}
+              entity={entity}
+              primaryAction={primaryAction}
+              currentNamespace={currentNamespace}
+            />
           </Td>
         );
       })}
