@@ -15,15 +15,15 @@ export const useNetworkMappingActions = ({ entity }: { entity: FlatNetworkMappin
   const { t } = useTranslation();
   const launchModal = useModal();
   const areProvidersReady = entity.sourceReady && entity.targetReady;
-  const isValid = entity.sourceResolved && entity.targetResolved;
-  const editingDisabled = !areProvidersReady || !isValid;
+  const areProvidersResolved = entity.sourceResolved && entity.targetResolved;
+  const editingDisabled = !areProvidersReady || !areProvidersResolved;
 
-  const disabledTooltip = !areProvidersReady
+  const disabledTooltip = !areProvidersResolved
     ? t(
-        'This mapping cannot be edited because the inventory data for its associated providers is not ready',
+        'This mapping cannot be edited because it includes missing source or target resources. Delete and recreate the mapping.',
       )
     : t(
-        'This mapping cannot be edited because it includes missing source or target resources. Delete and recreate the mapping.',
+        'This mapping cannot be edited because the inventory data for its associated providers is not ready',
       );
 
   const actions = useMemo(

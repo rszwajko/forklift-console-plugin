@@ -6,8 +6,8 @@ import * as C from 'src/utils/constants';
 import { useTranslation } from 'src/utils/i18n';
 
 import { K8sGroupVersionKind, ResourceLink } from '@openshift-console/dynamic-plugin-sdk';
-import { Label } from '@patternfly/react-core';
-import { NetworkIcon } from '@patternfly/react-icons';
+import { Label, Tooltip } from '@patternfly/react-core';
+import { ExclamationCircleIcon, NetworkIcon } from '@patternfly/react-icons';
 import spacing from '@patternfly/react-styles/css/utilities/Spacing/spacing';
 import { ExpandableRowContent, Td, Tr } from '@patternfly/react-table';
 
@@ -52,19 +52,34 @@ const Ref = ({
   gvk,
   name,
   namespace,
+  resolved,
 }: {
   gvk: K8sGroupVersionKind;
   name: string;
   namespace: string;
-}) => <ResourceLink groupVersionKind={gvk} name={name} namespace={namespace} />;
+  resolved: boolean;
+}) => {
+  const { t } = useTranslation();
+  return resolved ? (
+    <ResourceLink groupVersionKind={gvk} name={name} namespace={namespace} />
+  ) : (
+    <Tooltip content={t('Provider cannot be resolved')}>
+      <span>
+        <ExclamationCircleIcon color="#C9190B" /> {name}
+      </span>
+    </Tooltip>
+  );
+};
 
 const cellCreator: Record<string, (props: CellProps) => JSX.Element> = {
-  [C.NAME]: ({ entity: e }: CellProps) => <Ref gvk={e.gvk} name={e.name} namespace={e.namespace} />,
+  [C.NAME]: ({ entity: e }: CellProps) => (
+    <Ref gvk={e.gvk} name={e.name} namespace={e.namespace} resolved />
+  ),
   [C.SOURCE]: ({ entity: e }: CellProps) => (
-    <Ref gvk={e.sourceGvk} name={e.source} namespace={e.namespace} />
+    <Ref gvk={e.sourceGvk} name={e.source} namespace={e.namespace} resolved={e.sourceResolved} />
   ),
   [C.TARGET]: ({ entity: e }: CellProps) => (
-    <Ref gvk={e.targetGvk} name={e.target} namespace={e.namespace} />
+    <Ref gvk={e.targetGvk} name={e.target} namespace={e.namespace} resolved={e.targetResolved} />
   ),
   [C.NAMESPACE]: ({ value }: CellProps) => <ResourceLink kind="Namespace" name={value} />,
   [C.ACTIONS]: ({ entity }: CellProps) => <NetworkMappingActions entity={entity} />,
