@@ -63,7 +63,7 @@ const Ref = ({
   return resolved ? (
     <ResourceLink groupVersionKind={gvk} name={name} namespace={namespace} />
   ) : (
-    <Tooltip content={t('Provider cannot be resolved')}>
+    <Tooltip content={t('Provider {{name}} cannot be resolved', { name })}>
       <span>
         <ExclamationCircleIcon color="#C9190B" /> {name}
       </span>

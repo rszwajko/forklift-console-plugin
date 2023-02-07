@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { defaultValueMatchers, FreetextFilter, ValueMatcher } from 'common/src/components/Filter';
 import withQueryClient from 'common/src/components/QueryClientHoc';
 import { loadUserSettings, StandardPage, UserSettings } from 'common/src/components/StandardPage';
 import { Field } from 'common/src/components/types';
@@ -12,7 +13,7 @@ import { ResourceConsolePageProps } from 'src/utils/types';
 import { useModal } from '@kubev2v/common/polyfills/sdk-shim';
 import { Button } from '@patternfly/react-core';
 
-import { FlatNetworkMapping, useFlaNetworkMappings } from './data';
+import { FlatNetworkMapping, Network, useFlaNetworkMappings } from './data';
 import NetworkMappingRow from './NetworkMappingRow';
 
 const byName = {
@@ -57,10 +58,6 @@ export const fieldsMetadata: Field[] = [
     id: C.FROM,
     toLabel: (t) => t('From'),
     isVisible: true,
-    filter: {
-      type: 'freetext',
-      toPlaceholderLabel: (t) => t('Filter by name'),
-    },
     sortable: false,
   },
   {
@@ -68,7 +65,7 @@ export const fieldsMetadata: Field[] = [
     toLabel: (t) => t('To'),
     isVisible: true,
     filter: {
-      type: 'freetext',
+      type: 'targetNetwork',
       toPlaceholderLabel: (t) => t('Filter by name'),
     },
     sortable: false,
@@ -119,6 +116,11 @@ const Page = ({
     namespace={namespace}
     title={title}
     userSettings={userSettings}
+    supportedFilters={{
+      freetext: FreetextFilter,
+      targetNetwork: FreetextFilter,
+    }}
+    supportedMatchers={[...defaultValueMatchers, targetNetworkMatcher]}
   />
 );
 
@@ -157,5 +159,14 @@ const AddMappingModal: React.FC<{
   );
 };
 AddMappingModal.displayName = 'AddMappingModal';
+
+const targetNetworkMatcher: ValueMatcher = {
+  filterType: 'targetNetwork',
+  matchValue: (networks: Network[]) => (filter: string) =>
+    networks.some((net) => {
+      const name = net?.type === 'pod' ? 'pod' : net?.name ?? '';
+      return name.includes(filter?.toLocaleLowerCase());
+    }),
+};
 
 export default NetworkMappingsPage;
