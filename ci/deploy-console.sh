@@ -23,8 +23,8 @@ kubectl apply -f ${script_dir}/yaml/okd-console.yaml
 
 echo ""
 echo "deploy console plugins (forklift, minivirt)"
-kubectl apply -f ${script_dir}/yaml/minivirt-plugin.yaml
-kubectl apply -f ${script_dir}/yaml/forklift-plugin.yaml
+# kubectl apply -f ${script_dir}/yaml/minivirt-plugin.yaml
+kubectl apply -f ${script_dir}/yaml/forklift-plugin-local.yaml
 
 echo ""
 echo "waiting for OKD console service..."
