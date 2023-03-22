@@ -21,6 +21,14 @@ CONSOLE_PORT=${CONSOLE_PORT:=9000}
 INVENTORY_SERVER_HOST=${INVENTORY_SERVER_HOST:="http://localhost:30088"}
 MUST_GATHER_API_SERVER_HOST=${MUST_GATHER_API_SERVER_HOST:="http://localhost:30089"}
 
+BRIDGE_K8S_AUTH_BEARER_TOKEN="abcdef.0123456789abcdef"
+BRIDGE_K8S_MODE_OFF_CLUSTER_ENDPOINT="https://localhost:6443"
+BRIDGE_K8S_AUTH="bearer-token"
+BRIDGE_USER_AUTH="disabled"
+BRIDGE_K8S_MODE="off-cluster"
+BRIDGE_K8S_MODE_OFF_CLUSTER_SKIP_VERIFY_TLS=true
+BRIDGE_USER_SETTINGS_LOCATION="localstorage"
+
 echo "Starting local OpenShift console..."
 echo "==================================="
 

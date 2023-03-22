@@ -4,37 +4,47 @@ on:
   pull_request:
 
 jobs:
-  tests:
-    name: Run linter and tests
+  e2e-tests:
+    name: Run e2e tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
+      - name: Download kind
+        run: |
+          curl --silent -LO https://kind.sigs.k8s.io/dl/v0.17.0/kind-linux-amd64
+          curl --silent -LO https://kind.sigs.k8s.io/dl/v0.17.0/kind-linux-amd64.sha256sum
+          cat kind-linux-amd64.sha256sum | sha256sum --check
+      - name: Install kind
+        run: |    
+          chmod +x ./kind-linux-amd64
+          sudo mv ./kind-linux-amd64 /usr/local/bin/kind
+      - name: Download kubectl
+        run: |
+          export KUBECTL_VERSION="$(curl -L -s https://dl.k8s.io/release/stable.txt)"
+          echo "Install kubectl $KUBECTL_VERSION"
+          curl --silent -LO "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/amd64/kubectl"
+          curl --silent -LO "https://dl.k8s.io/$KUBECTL_VERSION/bin/linux/amd64/kubectl.sha256"
+          echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+      - name: Install kubectl
+        run: sudo install kubectl /usr/local/bin/kubectl
+      # - name: Install podman
+      #   run: sudo apt-get -y install podman
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 16
-
-      - name: Install dependencies
+      - name: Install NPM dependencies
         run: npm install
-
-      - name: Lint, eslint and stylelint
-        run: npm run lint
-
-      - name: Lint, test i18n files and helm
-        run: npm run test:i18n
-
-      - name: Lint, helm
-        run: npm run helm:lint
-
-      - name: Test build
-        run: npm run build
-
-      - name: Test
-        run: npm run test:coverage
-
-      - name: Test coverage
-        uses: codecov/codecov-action@v3
+      - name: Create Cluster
+        run: sudo bash ci/deploy-cluster.sh
+      - name: Deploy Console and Forklift CRDs
+        run: sudo kubectl apply -f ci/yaml/crds
+      - name: Cypress run
+        uses: cypress-io/github-action@v5
         with:
-          fail_ci_if_error: true
+          env: DATA_SOURCE=mock
+          start: npm run start, npm run console
+          wait-on: "http://localhost:9000"
+          browser: chrome
+          headed: false
