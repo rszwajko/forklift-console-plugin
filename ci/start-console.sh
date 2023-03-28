@@ -55,5 +55,5 @@ END
 )
 export BRIDGE_PLUGIN_PROXY=$(echo ${PLUGIN_PROXY} | sed 's/[ \n]//g')
 
-export BRIDGE_PLUGINS="${PLUGIN_NAME}=http://localhost:9001"
+export BRIDGE_PLUGINS="${PLUGIN_NAME}=http://localhost:9001/dev"
 podman run --pull always --rm -v $(pwd)/tmp:/mnt/config:Z --network=host --name=${CONSOLE_CONTAINER_NAME} --env "BRIDGE_*" $CONSOLE_IMAGE

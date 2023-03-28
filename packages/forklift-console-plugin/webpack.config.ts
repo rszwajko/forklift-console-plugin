@@ -85,7 +85,7 @@ const config: WebpackConfiguration & {
     ],
   },
   devServer: {
-    static: './dist',
+    static: ['./dist', '../mocks/public'],
     port: 9001,
     // Allow bridge running in a container to connect to the plugin dev server.
     allowedHosts: 'all',
@@ -96,6 +96,23 @@ const config: WebpackConfiguration & {
     },
     devMiddleware: {
       writeToDisk: true,
+    },
+    proxy: {
+      context: () => true,
+      target: 'http://localhost:9000',
+      changeOrigin: true,
+      secure: false,
+      logLevel: 'debug',
+      bypass: function (req) {
+        if (req.url.startsWith('/dev')) {
+          return '/';
+        }
+        if (req.url.startsWith('/mockServiceWorker.js')) {
+          return req.url;
+        }
+        // proxy the request
+        return undefined;
+      },
     },
   },
   plugins: [

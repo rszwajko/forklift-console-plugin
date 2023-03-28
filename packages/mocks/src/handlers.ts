@@ -17,6 +17,14 @@ export const getInventoryApiUrl = (relativePath?: string): string =>
 
 export const handlers = [
   rest.get(getInventoryApiUrl('providers'), (req, res, ctx) =>
-    res(ctx.status(200), ctx.json([openshiftProvider1])),
+    res(
+      ctx.status(200),
+      ctx.json({
+        vsphere: [],
+        ovirt: [],
+        openstack: [],
+        openshift: [openshiftProvider1],
+      }),
+    ),
   ),
 ];

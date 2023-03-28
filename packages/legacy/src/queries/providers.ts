@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useQueryClient, UseQueryResult, UseMutationResult } from 'react-query';
+import { useQueryClient, UseQueryResult, UseMutationResult, useQuery } from 'react-query';
 import * as yup from 'yup';
 
 import { usePollingContext } from 'legacy/src/common/context';
@@ -12,7 +12,7 @@ import {
   sortIndexedDataByName,
   getInventoryApiUrl,
 } from './helpers';
-import { MOCK_CLUSTER_PROVIDERS, MOCK_INVENTORY_PROVIDERS } from './mocks/providers.mock';
+import { MOCK_CLUSTER_PROVIDERS } from './mocks/providers.mock';
 import {
   IProvidersByType,
   InventoryProvider,
@@ -62,15 +62,12 @@ export const useInventoryProvidersQuery = () => {
     (data): IProvidersByType => sortIndexedDataByName(data),
     []
   );
-  const result = useMockableQuery<IProvidersByType>(
-    {
-      queryKey: 'inventory-providers',
-      queryFn: async () => await consoleFetchJSON(getInventoryApiUrl('providers?detail=1')),
-      refetchInterval: usePollingContext().refetchInterval,
-      select: sortIndexedDataByNameCallback,
-    },
-    MOCK_INVENTORY_PROVIDERS
-  );
+  const result = useQuery<IProvidersByType>({
+    queryKey: 'inventory-providers',
+    queryFn: async () => await consoleFetchJSON(getInventoryApiUrl('providers?detail=1')),
+    refetchInterval: usePollingContext().refetchInterval,
+    select: sortIndexedDataByNameCallback,
+  });
   return result;
 };
 
