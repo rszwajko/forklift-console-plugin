@@ -1,0 +1,20 @@
+{
+  "name": "@kubev2v/mocks",
+  "version": "0.0.1",
+  "private": true,
+  "repository": "git@github.com:kubev2v/forklift-console-plugin.git",
+  "license": "Apache-2.0",
+  "scripts": {
+    "clean": "rm -rf ./dist && rm -rf ./coverage",
+    "clean:all": "npm run clean && rm -rf ./node_modules",
+    "build": "rm -rf ./dist && tsc",
+    "lint": "eslint . && stylelint \"src/**/*.css\" --allow-empty-input",
+    "lint:fix": "eslint . --fix && stylelint \"src/**/*.css\" --allow-empty-input --fix"
+  },
+  "dependencies": {
+    "msw": "^1.2.1"
+  },
+  "msw": {
+    "workerDirectory": "public"
+  }
+}
