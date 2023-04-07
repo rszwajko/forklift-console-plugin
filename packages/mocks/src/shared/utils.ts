@@ -1,5 +1,3 @@
-import { readFileSync } from 'fs';
-
 import { RequestHandler, MockedRequest, ResponseComposition, rest, RestContext } from 'msw';
 
 /**
@@ -23,10 +21,10 @@ const replaceSearch = (url: string) => {
 };
 
 export const createHandlersFromHar = (
-  harFile: string,
+  harFileContent: string,
   prefixMap: Record<string, string>,
 ): RequestHandler[] =>
-  getEntriesFromArchive(JSON.parse(readFileSync(harFile, 'utf-8')))
+  getEntriesFromArchive(JSON.parse(harFileContent))
     .map(({ request, ...rest }) => ({
       ...rest,
       request: { ...request, url: replacePrefix(replaceSearch(request.url), prefixMap) },

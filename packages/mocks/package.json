@@ -2,12 +2,20 @@
   "name": "@kubev2v/mocks",
   "version": "0.0.1",
   "private": true,
-  "repository": "git@github.com:kubev2v/forklift-console-plugin.git",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kubev2v/forklift-console-plugin.git",
+    "directory": "packages/mocks"
+  },
   "license": "Apache-2.0",
-  "main": "./src/server.ts",
+  "files": [
+    "./dist/*"
+  ],
+  "main": "dist/node/server.js",
+  "types": "dist/node/server.d.ts",
   "scripts": {
-    "build": "rm -rf ./dist && tsc",
-    "start": "npx ts-node .",
+    "build": "rm -rf ./dist && webpack",
+    "start": "npx ts-node src/node/server.ts",
     "lint": "eslint . ",
     "lint:fix": "eslint . --fix"
   },
@@ -15,12 +23,17 @@
     "@mswjs/http-middleware": "^0.8.0",
     "express": "^4.18.2",
     "express-http-proxy": "^1.6.3",
-    "fs": "^0.0.1-security",
     "minimist": "^1.2.8",
     "msw": "^1.2.1",
-    "process": "^0.11.10"
+    "process": "^0.11.10",
+    "webpack": "^5.68.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.7.4"
   },
   "devDependencies": {
     "ts-node": "^10.9.1"
+  },
+  "msw": {
+    "workerDirectory": "generated"
   }
 }

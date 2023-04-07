@@ -7,9 +7,9 @@ import minimist from 'minimist';
 
 import { createMiddleware } from '@mswjs/http-middleware';
 
-import { createDefaultHandlers } from './handlers';
-import defaultPrefixMap from './prefixMap.json';
-import { createHandlersFromHar } from './utils';
+import { createDefaultHandlers } from '../shared/handlers';
+import defaultPrefixMap from '../shared/prefixMap.json';
+import { createHandlersFromHar } from '../shared/utils';
 
 const argv = minimist(process.argv.slice(2));
 
@@ -34,7 +34,7 @@ const prefixMap = prefixMapFile
 console.log('Using prefix map:', prefixMap);
 
 const mswHandlers = harFile
-  ? createHandlersFromHar(harFile, prefixMap)
+  ? createHandlersFromHar(readFileSync(harFile, 'utf-8'), prefixMap)
   : createDefaultHandlers(defaultPrefixMap);
 server.use(createMiddleware(...mswHandlers));
 
