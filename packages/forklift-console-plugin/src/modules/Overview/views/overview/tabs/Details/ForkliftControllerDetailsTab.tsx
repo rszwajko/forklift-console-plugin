@@ -4,6 +4,7 @@ import { RouteComponentProps } from 'react-router-dom';
 import { V1beta1ForkliftController } from '@kubev2v/types';
 import { Grid, GridItem } from '@patternfly/react-core';
 
+import { ChartsCard } from './cards/ChartsCard';
 import { ConditionsCard, MigrationsCard, OperatorCard, OverviewCard, SettingsCard } from './cards';
 
 interface ForkliftControllerDetailsTabProps extends RouteComponentProps {
@@ -26,6 +27,10 @@ export const ForkliftControllerDetailsTab: React.FC<ForkliftControllerDetailsTab
 
         <GridItem span={4} rowSpan={5}>
           <SettingsCard obj={obj} />
+        </GridItem>
+
+        <GridItem span={8}>
+          <ChartsCard obj={obj} />
         </GridItem>
 
         <GridItem span={8}>
