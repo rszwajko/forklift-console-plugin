@@ -3,6 +3,6 @@ import { TableCell } from 'src/modules/Providers/utils';
 
 import { VMCellProps } from './VMCellProps';
 
-export const VMNameCellRenderer: React.FC<VMCellProps> = ({ data }) => {
+export function VMNameCellRenderer<T extends { name: string }>({ data }: VMCellProps<T>) {
   return <TableCell>{data.name}</TableCell>;
-};
+}

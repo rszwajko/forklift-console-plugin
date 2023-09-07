@@ -1,6 +1,7 @@
 import React from 'react';
 import { TableCell } from 'src/modules/Providers/utils';
 
+import { ProviderVirtualMachine } from '@kubev2v/types';
 import {
   BlueInfoCircleIcon,
   RedExclamationCircleIcon,
@@ -22,7 +23,9 @@ const categoryWeights = {
   Information: 3,
 };
 
-export const VMConcernsCellRenderer: React.FC<VMCellProps> = ({ data }) => {
+export function VMConcernsCellRenderer<T extends { vm: ProviderVirtualMachine }>({
+  data,
+}: VMCellProps<T>) {
   return (
     <TableCell>
       <Stack>
@@ -38,4 +41,4 @@ export const VMConcernsCellRenderer: React.FC<VMCellProps> = ({ data }) => {
       </Stack>
     </TableCell>
   );
-};
+}

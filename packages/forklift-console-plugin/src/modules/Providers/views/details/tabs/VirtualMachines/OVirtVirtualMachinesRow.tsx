@@ -1,20 +1,43 @@
 import React from 'react';
 import { TableCell } from 'src/modules/Providers/utils';
 
-import { RowProps } from '@kubev2v/common';
+import { ResourceField, RowProps } from '@kubev2v/common';
 import { OVirtVM } from '@kubev2v/types';
-import { Tr } from '@patternfly/react-table';
+import { Td, Tr } from '@patternfly/react-table';
 
-import { VMCellProps } from './components';
-import { defaultCellRenderers, renderTd, VmData } from './ProviderVirtualMachinesRow';
+import { VMCellProps, VMConcernsCellRenderer, VMNameCellRenderer } from './components';
 
-const cellRenderers: Record<string, React.FC<VMCellProps>> = {
-  ...defaultCellRenderers,
-  host: ({ data }) => <TableCell>{(data?.vm as OVirtVM)?.host}</TableCell>,
-  cluster: ({ data }) => <TableCell>{(data?.vm as OVirtVM)?.cluster}</TableCell>,
-  path: ({ data }) => <TableCell>{(data?.vm as OVirtVM)?.path}</TableCell>,
-  status: ({ data }) => <TableCell>{(data?.vm as OVirtVM)?.status}</TableCell>,
-  description: ({ data }) => <TableCell>{(data?.vm as OVirtVM)?.description}</TableCell>,
+export interface VmData {
+  vm: OVirtVM;
+  name: string;
+  concerns: string;
+}
+
+const renderTd = ({ resourceData, resourceFieldId, resourceFields }: RenderTdProps) => {
+  const fieldId = resourceFieldId;
+
+  const CellRenderer = cellRenderers?.[fieldId] ?? (() => <></>);
+  return (
+    <Td key={fieldId} dataLabel={fieldId}>
+      <CellRenderer data={resourceData} fieldId={fieldId} fields={resourceFields} />
+    </Td>
+  );
+};
+
+interface RenderTdProps {
+  resourceData: VmData;
+  resourceFieldId: string;
+  resourceFields: ResourceField[];
+}
+
+const cellRenderers: Record<string, React.FC<VMCellProps<VmData>>> = {
+  name: VMNameCellRenderer,
+  concerns: VMConcernsCellRenderer,
+  host: ({ data }) => <TableCell>{data?.vm?.host}</TableCell>,
+  cluster: ({ data }) => <TableCell>{data?.vm?.cluster}</TableCell>,
+  path: ({ data }) => <TableCell>{data?.vm?.path}</TableCell>,
+  status: ({ data }) => <TableCell>{data?.vm?.status}</TableCell>,
+  description: ({ data }) => <TableCell>{data?.vm?.description}</TableCell>,
 };
 
 export const OVirtVirtualMachinesRow: React.FC<RowProps<VmData>> = ({
@@ -24,7 +47,7 @@ export const OVirtVirtualMachinesRow: React.FC<RowProps<VmData>> = ({
   return (
     <Tr>
       {resourceFields?.map(({ resourceFieldId }) =>
-        renderTd({ resourceData, resourceFieldId, resourceFields, cellRenderers }),
+        renderTd({ resourceData, resourceFieldId, resourceFields }),
       )}
     </Tr>
   );

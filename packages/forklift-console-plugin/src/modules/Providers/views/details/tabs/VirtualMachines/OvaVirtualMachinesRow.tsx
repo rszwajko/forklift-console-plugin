@@ -1,16 +1,38 @@
 import React from 'react';
 import { TableCell } from 'src/modules/Providers/utils';
 
-import { RowProps } from '@kubev2v/common';
+import { ResourceField, RowProps } from '@kubev2v/common';
 import { OvaVM } from '@kubev2v/types';
-import { Tr } from '@patternfly/react-table';
+import { Td, Tr } from '@patternfly/react-table';
 
-import { VMCellProps } from './components';
-import { defaultCellRenderers, renderTd, VmData } from './ProviderVirtualMachinesRow';
+import { VMCellProps, VMConcernsCellRenderer, VMNameCellRenderer } from './components';
 
-const cellRenderers: Record<string, React.FC<VMCellProps>> = {
-  ...defaultCellRenderers,
-  ovaPath: ({ data }) => <TableCell>{(data?.vm as OvaVM)?.OvaPath}</TableCell>,
+export interface VmData {
+  vm: OvaVM;
+  name: string;
+  concerns: string;
+}
+
+const renderTd = ({ resourceData, resourceFieldId, resourceFields }: RenderTdProps) => {
+  const fieldId = resourceFieldId;
+
+  const CellRenderer = cellRenderers?.[fieldId] ?? (() => <></>);
+  return (
+    <Td key={fieldId} dataLabel={fieldId}>
+      <CellRenderer data={resourceData} fieldId={fieldId} fields={resourceFields} />
+    </Td>
+  );
+};
+
+interface RenderTdProps {
+  resourceData: VmData;
+  resourceFieldId: string;
+  resourceFields: ResourceField[];
+}
+const cellRenderers: Record<string, React.FC<VMCellProps<VmData>>> = {
+  name: VMNameCellRenderer,
+  concerns: VMConcernsCellRenderer,
+  ovaPath: ({ data }) => <TableCell>{data?.vm?.OvaPath}</TableCell>,
 };
 
 export const OvaVirtualMachinesRow: React.FC<RowProps<VmData>> = ({
@@ -20,7 +42,7 @@ export const OvaVirtualMachinesRow: React.FC<RowProps<VmData>> = ({
   return (
     <Tr>
       {resourceFields?.map(({ resourceFieldId }) =>
-        renderTd({ resourceData, resourceFieldId, resourceFields, cellRenderers }),
+        renderTd({ resourceData, resourceFieldId, resourceFields }),
       )}
     </Tr>
   );

@@ -1,9 +1,7 @@
 import { ResourceField } from '@kubev2v/common';
 
-import { VmData } from '../ProviderVirtualMachinesRow';
-
-export interface VMCellProps {
-  data: VmData;
+export interface VMCellProps<T> {
+  data: T;
   fieldId: string;
   fields: ResourceField[];
 }
