@@ -1,5 +1,5 @@
 import { ResourceField } from '@kubev2v/common';
-import { ProviderVirtualMachine } from '@kubev2v/types';
+import { ProviderType, ProviderVirtualMachine } from '@kubev2v/types';
 
 export interface VmData {
   vm: ProviderVirtualMachine;
@@ -8,6 +8,7 @@ export interface VmData {
 }
 
 export interface VMCellProps {
+  providerType: ProviderType;
   data: VmData;
   fieldId: string;
   fields: ResourceField[];

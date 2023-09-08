@@ -3,10 +3,12 @@ import React from 'react';
 import { ResourceField, RowProps } from '@kubev2v/common';
 import { Td, Tr } from '@patternfly/react-table';
 
+import { PowerStateCellRenderer } from './components/PowerStateCellRenderer';
 import { VMCellProps, VmData, VMNameCellRenderer } from './components';
 
 const cellRenderers: Record<string, React.FC<VMCellProps>> = {
   name: VMNameCellRenderer,
+  status: PowerStateCellRenderer,
 };
 
 const renderTd = ({ resourceData, resourceFieldId, resourceFields }: RenderTdProps) => {
@@ -15,7 +17,12 @@ const renderTd = ({ resourceData, resourceFieldId, resourceFields }: RenderTdPro
   const CellRenderer = cellRenderers?.[fieldId] ?? (() => <></>);
   return (
     <Td key={fieldId} dataLabel={fieldId}>
-      <CellRenderer data={resourceData} fieldId={fieldId} fields={resourceFields} />
+      <CellRenderer
+        data={resourceData}
+        fieldId={fieldId}
+        fields={resourceFields}
+        providerType="openshift"
+      />
     </Td>
   );
 };
