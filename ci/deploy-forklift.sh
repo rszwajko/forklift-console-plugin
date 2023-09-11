@@ -14,7 +14,7 @@ echo ""
 echo "Installing forklift operator"
 echo "============================"
 
-FORKLIFT_IMAGE=quay.io/kubev2v/forklift-operator-index:latest
+FORKLIFT_IMAGE=localhost:5001/forklift-operator-index:release-v2.5.1
 FORKLIFT_NAMESPACE=konveyor-forklift
 
 cat << EOF | kubectl apply -f -

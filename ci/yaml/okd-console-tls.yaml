@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: forklift-console-plugin
-          image: quay.io/kubev2v/forklift-console-plugin:latest
+          image: localhost:5001/forklift-console-plugin:release-v2.5.1
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -71,7 +71,7 @@ spec:
           secretName: console-serving-cert
       containers:
       - name: console
-        image: quay.io/openshift/origin-console:latest
+        image: localhost:5001/origin-console:4.11
         volumeMounts:
         - name: console-serving-cert
           mountPath: /var/run/secrets/console-serving-cert
