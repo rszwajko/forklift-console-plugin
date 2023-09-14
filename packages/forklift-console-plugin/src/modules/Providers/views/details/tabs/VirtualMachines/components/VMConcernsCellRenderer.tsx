@@ -8,6 +8,8 @@ import {
 } from '@openshift-console/dynamic-plugin-sdk';
 import { Stack, StackItem } from '@patternfly/react-core';
 
+import { hasConcerns } from '../utils/helpers/hasConcerns';
+
 import { VMCellProps } from './VMCellProps';
 
 const statusIcons = {
@@ -23,10 +25,11 @@ const categoryWeights = {
 };
 
 export const VMConcernsCellRenderer: React.FC<VMCellProps> = ({ data }) => {
+  const concerns = hasConcerns(data?.vm) ? data.vm.concerns : [];
   return (
     <TableCell>
       <Stack>
-        {data?.vm?.concerns
+        {concerns
           ?.sort((a, b) => categoryWeights[a.category] - categoryWeights[b.category])
           ?.map((c) => {
             return (
