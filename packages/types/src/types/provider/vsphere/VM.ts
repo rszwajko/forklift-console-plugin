@@ -20,4 +20,6 @@ export interface VSphereVM extends VSphereResource {
   disks: VSphereDisk[];
   // Concerns          []model.Concern `json:"concerns"`
   concerns: Concern[];
+  // prop added by the UI to implement narrowing (discriminated union)
+  providerType: 'vsphere';
 }

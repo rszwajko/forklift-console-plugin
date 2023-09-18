@@ -28,6 +28,8 @@ export interface OvaVM extends OvaResource {
   Disks: OvaDisk[];
   Networks: OvaNetwork[];
   concerns: Concern[];
+  // prop added by the UI to implement narrowing (discriminated union)
+  providerType: 'ova';
 }
 
 export interface OvaDevice {

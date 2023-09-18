@@ -23,6 +23,8 @@ export interface OpenstackVM extends OpenstackResource {
   attachedVolumes?: OpenstackAttachedVolume[];
   // Concerns          []Concern              `json:"concerns"`
   concerns: Concern[];
+  // prop added by the UI to implement narrowing (discriminated union)
+  providerType: 'openstack';
 }
 
 export interface OpenstackAttachedVolume {

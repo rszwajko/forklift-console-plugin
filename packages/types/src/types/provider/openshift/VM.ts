@@ -7,4 +7,6 @@ import { OpenshiftResource } from './Resource';
 export interface OpenshiftVM extends OpenshiftResource {
   concerns: Concern[];
   object: V1VirtualMachine;
+  // prop added by the UI to implement narrowing (discriminated union)
+  providerType: 'openshift';
 }
