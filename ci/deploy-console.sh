@@ -27,18 +27,18 @@ cat ${OKD_CONSOLE_YAML} | \
     sed "s/${FORKLIFT_PLUGIN_UPSTREAM_IMG//\//\\/}/${FORKLIFT_PLUGIN_IMAGE//\//\\/}/g" | \
     kubectl apply -f -
 
-echo ""
-echo "waiting for OKD console service..."
-echo "=================================="
+#echo ""
+#echo "waiting for OKD console service..."
+#echo "=================================="
 
-kubectl wait deployment -n konveyor-forklift console --for condition=Available=True --timeout=${K8S_TIMEOUT}
+#kubectl wait deployment -n konveyor-forklift console --for condition=Available=True --timeout=${K8S_TIMEOUT}
 
-echo ""
-echo "waiting for forklift console plugin service..."
-echo "========================================="
+#echo ""
+#echo "waiting for forklift console plugin service..."
+#echo "========================================="
 
-image=$(kubectl get deployment -n konveyor-forklift forklift-console-plugin -o jsonpath={$.spec.template.spec.containers[].image})
-echo ""
-echo "Using: ${image}"
+#image=$(kubectl get deployment -n konveyor-forklift forklift-console-plugin -o jsonpath={$.spec.template.spec.containers[].image})
+#echo ""
+#echo "Using: ${image}"
 
-kubectl wait deployment -n konveyor-forklift forklift-console-plugin --for condition=Available=True --timeout=${K8S_TIMEOUT}
+#kubectl wait deployment -n konveyor-forklift forklift-console-plugin --for condition=Available=True --timeout=${K8S_TIMEOUT}

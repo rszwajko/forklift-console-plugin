@@ -83,7 +83,7 @@ spec:
       serviceAccountName: console
       containers:
       - name: console
-        image: localhost:5001/origin-console:4.11
+        image: localhost:5001/origin-console:4.13
         env:
         - name: BRIDGE_PLUGINS
           value: forklift-console-plugin=http://forklift-console-plugin.konveyor-forklift.svc.cluster.local:8080

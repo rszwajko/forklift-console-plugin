@@ -71,7 +71,7 @@ spec:
           secretName: console-serving-cert
       containers:
       - name: console
-        image: localhost:5001/origin-console:4.11
+        image: localhost:5001/origin-console:4.13
         volumeMounts:
         - name: console-serving-cert
           mountPath: /var/run/secrets/console-serving-cert
