@@ -5,7 +5,7 @@ import { EnumToTuple, ResourceFieldFactory } from '@kubev2v/common';
 import { ProviderVirtualMachinesList, VmData } from './components';
 import { OpenShiftVirtualMachinesRow } from './OpenShiftVirtualMachinesRow';
 import { ProviderVirtualMachinesProps } from './ProviderVirtualMachines';
-import { getVmPowerState } from './utils';
+import { getOpenShiftFeatureMap, getVmPowerState } from './utils';
 
 const openShiftVmFieldsMetadataFactory: ResourceFieldFactory = (t) => [
   {
@@ -30,6 +30,26 @@ const openShiftVmFieldsMetadataFactory: ResourceFieldFactory = (t) => [
       type: 'enum',
       placeholderLabel: t('Filter by status'),
       values: EnumToTuple({ off: 'Off', on: 'On', unknown: 'Unknown' }),
+    },
+    sortable: true,
+  },
+  {
+    resourceFieldId: 'features',
+    jsonPath: (data: VmData) => getOpenShiftFeatureMap(data?.vm),
+    label: t('Features'),
+    isVisible: true,
+    isIdentity: false,
+    filter: {
+      type: 'enum',
+      placeholderLabel: t('Filter by features'),
+      values: EnumToTuple({
+        numa: t('NUMA'),
+        gpus: t('GPUs'),
+        hostDevices: t('Host Devices'),
+        persistentTpm: t('Persistent TPM'),
+        persistentEfi: t('Persistent EFI'),
+        dedicatedCpu: t('Dedicated CPU'),
+      }),
     },
     sortable: true,
   },

@@ -53,8 +53,9 @@ export const ProviderVirtualMachinesList: React.FC<ProviderVirtualMachinesListPr
       userSettings={userSettings}
       extraSupportedFilters={{
         concerns: EnumFilter,
+        features: EnumFilter,
       }}
-      extraSupportedMatchers={[concernsMatcher]}
+      extraSupportedMatchers={[concernsMatcher, featuresMatcher]}
     />
   );
 };
@@ -63,4 +64,9 @@ const concernsMatcher: ValueMatcher = {
   filterType: 'concerns',
   matchValue: (concerns: Concern[]) => (filter: string) =>
     Array.isArray(concerns) && concerns.some(({ category }) => category === filter),
+};
+
+const featuresMatcher: ValueMatcher = {
+  filterType: 'features',
+  matchValue: (features: { [key: string]: boolean }) => (filter: string) => !!features?.[filter],
 };

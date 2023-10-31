@@ -114,7 +114,7 @@ interface V1VirtualMachineInstanceSpec {
 
   // Specification of the desired behavior of the VirtualMachineInstance on the host.
   // Domain DomainSpec `json:"domain"`
-  domain: DomainSpec;
+  domain: V1DomainSpec;
 
   // NodeSelector is a selector which must be true for the vmi to fit on a node.
   // Selector which must match a node's labels for the vmi to be scheduled on that node.
@@ -235,7 +235,7 @@ interface V1VirtualMachineInstanceSpec {
   //AccessCredentials []AccessCredential `json:"accessCredentials,omitempty"`
 }
 
-interface DomainSpec {
+export interface V1DomainSpec {
   // Resources describes the Compute Resources required by this vmi.
   // Resources ResourceRequirements `json:"resources,omitempty"`
   resources?: {
@@ -251,6 +251,8 @@ interface DomainSpec {
     cores: number;
     sockets: number;
     threads: number;
+    dedicatedCpuPlacement?: boolean;
+    numa?: unknown;
   };
 
   // Memory allow specifying the VMI memory features.
@@ -264,6 +266,13 @@ interface DomainSpec {
   // Firmware.
   // +optional
   // Firmware *Firmware `json:"firmware,omitempty"`
+  firmware?: {
+    bootloader?: {
+      efi?: {
+        persistent?: boolean;
+      };
+    };
+  };
 
   // Clock sets the clock and timers of the vmi.
   // +optional
@@ -355,6 +364,7 @@ interface Devices {
   // +optional
   // +listType=atomic
   // GPUs []GPU `json:"gpus,omitempty"`
+  gpus?: unknown[];
 
   // Filesystems describes filesystem which is connected to the vmi.
   // +optional
@@ -365,4 +375,9 @@ interface Devices {
   // +optional
   // +listType=atomic
   // HostDevices []HostDevice `json:"hostDevices,omitempty"`
+  hostDevices?: unknown[];
+
+  tpm?: {
+    persistent?: boolean;
+  };
 }
