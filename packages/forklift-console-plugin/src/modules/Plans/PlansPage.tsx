@@ -41,7 +41,11 @@ export const fieldsMetadataFactory: ResourceFieldFactory = (t) => [
     isIdentity: true,
     filter: {
       placeholderLabel: t('Filter by namespace'),
-      type: 'freetext',
+      type: 'autocomplete',
+      values: EnumToTuple({
+        'konveyor-forklift': 'konveyor-forklift',
+        'konveyor-migration': 'konveyor-migration',
+      }),
     },
     sortable: true,
   },
