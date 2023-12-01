@@ -52,4 +52,5 @@ export type K8sConditionStatus = (typeof K8sConditionStatusValues)[number];
 export interface GlobalActionToolbarProps<T> {
   // data currently visible on the screen (i.e. adjusted by paging and filtering)
   dataOnScreen: T[];
+  selectedIds?: string[];
 }
