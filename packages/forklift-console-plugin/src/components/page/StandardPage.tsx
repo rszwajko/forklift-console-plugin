@@ -1,4 +1,4 @@
-import React, { ReactNode, useMemo } from 'react';
+import React, { ReactNode, useMemo, useState } from 'react';
 import { useForkliftTranslation } from 'src/utils/i18n';
 
 import {
@@ -39,6 +39,7 @@ import {
 import { FilterIcon } from '@patternfly/react-icons';
 
 import { ManageColumnsToolbar } from './ManageColumnsToolbar';
+import { withHeaderSelection, withRowSelection } from './withRowSelection';
 
 import './StandardPage.style.css';
 
@@ -155,6 +156,11 @@ export interface StandardPageProps<T> {
    * Toolbar items with global actions.
    */
   GlobalActionToolbarItems?: ((props: GlobalActionToolbarProps<T>) => JSX.Element)[];
+
+  /**
+   *
+   */
+  selectionMode?: { type: 'MULTI'; toId: (item: T) => string; canSelect: (item: T) => string };
 }
 
 /**
@@ -177,7 +183,16 @@ export function StandardPage<T>({
   HeaderMapper = DefaultHeader,
   GlobalActionToolbarItems = [],
   alerts,
+  selectionMode,
 }: StandardPageProps<T>) {
+  const [selectedIds, setSelectedIds]: [string[], (selected: string[]) => void] = useState([]);
+  const isSelected = (item: T) => selectedIds.includes(selectionMode.toId(item));
+  const toggleSelectFor = (items: T[]) => {
+    const ids = items.map(selectionMode.toId);
+    const allSelected = ids.every((id) => selectedIds.includes(id));
+    setSelectedIds([...selectedIds.filter((it) => !ids.includes(it)), ...(allSelected ? [] : ids)]);
+  };
+
   const {
     t,
     i18n: { resolvedLanguage },
@@ -296,8 +311,26 @@ export function StandardPage<T>({
           entities={showPagination ? pageData : filteredData}
           visibleColumns={fields.filter(({ isVisible, isHidden }) => isVisible && !isHidden)}
           aria-label={title}
-          Row={RowMapper}
-          Header={HeaderMapper}
+          Row={
+            selectionMode
+              ? withRowSelection({
+                  RowMapper,
+                  canSelect: selectionMode.canSelect,
+                  isSelected,
+                  toggleSelectFor,
+                })
+              : RowMapper
+          }
+          Header={
+            selectionMode
+              ? withHeaderSelection({
+                  HeaderMapper,
+                  canSelect: selectionMode.canSelect,
+                  isSelected,
+                  toggleSelectFor,
+                })
+              : HeaderMapper
+          }
           activeSort={activeSort}
           setActiveSort={setActiveSort}
           currentNamespace={namespace}
