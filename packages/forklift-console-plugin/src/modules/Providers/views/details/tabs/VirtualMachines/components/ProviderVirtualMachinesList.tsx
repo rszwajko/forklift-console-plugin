@@ -1,6 +1,7 @@
 import React, { FC, useState } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
-import { withIdBasedSelection } from 'src/components/page/withSelection';
+import { GlobalActionWithSelection, withIdBasedSelection } from 'src/components/page/withSelection';
+import { ModalHOC } from 'src/modules/Providers/modals';
 import { ProviderData } from 'src/modules/Providers/utils';
 import { useForkliftTranslation } from 'src/utils/i18n';
 
@@ -16,6 +17,7 @@ import { Concern } from '@kubev2v/types';
 
 import { useInventoryVms } from '../utils/useInventoryVms';
 
+import { MigrationAction } from './MigrationAction';
 import { VmData } from './VMCellProps';
 
 export interface ProviderVirtualMachinesListProps extends RouteComponentProps {
@@ -47,22 +49,28 @@ export const ProviderVirtualMachinesList: FC<ProviderVirtualMachinesListProps> =
   const [userSettings] = useState(() => loadUserSettings({ pageId }));
 
   const [vmData, loading] = useInventoryVms(obj, loaded, loadError);
+  const actions: FC<GlobalActionWithSelection<VmData>>[] = [
+    ({ selectedIds }) => <MigrationAction {...{ provider: obj?.provider, selectedIds }} />,
+  ];
 
   return (
-    <PageWithSelection
-      data-testid="vm-list"
-      dataSource={[vmData || [], !loading, null]}
-      CellMapper={cellMapper}
-      fieldsMetadata={fieldsMetadataFactory(t)}
-      namespace={obj?.provider?.metadata?.namespace}
-      title={t('Virtual Machines')}
-      userSettings={userSettings}
-      extraSupportedFilters={{
-        concerns: SearchableGroupedEnumFilter,
-        features: EnumFilter,
-      }}
-      extraSupportedMatchers={[concernsMatcher, featuresMatcher]}
-    />
+    <ModalHOC>
+      <PageWithSelection
+        data-testid="vm-list"
+        dataSource={[vmData || [], !loading, null]}
+        CellMapper={cellMapper}
+        fieldsMetadata={fieldsMetadataFactory(t)}
+        namespace={obj?.provider?.metadata?.namespace}
+        title={t('Virtual Machines')}
+        userSettings={userSettings}
+        extraSupportedFilters={{
+          concerns: SearchableGroupedEnumFilter,
+          features: EnumFilter,
+        }}
+        extraSupportedMatchers={[concernsMatcher, featuresMatcher]}
+        GlobalActionToolbarItems={actions}
+      />
+    </ModalHOC>
   );
 };
 
