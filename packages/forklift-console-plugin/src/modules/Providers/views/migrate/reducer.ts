@@ -1,28 +1,36 @@
+import { FC } from 'react';
 import { Draft } from 'immer';
 import { isProviderLocalTarget } from 'src/utils/resources';
 import { v4 as randomId } from 'uuid';
 
-import { V1beta1Plan, V1beta1Provider } from '@kubev2v/types';
+import { DefaultRow, ResourceFieldFactory, RowProps, withTr } from '@kubev2v/common';
+import { ProviderType, V1beta1Plan, V1beta1Provider } from '@kubev2v/types';
 
 import { validateK8sName, Validation } from '../../utils';
 import { planTemplate } from '../create/templates';
 import { toId, VmData } from '../details';
+import { openShiftVmFieldsMetadataFactory } from '../details/tabs/VirtualMachines/OpenShiftVirtualMachinesList';
+import { openStackVmFieldsMetadataFactory } from '../details/tabs/VirtualMachines/OpenStackVirtualMachinesList';
+import { ovaVmFieldsMetadataFactory } from '../details/tabs/VirtualMachines/OvaVirtualMachinesList';
+import { oVirtVmFieldsMetadataFactory } from '../details/tabs/VirtualMachines/OVirtVirtualMachinesList';
+import { OVirtVirtualMachinesCells } from '../details/tabs/VirtualMachines/OVirtVirtualMachinesRow';
+import { vSphereVmFieldsMetadataFactory } from '../details/tabs/VirtualMachines/VSphereVirtualMachinesList';
 
 import {
   CreateVmMigration,
   PageAction,
   PlanAvailableProviders,
   PlanDescription,
+  PlanExistingPlans,
   PlanName,
   PlanTargetNamespace,
   PlanTargetProvider,
   SET_AVAILABLE_PROVIDERS,
   SET_DESCRIPTION,
+  SET_EXISTING_PLANS,
   SET_NAME,
   SET_TARGET_NAMESPACE,
   SET_TARGET_PROVIDER,
-  SET_EXISTING_PLANS,
-  PlanExistingPlans,
 } from './actions';
 
 export interface CreateVmMigrationPageState {
@@ -36,6 +44,7 @@ export interface CreateVmMigrationPageState {
   availableProviders: V1beta1Provider[];
   selectedVms: VmData[];
   existingPlans: V1beta1Plan[];
+  vmFieldsFactory: [ResourceFieldFactory, FC<RowProps<unknown>>];
 }
 
 const validateUniqueName = (name: string, existingPlanNames: string[]) =>
@@ -47,13 +56,16 @@ const actions: {
     action: PageAction<CreateVmMigration, unknown>,
   ) => CreateVmMigrationPageState;
 } = {
-  [SET_NAME](
-    draft,
-    { payload: { name } }: PageAction<CreateVmMigration, PlanName>,
-  ) {
+  [SET_NAME](draft, { payload: { name } }: PageAction<CreateVmMigration, PlanName>) {
     draft.newPlan.metadata.name = name;
     draft.validation.name =
-      validateK8sName(name) && validateUniqueName(name, draft.existingPlans.map(plan => plan?.metadata?.name ?? '')) ? 'success' : 'error';
+      validateK8sName(name) &&
+      validateUniqueName(
+        name,
+        draft.existingPlans.map((plan) => plan?.metadata?.name ?? ''),
+      )
+        ? 'success'
+        : 'error';
     return draft;
   },
   [SET_DESCRIPTION](
@@ -84,20 +96,27 @@ const actions: {
     draft,
     { payload: { availableProviders } }: PageAction<CreateVmMigration, PlanAvailableProviders>,
   ) {
+    if (!availableProviders?.length) {
+      draft.availableProviders = [];
+      return draft;
+    }
+
+    draft.availableProviders = availableProviders;
     const targetProvider = draft.newPlan.spec.provider.destination;
+    // set the default provider if none is set
+    // reset the provider if provider was removed
     if (
       !targetProvider ||
       !availableProviders.find((p) => p?.metadata?.name === targetProvider.name)
     ) {
-      // set the default provider if none is set
-      // reset the provider if provider was removed
       const firstHostProvider = availableProviders.find((p) => isProviderLocalTarget(p));
-      draft.newPlan.spec.provider.destination =
-        firstHostProvider && getObjectRef(firstHostProvider);
+      // there might be no host (or other openshift) provider in the namespace
+      draft.newPlan.spec.provider.destination = firstHostProvider
+        ? getObjectRef(firstHostProvider)
+        : undefined;
       draft.newPlan.spec.targetNamespace = undefined;
       draft.validation.targetNamespace = 'default';
     }
-    draft.availableProviders = availableProviders;
     return draft;
   },
   [SET_EXISTING_PLANS](
@@ -168,4 +187,24 @@ export const createInitialState = ({
     name: 'default',
     targetNamespace: 'default',
   },
+  vmFieldsFactory: resourceFieldsForType(sourceProvider?.spec?.type as ProviderType),
 });
+
+export const resourceFieldsForType = (
+  type: ProviderType,
+): [ResourceFieldFactory, FC<RowProps<unknown>>] => {
+  switch (type) {
+    case 'openshift':
+      return [openShiftVmFieldsMetadataFactory, DefaultRow];
+    case 'openstack':
+      return [openStackVmFieldsMetadataFactory, DefaultRow];
+    case 'ova':
+      return [ovaVmFieldsMetadataFactory, DefaultRow];
+    case 'ovirt':
+      return [oVirtVmFieldsMetadataFactory, withTr(OVirtVirtualMachinesCells)];
+    case 'vsphere':
+      return [vSphereVmFieldsMetadataFactory, DefaultRow];
+    default:
+      return [() => [], DefaultRow];
+  }
+};

@@ -25,7 +25,6 @@ export interface PageAction<S, T> {
 
 export interface PlanName {
   name: string;
-  existingPlanNames: string[];
 }
 
 export interface PlanDescription {
@@ -71,14 +70,10 @@ export const setPlanDescription = (
   payload: { description },
 });
 
-export const setPlanName = (
-  name: string,
-  existingPlanNames: string[],
-): PageAction<CreateVmMigration, PlanName> => ({
+export const setPlanName = (name: string): PageAction<CreateVmMigration, PlanName> => ({
   type: 'SET_NAME',
   payload: {
     name,
-    existingPlanNames,
   },
 });
 
