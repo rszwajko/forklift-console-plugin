@@ -3,14 +3,20 @@ import { useHistory } from 'react-router';
 import { useForkliftTranslation } from 'src/utils/i18n';
 import { useImmerReducer } from 'use-immer';
 
-import { ProviderModelGroupVersionKind, ProviderModelRef, V1beta1Provider } from '@kubev2v/types';
+import {
+  PlanModelGroupVersionKind,
+  ProviderModelGroupVersionKind,
+  ProviderModelRef,
+  V1beta1Plan,
+  V1beta1Provider,
+} from '@kubev2v/types';
 import { useK8sWatchResource } from '@openshift-console/dynamic-plugin-sdk';
 import { Button, Flex, FlexItem, PageSection, Title } from '@patternfly/react-core';
 
 import { useToggle } from '../../hooks';
 import { getResourceUrl } from '../../utils';
 
-import { setAvailableProviders } from './actions';
+import { setAvailableProviders, setExistingPlans } from './actions';
 import { PlansCreateForm } from './PlansCreateForm';
 import { useCreateVmMigrationData } from './ProvidersCreateVmMigrationContext';
 import { createInitialState, reducer } from './reducer';
@@ -50,6 +56,14 @@ const ProvidersCreateVmMigrationPage: FC<{
     namespace,
   });
   useEffect(() => dispatch(setAvailableProviders(providers ?? [])), [providers]);
+
+  const [plans] = useK8sWatchResource<V1beta1Plan[]>({
+    groupVersionKind: PlanModelGroupVersionKind,
+    namespaced: true,
+    isList: true,
+    namespace,
+  });
+  useEffect(() => dispatch(setExistingPlans(plans ?? [])), [plans]);
 
   const [isLoading, toggleIsLoading] = useToggle();
   const onUpdate = toggleIsLoading;

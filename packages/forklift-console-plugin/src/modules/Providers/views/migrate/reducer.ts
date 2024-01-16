@@ -21,6 +21,8 @@ import {
   SET_NAME,
   SET_TARGET_NAMESPACE,
   SET_TARGET_PROVIDER,
+  SET_EXISTING_PLANS,
+  PlanExistingPlans,
 } from './actions';
 
 export interface CreateVmMigrationPageState {
@@ -33,6 +35,7 @@ export interface CreateVmMigrationPageState {
   };
   availableProviders: V1beta1Provider[];
   selectedVms: VmData[];
+  existingPlans: V1beta1Plan[];
 }
 
 const validateUniqueName = (name: string, existingPlanNames: string[]) =>
@@ -46,11 +49,11 @@ const actions: {
 } = {
   [SET_NAME](
     draft,
-    { payload: { name, existingPlanNames } }: PageAction<CreateVmMigration, PlanName>,
+    { payload: { name } }: PageAction<CreateVmMigration, PlanName>,
   ) {
     draft.newPlan.metadata.name = name;
     draft.validation.name =
-      validateK8sName(name) && validateUniqueName(name, existingPlanNames) ? 'success' : 'error';
+      validateK8sName(name) && validateUniqueName(name, draft.existingPlans.map(plan => plan?.metadata?.name ?? '')) ? 'success' : 'error';
     return draft;
   },
   [SET_DESCRIPTION](
@@ -95,6 +98,13 @@ const actions: {
       draft.validation.targetNamespace = 'default';
     }
     draft.availableProviders = availableProviders;
+    return draft;
+  },
+  [SET_EXISTING_PLANS](
+    draft,
+    { payload: { existingPlans } }: PageAction<CreateVmMigration, PlanExistingPlans>,
+  ) {
+    draft.existingPlans = existingPlans;
     return draft;
   },
 };
@@ -153,6 +163,7 @@ export const createInitialState = ({
   apiError: null,
   availableProviders: [],
   selectedVms,
+  existingPlans: [],
   validation: {
     name: 'default',
     targetNamespace: 'default',
