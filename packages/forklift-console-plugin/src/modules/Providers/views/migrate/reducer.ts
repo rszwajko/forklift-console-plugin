@@ -4,10 +4,17 @@ import { isProviderLocalOpenshift } from 'src/utils/resources';
 import { v4 as randomId } from 'uuid';
 
 import { DefaultRow, ResourceFieldFactory, RowProps, withTr } from '@kubev2v/common';
-import { OpenShiftNamespace, ProviderType, V1beta1Plan, V1beta1Provider } from '@kubev2v/types';
+import {
+  OpenShiftNamespace,
+  ProviderType,
+  V1beta1NetworkMap,
+  V1beta1Plan,
+  V1beta1Provider,
+  V1beta1StorageMap,
+} from '@kubev2v/types';
 
 import { getIsTarget, validateK8sName, Validation } from '../../utils';
-import { planTemplate } from '../create/templates';
+import { networkMapTemplate, planTemplate, storageMapTemplate } from '../create/templates';
 import { toId, VmData } from '../details';
 import { openShiftVmFieldsMetadataFactory } from '../details/tabs/VirtualMachines/OpenShiftVirtualMachinesList';
 import { OpenShiftVirtualMachinesCells } from '../details/tabs/VirtualMachines/OpenShiftVirtualMachinesRow';
@@ -41,6 +48,8 @@ import {
 
 export interface CreateVmMigrationPageState {
   newPlan: V1beta1Plan;
+  newNetMap: V1beta1NetworkMap;
+  newStorageMap: V1beta1StorageMap;
   validationError: Error | null;
   apiError: Error | null;
   validation: {
@@ -53,6 +62,9 @@ export interface CreateVmMigrationPageState {
   existingPlans: V1beta1Plan[];
   vmFieldsFactory: [ResourceFieldFactory, FC<RowProps<VmData>>];
   availableTargetNamespaces: OpenShiftNamespace[];
+  sourceNetworks: string[];
+  targetNetworks: string[];
+  availableTargetNetworks: unknown[];
 }
 
 const validateUniqueName = (name: string, existingPlanNames: string[]) =>
@@ -201,9 +213,7 @@ export const createInitialState = ({
     ...planTemplate,
     metadata: {
       ...planTemplate?.metadata,
-      name: sourceProvider?.metadata?.name
-        ? `${sourceProvider?.metadata?.name}-${randomId().substring(0, 8)}`
-        : undefined,
+      name: `${sourceProvider.metadata.name}-${randomId().substring(0, 8)}`,
       namespace,
     },
     spec: {
@@ -214,6 +224,22 @@ export const createInitialState = ({
       },
       targetNamespace: undefined,
       vms: selectedVms.map((data) => ({ name: data.name, id: toId(data) })),
+    },
+  },
+  newNetMap: {
+    ...networkMapTemplate,
+    metadata: {
+      ...networkMapTemplate?.metadata,
+      name: `${sourceProvider.metadata.name}-${randomId().substring(0, 8)}`,
+      namespace,
+    },
+  },
+  newStorageMap: {
+    ...storageMapTemplate,
+    metadata: {
+      ...storageMapTemplate?.metadata,
+      name: `${sourceProvider.metadata.name}-${randomId().substring(0, 8)}`,
+      namespace,
     },
   },
   validationError: null,
@@ -228,6 +254,9 @@ export const createInitialState = ({
   },
   vmFieldsFactory: resourceFieldsForType(sourceProvider?.spec?.type as ProviderType),
   availableTargetNamespaces: [],
+  sourceNetworks: ['foo', 'bar'],
+  targetNetworks: ['oof', 'rab'],
+  availableTargetNetworks: [],
 });
 
 export const resourceFieldsForType = (

@@ -4,7 +4,11 @@ import { useForkliftTranslation } from 'src/utils/i18n';
 import { isProviderLocalOpenshift } from 'src/utils/resources';
 
 import { EnumFilter, SearchableGroupedEnumFilter } from '@kubev2v/common';
-import { ProviderModelGroupVersionKind } from '@kubev2v/types';
+import {
+  NetworkMapModelGroupVersionKind,
+  ProviderModelGroupVersionKind,
+  StorageMapModelGroupVersionKind,
+} from '@kubev2v/types';
 import { ResourceLink } from '@openshift-console/dynamic-plugin-sdk';
 import {
   Button,
@@ -29,13 +33,23 @@ import {
 import { DetailsItem, getIsTarget } from '../../utils';
 import { concernsMatcher, featuresMatcher, VmData } from '../details';
 
-import { PageAction, setPlanName, setPlanTargetNamespace, setPlanTargetProvider } from './actions';
+import {
+  PageAction,
+  replaceNetworkMapping,
+  replaceStorageMapping,
+  setPlanName,
+  setPlanTargetNamespace,
+  setPlanTargetProvider,
+} from './actions';
 import { EditableDescriptionItem } from './EditableDescriptionItem';
+import { MappingList } from './MappingList';
 import { CreateVmMigrationPageState } from './reducer';
 
 export const PlansCreateForm = ({
   state: {
     newPlan: plan,
+    newNetMap: netMap,
+    newStorageMap: storageMap,
     validation,
     selectedVms,
     vmFieldsFactory: [vmFieldsFactory, RowMapper],
@@ -216,6 +230,62 @@ export const PlansCreateForm = ({
                 onEdit={() => setIsTargetNamespaceEdited(true)}
               />
             )}
+            <DescriptionListGroup>
+              <DescriptionListTerm>
+                <span className="forklift-page-editable-description-item">
+                  {t('Network map:')}
+                  <ResourceLink
+                    groupVersionKind={NetworkMapModelGroupVersionKind}
+                    namespace={netMap.metadata?.namespace}
+                    name={netMap.metadata?.name}
+                  />
+                </span>
+              </DescriptionListTerm>
+              <DescriptionListDescription className="forklift-page-mapping-list">
+                <MappingList
+                  addMapping={(newMapping) => dispatch(replaceNetworkMapping({ next: newMapping }))}
+                  replaceMapping={({ current, next }) =>
+                    dispatch(replaceNetworkMapping({ current, next }))
+                  }
+                  deleteMapping={(current) => dispatch(replaceNetworkMapping({ current }))}
+                  availableDestinations={['foo', 'bar']}
+                  availableSources={['foo', 'bar']}
+                  mappings={[
+                    { source: 'foo', destination: 'bar' },
+                    { source: 'foo', destination: 'bar' },
+                    { source: 'foo', destination: 'bar' },
+                    { source: 'foo', destination: 'bar' },
+                  ]}
+                />
+              </DescriptionListDescription>
+            </DescriptionListGroup>
+            <DescriptionListGroup>
+              <DescriptionListTerm>
+                {t('Storage map:')}
+                <ResourceLink
+                  groupVersionKind={StorageMapModelGroupVersionKind}
+                  namespace={storageMap.metadata?.namespace}
+                  name={storageMap.metadata?.name}
+                />
+              </DescriptionListTerm>
+              <DescriptionListDescription className="forklift-page-mapping-list">
+                <MappingList
+                  addMapping={(newMapping) => dispatch(replaceStorageMapping({ next: newMapping }))}
+                  replaceMapping={({ current, next }) =>
+                    dispatch(replaceStorageMapping({ current, next }))
+                  }
+                  deleteMapping={(current) => dispatch(replaceStorageMapping({ current }))}
+                  availableDestinations={['foo', 'bar']}
+                  availableSources={['foo', 'bar']}
+                  mappings={[
+                    { source: 'foo', destination: 'bar' },
+                    { source: 'foo', destination: 'bar' },
+                    { source: 'foo', destination: 'bar' },
+                    { source: 'foo', destination: 'bar' },
+                  ]}
+                />
+              </DescriptionListDescription>
+            </DescriptionListGroup>
           </DescriptionList>
         </DrawerContentBody>
       </DrawerContent>
