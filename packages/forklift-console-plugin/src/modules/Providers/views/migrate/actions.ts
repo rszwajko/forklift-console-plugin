@@ -1,5 +1,7 @@
 import { OpenShiftNamespace, V1beta1Plan, V1beta1Provider } from '@kubev2v/types';
 
+import { Mapping } from './MappingList';
+
 // action type names
 export const SET_NAME = 'SET_NAME';
 export const SET_DESCRIPTION = 'SET_DESCRIPTION';
@@ -8,6 +10,8 @@ export const SET_TARGET_NAMESPACE = 'SET_TARGET_NAMESPACE';
 export const SET_AVAILABLE_PROVIDERS = 'SET_AVAILABLE_PROVIDERS';
 export const SET_EXISTING_PLANS = 'SET_EXISTING_PLANS';
 export const SET_AVAILABLE_TARGET_NAMESPACES = 'SET_AVAILABLE_TARGET_NAMESPACES';
+export const REPLACE_NETWORK_MAPPING = 'REPLACE_NETWORK_MAPPING';
+export const REPLACE_STORAGE_MAPPING = 'REPLACE_STORAGE_MAPPING';
 
 export type CreateVmMigration =
   | typeof SET_NAME
@@ -16,7 +20,9 @@ export type CreateVmMigration =
   | typeof SET_TARGET_NAMESPACE
   | typeof SET_AVAILABLE_PROVIDERS
   | typeof SET_EXISTING_PLANS
-  | typeof SET_AVAILABLE_TARGET_NAMESPACES;
+  | typeof SET_AVAILABLE_TARGET_NAMESPACES
+  | typeof REPLACE_NETWORK_MAPPING
+  | typeof REPLACE_STORAGE_MAPPING;
 
 export interface PageAction<S, T> {
   type: S;
@@ -51,6 +57,10 @@ export interface PlanExistingPlans {
 
 export interface PlanAvailableTargetNamespaces {
   availableTargetNamespaces: OpenShiftNamespace[];
+}
+export interface PlanMapping {
+  current?: Mapping;
+  next?: Mapping;
 }
 
 // action creators
@@ -106,4 +116,20 @@ export const setAvailableTargetNamespaces = (
 ): PageAction<CreateVmMigration, PlanAvailableTargetNamespaces> => ({
   type: 'SET_AVAILABLE_TARGET_NAMESPACES',
   payload: { availableTargetNamespaces },
+});
+
+export const replaceStorageMapping = ({
+  current,
+  next,
+}: PlanMapping): PageAction<CreateVmMigration, PlanMapping> => ({
+  type: 'REPLACE_STORAGE_MAPPING',
+  payload: { current, next },
+});
+
+export const replaceNetworkMapping = ({
+  current,
+  next,
+}: PlanMapping): PageAction<CreateVmMigration, PlanMapping> => ({
+  type: 'REPLACE_NETWORK_MAPPING',
+  payload: { current, next },
 });
