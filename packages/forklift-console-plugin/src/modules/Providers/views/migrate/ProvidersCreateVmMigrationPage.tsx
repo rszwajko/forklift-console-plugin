@@ -16,9 +16,15 @@ import { Button, Flex, FlexItem, PageSection } from '@patternfly/react-core';
 
 import { useToggle } from '../../hooks';
 import { useNamespaces } from '../../hooks/useNamespaces';
+import { useNetworks } from '../../hooks/useNetworks';
 import { getResourceUrl } from '../../utils';
 
-import { setAvailableProviders, setAvailableTargetNamespaces, setExistingPlans } from './actions';
+import {
+  setAvailableProviders,
+  setAvailableTargetNamespaces,
+  setAvailableTargetNetworks,
+  setExistingPlans,
+} from './actions';
 import { PlansCreateForm } from './PlansCreateForm';
 import { useCreateVmMigrationData } from './ProvidersCreateVmMigrationContext';
 import { createInitialState, reducer } from './reducer';
@@ -67,10 +73,17 @@ const ProvidersCreateVmMigrationPage: FC<{
   });
   useEffect(() => dispatch(setExistingPlans(plans ?? [])), [plans]);
 
-  const [namespaces] = useNamespaces(
-    providers?.find((p) => p?.metadata?.name === state.newPlan.spec?.provider?.destination?.name),
+  const targetProvider = providers?.find(
+    (p) => p?.metadata?.name === state.newPlan.spec?.provider?.destination?.name,
   );
+  const [namespaces] = useNamespaces(targetProvider);
   useEffect(() => dispatch(setAvailableTargetNamespaces(namespaces)), [namespaces]);
+
+  const [targetNetworks] = useNetworks(targetProvider);
+  useEffect(() => dispatch(setAvailableTargetNetworks(targetNetworks)), [targetNetworks]);
+
+  // const [sourceNetworks] = useNetworks(sourceProvider);
+  // useEffect(() => dispatch(setAvailableTargetNamespaces(sourceNetworks)), [sourceNetworks]);
 
   const [isLoading, toggleIsLoading] = useToggle();
   const onUpdate = toggleIsLoading;

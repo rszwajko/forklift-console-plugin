@@ -55,6 +55,12 @@ export const PlansCreateForm = ({
     vmFieldsFactory: [vmFieldsFactory, RowMapper],
     availableProviders,
     availableTargetNamespaces,
+    sourceNetworks,
+    targetNetworks,
+    networkMappings,
+    sourceStorages,
+    targetStorages,
+    storageMappings,
   },
   dispatch,
 }: {
@@ -248,25 +254,22 @@ export const PlansCreateForm = ({
                     dispatch(replaceNetworkMapping({ current, next }))
                   }
                   deleteMapping={(current) => dispatch(replaceNetworkMapping({ current }))}
-                  availableDestinations={['foo', 'bar']}
-                  availableSources={['foo', 'bar']}
-                  mappings={[
-                    { source: 'foo', destination: 'bar' },
-                    { source: 'foo', destination: 'bar' },
-                    { source: 'foo', destination: 'bar' },
-                    { source: 'foo', destination: 'bar' },
-                  ]}
+                  availableDestinations={targetNetworks}
+                  availableSources={sourceNetworks}
+                  mappings={networkMappings}
                 />
               </DescriptionListDescription>
             </DescriptionListGroup>
             <DescriptionListGroup>
               <DescriptionListTerm>
-                {t('Storage map:')}
-                <ResourceLink
-                  groupVersionKind={StorageMapModelGroupVersionKind}
-                  namespace={storageMap.metadata?.namespace}
-                  name={storageMap.metadata?.name}
-                />
+                <span className="forklift-page-editable-description-item">
+                  {t('Storage map:')}
+                  <ResourceLink
+                    groupVersionKind={StorageMapModelGroupVersionKind}
+                    namespace={storageMap.metadata?.namespace}
+                    name={storageMap.metadata?.name}
+                  />
+                </span>
               </DescriptionListTerm>
               <DescriptionListDescription className="forklift-page-mapping-list">
                 <MappingList
@@ -275,14 +278,9 @@ export const PlansCreateForm = ({
                     dispatch(replaceStorageMapping({ current, next }))
                   }
                   deleteMapping={(current) => dispatch(replaceStorageMapping({ current }))}
-                  availableDestinations={['foo', 'bar']}
-                  availableSources={['foo', 'bar']}
-                  mappings={[
-                    { source: 'foo', destination: 'bar' },
-                    { source: 'foo', destination: 'bar' },
-                    { source: 'foo', destination: 'bar' },
-                    { source: 'foo', destination: 'bar' },
-                  ]}
+                  availableDestinations={targetStorages}
+                  availableSources={sourceStorages}
+                  mappings={storageMappings}
                 />
               </DescriptionListDescription>
             </DescriptionListGroup>

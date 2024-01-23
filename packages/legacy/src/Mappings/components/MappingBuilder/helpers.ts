@@ -192,6 +192,7 @@ export const getBuilderItemsWithMissingSources = (
     nicProfiles,
     disks
   );
+  // TODO !!!!
   const itemsToKeep = keepNonRequiredSources
     ? nonEmptyItems
     : nonEmptyItems.filter((item) =>

@@ -12,6 +12,7 @@ import {
   V1beta1Provider,
   V1beta1StorageMap,
 } from '@kubev2v/types';
+import { V1beta1NetworkMapSpecMapDestination } from '@kubev2v/types/dist/models/V1beta1NetworkMapSpecMapDestination';
 
 import { getIsTarget, validateK8sName, Validation } from '../../utils';
 import { networkMapTemplate, planTemplate, storageMapTemplate } from '../create/templates';
@@ -29,22 +30,27 @@ import { VSphereVirtualMachinesCells } from '../details/tabs/VirtualMachines/VSp
 
 import {
   CreateVmMigration,
+  DEFAULT_NAMESPACE,
   PageAction,
   PlanAvailableProviders,
   PlanAvailableTargetNamespaces,
+  PlanAvailableTargetNetworks,
   PlanDescription,
   PlanExistingPlans,
   PlanName,
   PlanTargetNamespace,
   PlanTargetProvider,
+  POD_NETWORK,
   SET_AVAILABLE_PROVIDERS,
   SET_AVAILABLE_TARGET_NAMESPACES,
+  SET_AVAILABLE_TARGET_NETWORKS,
   SET_DESCRIPTION,
   SET_EXISTING_PLANS,
   SET_NAME,
   SET_TARGET_NAMESPACE,
   SET_TARGET_PROVIDER,
 } from './actions';
+import { Mapping } from './MappingList';
 
 export interface CreateVmMigrationPageState {
   newPlan: V1beta1Plan;
@@ -64,7 +70,14 @@ export interface CreateVmMigrationPageState {
   availableTargetNamespaces: OpenShiftNamespace[];
   sourceNetworks: string[];
   targetNetworks: string[];
-  availableTargetNetworks: unknown[];
+  networkMappings: Mapping[];
+  availableTargetNetworks: V1beta1NetworkMapSpecMapDestination[];
+  networksUsedBySelectedVms: { [name: string]: unknown };
+  sourceStorages: string[];
+  targetStorages: string[];
+  storageMappings: Mapping[];
+  availableTargetStorages: { [name: string]: unknown };
+  storagesUsedBySelectedVms: { [name: string]: unknown };
 }
 
 const validateUniqueName = (name: string, existingPlanNames: string[]) =>
@@ -111,6 +124,7 @@ const actions: {
       targetNamespace,
       draft.availableTargetNamespaces,
     );
+    setTargetNetworks(draft);
     return draft;
   },
   [SET_TARGET_PROVIDER](
@@ -152,12 +166,59 @@ const actions: {
     }: PageAction<CreateVmMigration, PlanAvailableTargetNamespaces>,
   ) {
     draft.availableTargetNamespaces = availableTargetNamespaces;
+
+    draft.validation.targetNamespace = validateTargetNamespace(
+      draft.newPlan.spec.targetNamespace,
+      availableTargetNamespaces,
+    );
+    if (draft.validation.targetNamespace === 'success') {
+      return draft;
+    }
+
+    const resolvedProvider = resolveTargetProvider(
+      draft.newPlan.spec.provider?.destination?.name,
+      draft.availableProviders,
+    );
+    draft.newPlan.spec.targetNamespace =
+      (isProviderLocalOpenshift(resolvedProvider) && draft.newPlan.metadata.namespace) ||
+      (availableTargetNamespaces.find((n) => n.name === DEFAULT_NAMESPACE) && DEFAULT_NAMESPACE) ||
+      availableTargetNamespaces[0]?.name;
+
     draft.validation.targetNamespace = validateTargetNamespace(
       draft.newPlan.spec.targetNamespace,
       availableTargetNamespaces,
     );
     return draft;
   },
+  [SET_AVAILABLE_TARGET_NETWORKS](
+    draft,
+    {
+      payload: { availableTargetNetworks },
+    }: PageAction<CreateVmMigration, PlanAvailableTargetNetworks>,
+  ) {
+    const networks: V1beta1NetworkMapSpecMapDestination[] = [
+      { type: 'pod', name: POD_NETWORK },
+      ...availableTargetNetworks.map(
+        ({ type, ...rest }) =>
+          ({
+            ...rest,
+            type: type ?? 'multus',
+          } as V1beta1NetworkMapSpecMapDestination),
+      ),
+    ];
+    // .filter(({ namespace }) => namespace === draft.newPlan.spec.targetNamespace),
+    draft.availableTargetNetworks = networks;
+    setTargetNetworks(draft);
+    return draft;
+  },
+};
+
+const setTargetNetworks = (draft: Draft<CreateVmMigrationPageState>) => {
+  draft.targetNetworks = draft.availableTargetNetworks
+    .filter(
+      ({ namespace, type }) => namespace === draft.newPlan.spec.targetNamespace || type === 'pod',
+    )
+    .map(({ name }) => name);
 };
 
 const setTargetProvider = (
@@ -165,18 +226,24 @@ const setTargetProvider = (
   targetProviderName: string,
   availableProviders: V1beta1Provider[],
 ) => {
+  if (draft.newPlan.spec.provider?.destination?.name === targetProviderName) {
+    // avoid side effects if no real change
+    return draft;
+  }
   // there might be no target provider in the namespace
-  const resolvedTarget = availableProviders
-    .filter(getIsTarget)
-    .find((p) => p?.metadata?.name === targetProviderName);
+  const resolvedTarget = resolveTargetProvider(targetProviderName, availableProviders);
   draft.newPlan.spec.provider.destination = resolvedTarget && getObjectRef(resolvedTarget);
-  draft.newPlan.spec.targetNamespace = isProviderLocalOpenshift(resolvedTarget)
-    ? draft.newPlan.metadata.namespace
-    : 'default';
   // assume the value is correct and wait until the namespaces will be loaded for further validation
+  draft.newPlan.spec.targetNamespace = undefined;
   draft.validation.targetNamespace = 'default';
+  draft.availableTargetNamespaces = [];
+  draft.availableTargetNetworks = [];
+  draft.networkMappings = [];
   draft.validation.targetProvider = resolvedTarget ? 'success' : 'error';
 };
+
+const resolveTargetProvider = (name: string, availableProviders: V1beta1Provider[]) =>
+  availableProviders.filter(getIsTarget).find((p) => p?.metadata?.name === name);
 
 export const reducer = (
   draft: Draft<CreateVmMigrationPageState>,
@@ -255,9 +322,18 @@ export const createInitialState = ({
   vmFieldsFactory: resourceFieldsForType(sourceProvider?.spec?.type as ProviderType),
   availableTargetNamespaces: [],
   sourceNetworks: ['foo', 'bar'],
-  targetNetworks: ['oof', 'rab'],
-  availableTargetNetworks: [],
+  targetNetworks: ['foo2', 'bar2'],
+  networkMappings: [{ source: 'foo', destination: 'foo2' }],
+  availableTargetNetworks: [{ name: 'foo2', type: 'multus' }],
+  networksUsedBySelectedVms: extractUniqueNetworks(selectedVms),
+  sourceStorages: [],
+  targetStorages: [],
+  storageMappings: [],
+  availableTargetStorages: {},
+  storagesUsedBySelectedVms: {},
 });
+
+const extractUniqueNetworks = (vms: VmData[]): { [name: string]: unknown } => ({});
 
 export const resourceFieldsForType = (
   type: ProviderType,

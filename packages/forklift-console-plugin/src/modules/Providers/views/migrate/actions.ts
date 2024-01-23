@@ -1,6 +1,10 @@
 import { OpenShiftNamespace, V1beta1Plan, V1beta1Provider } from '@kubev2v/types';
+import { V1beta1NetworkMapSpecMapSource } from '@kubev2v/types/dist/models/V1beta1NetworkMapSpecMapSource';
 
 import { Mapping } from './MappingList';
+
+export const POD_NETWORK = 'Pod Networking';
+export const DEFAULT_NAMESPACE = 'default';
 
 // action type names
 export const SET_NAME = 'SET_NAME';
@@ -12,6 +16,7 @@ export const SET_EXISTING_PLANS = 'SET_EXISTING_PLANS';
 export const SET_AVAILABLE_TARGET_NAMESPACES = 'SET_AVAILABLE_TARGET_NAMESPACES';
 export const REPLACE_NETWORK_MAPPING = 'REPLACE_NETWORK_MAPPING';
 export const REPLACE_STORAGE_MAPPING = 'REPLACE_STORAGE_MAPPING';
+export const SET_AVAILABLE_TARGET_NETWORKS = 'SET_AVAILABLE_TARGET_NETWORKS';
 
 export type CreateVmMigration =
   | typeof SET_NAME
@@ -22,7 +27,8 @@ export type CreateVmMigration =
   | typeof SET_EXISTING_PLANS
   | typeof SET_AVAILABLE_TARGET_NAMESPACES
   | typeof REPLACE_NETWORK_MAPPING
-  | typeof REPLACE_STORAGE_MAPPING;
+  | typeof REPLACE_STORAGE_MAPPING
+  | typeof SET_AVAILABLE_TARGET_NETWORKS;
 
 export interface PageAction<S, T> {
   type: S;
@@ -58,6 +64,11 @@ export interface PlanExistingPlans {
 export interface PlanAvailableTargetNamespaces {
   availableTargetNamespaces: OpenShiftNamespace[];
 }
+
+export interface PlanAvailableTargetNetworks {
+  availableTargetNetworks: V1beta1NetworkMapSpecMapSource[];
+}
+
 export interface PlanMapping {
   current?: Mapping;
   next?: Mapping;
@@ -132,4 +143,11 @@ export const replaceNetworkMapping = ({
 }: PlanMapping): PageAction<CreateVmMigration, PlanMapping> => ({
   type: 'REPLACE_NETWORK_MAPPING',
   payload: { current, next },
+});
+
+export const setAvailableTargetNetworks = (
+  availableTargetNetworks: V1beta1NetworkMapSpecMapSource[],
+): PageAction<CreateVmMigration, PlanAvailableTargetNetworks> => ({
+  type: 'SET_AVAILABLE_TARGET_NETWORKS',
+  payload: { availableTargetNetworks },
 });
