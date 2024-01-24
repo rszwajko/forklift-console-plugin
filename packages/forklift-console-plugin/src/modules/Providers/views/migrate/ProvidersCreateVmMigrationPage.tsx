@@ -27,7 +27,8 @@ import {
 } from './actions';
 import { PlansCreateForm } from './PlansCreateForm';
 import { useCreateVmMigrationData } from './ProvidersCreateVmMigrationContext';
-import { createInitialState, reducer } from './reducer';
+import { reducer } from './reducer';
+import { createInitialState } from './stateHelpers';
 
 const ProvidersCreateVmMigrationPage: FC<{
   namespace: string;
