@@ -47,20 +47,18 @@ import { CreateVmMigrationPageState } from './reducer';
 
 export const PlansCreateForm = ({
   state: {
-    newPlan: plan,
-    newNetMap: netMap,
-    newStorageMap: storageMap,
+    underConstruction: { plan, netMap, storageMap },
     validation,
-    selectedVms,
-    vmFieldsFactory: [vmFieldsFactory, RowMapper],
-    availableProviders,
-    availableTargetNamespaces,
-    sourceNetworks,
-    targetNetworks,
-    networkMappings,
-    sourceStorages,
-    targetStorages,
-    storageMappings,
+    receivedAsParams: { selectedVms },
+    calculatedOnce: {
+      vmFieldsFactory: [vmFieldsFactory, RowMapper],
+    },
+    existingResources: {
+      providers: availableProviders,
+      targetNamespaces: availableTargetNamespaces,
+    },
+    workArea: { sourceNetworks, networkMappings, storageMappings, sourceStorages },
+    calculatedPerNamespace: { targetNetworks, targetStorages },
   },
   dispatch,
 }: {
@@ -106,20 +104,20 @@ export const PlansCreateForm = ({
               default: '1Col',
             }}
           >
-            {isNameEdited || validation.name === 'error' ? (
+            {isNameEdited || validation.planName === 'error' ? (
               <Form isWidthLimited>
                 <FormGroup
                   label={t('Plan name')}
                   isRequired
                   fieldId="planName"
-                  validated={validation.name}
+                  validated={validation.planName}
                 >
                   <TextInput
                     isRequired
                     type="text"
                     id="planName"
                     value={plan.metadata.name}
-                    validated={validation.name}
+                    validated={validation.planName}
                     onChange={(value) => dispatch(setPlanName(value?.trim() ?? ''))}
                   />
                 </FormGroup>

@@ -56,6 +56,9 @@ const ProvidersCreateVmMigrationPage: FC<{
     { namespace, sourceProvider, selectedVms },
     createInitialState,
   );
+  const {
+    underConstruction: { plan },
+  } = state;
 
   const [providers] = useK8sWatchResource<V1beta1Provider[]>({
     groupVersionKind: ProviderModelGroupVersionKind,
@@ -74,7 +77,7 @@ const ProvidersCreateVmMigrationPage: FC<{
   useEffect(() => dispatch(setExistingPlans(plans ?? [])), [plans]);
 
   const targetProvider = providers?.find(
-    (p) => p?.metadata?.name === state.newPlan.spec?.provider?.destination?.name,
+    (p) => p?.metadata?.name === plan.spec?.provider?.destination?.name,
   );
   const [namespaces] = useNamespaces(targetProvider);
   useEffect(() => dispatch(setAvailableTargetNamespaces(namespaces)), [namespaces]);

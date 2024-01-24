@@ -35,7 +35,6 @@ import {
   PlanAvailableProviders,
   PlanAvailableTargetNamespaces,
   PlanAvailableTargetNetworks,
-  PlanDescription,
   PlanExistingPlans,
   PlanName,
   PlanTargetNamespace,
@@ -44,7 +43,6 @@ import {
   SET_AVAILABLE_PROVIDERS,
   SET_AVAILABLE_TARGET_NAMESPACES,
   SET_AVAILABLE_TARGET_NETWORKS,
-  SET_DESCRIPTION,
   SET_EXISTING_PLANS,
   SET_NAME,
   SET_TARGET_NAMESPACE,
@@ -53,31 +51,43 @@ import {
 import { Mapping } from './MappingList';
 
 export interface CreateVmMigrationPageState {
-  newPlan: V1beta1Plan;
-  newNetMap: V1beta1NetworkMap;
-  newStorageMap: V1beta1StorageMap;
+  underConstruction: {
+    plan: V1beta1Plan;
+    netMap: V1beta1NetworkMap;
+    storageMap: V1beta1StorageMap;
+  };
   validationError: Error | null;
   apiError: Error | null;
   validation: {
-    name: Validation;
+    planName: Validation;
     targetNamespace: Validation;
     targetProvider: Validation;
   };
-  availableProviders: V1beta1Provider[];
-  selectedVms: VmData[];
-  existingPlans: V1beta1Plan[];
-  vmFieldsFactory: [ResourceFieldFactory, FC<RowProps<VmData>>];
-  availableTargetNamespaces: OpenShiftNamespace[];
-  sourceNetworks: string[];
-  targetNetworks: string[];
-  networkMappings: Mapping[];
-  availableTargetNetworks: V1beta1NetworkMapSpecMapDestination[];
-  networksUsedBySelectedVms: { [name: string]: unknown };
-  sourceStorages: string[];
-  targetStorages: string[];
-  storageMappings: Mapping[];
-  availableTargetStorages: { [name: string]: unknown };
-  storagesUsedBySelectedVms: { [name: string]: unknown };
+  existingResources: {
+    providers: V1beta1Provider[];
+    plans: V1beta1Plan[];
+    targetNamespaces: OpenShiftNamespace[];
+    targetNetworks: V1beta1NetworkMapSpecMapDestination[];
+    targetStorages: unknown[];
+  };
+  calculatedOnce: {
+    storagesUsedBySelectedVms: { [name: string]: unknown };
+    networksUsedBySelectedVms: { [name: string]: unknown };
+    vmFieldsFactory: [ResourceFieldFactory, FC<RowProps<VmData>>];
+  };
+  calculatedPerNamespace: {
+    targetStorages: string[];
+    targetNetworks: string[];
+  };
+  receivedAsParams: {
+    selectedVms: VmData[];
+  };
+  workArea: {
+    sourceNetworks: string[];
+    sourceStorages: string[];
+    networkMappings: Mapping[];
+    storageMappings: Mapping[];
+  };
 }
 
 const validateUniqueName = (name: string, existingPlanNames: string[]) =>
@@ -104,25 +114,18 @@ const actions: {
   ) => CreateVmMigrationPageState;
 } = {
   [SET_NAME](draft, { payload: { name } }: PageAction<CreateVmMigration, PlanName>) {
-    draft.newPlan.metadata.name = name;
-    draft.validation.name = validatePlanName(name, draft.existingPlans);
-    return draft;
-  },
-  [SET_DESCRIPTION](
-    draft,
-    { payload: { description } }: PageAction<CreateVmMigration, PlanDescription>,
-  ) {
-    draft.newPlan.spec.description = description;
+    draft.underConstruction.plan.metadata.name = name;
+    draft.validation.planName = validatePlanName(name, draft.existingResources.plans);
     return draft;
   },
   [SET_TARGET_NAMESPACE](
     draft,
     { payload: { targetNamespace } }: PageAction<CreateVmMigration, PlanTargetNamespace>,
   ) {
-    draft.newPlan.spec.targetNamespace = targetNamespace;
+    draft.underConstruction.plan.spec.targetNamespace = targetNamespace;
     draft.validation.targetNamespace = validateTargetNamespace(
       targetNamespace,
-      draft.availableTargetNamespaces,
+      draft.existingResources.targetNamespaces,
     );
     setTargetNetworks(draft);
     return draft;
@@ -131,20 +134,22 @@ const actions: {
     draft,
     { payload: { targetProviderName } }: PageAction<CreateVmMigration, PlanTargetProvider>,
   ) {
-    setTargetProvider(draft, targetProviderName, draft.availableProviders);
+    setTargetProvider(draft, targetProviderName, draft.existingResources.providers);
     return draft;
   },
   [SET_AVAILABLE_PROVIDERS](
     draft,
     { payload: { availableProviders } }: PageAction<CreateVmMigration, PlanAvailableProviders>,
   ) {
-    draft.availableProviders = availableProviders;
+    draft.existingResources.providers = availableProviders;
     // set the default provider if none is set
     // reset the provider if provider was removed
     if (
       !availableProviders
         .filter(getIsTarget)
-        .find((p) => p?.metadata?.name === draft.newPlan.spec.provider.destination?.name)
+        .find(
+          (p) => p?.metadata?.name === draft.underConstruction.plan.spec.provider.destination?.name,
+        )
     ) {
       const firstHostProvider = availableProviders.find((p) => isProviderLocalOpenshift(p));
       setTargetProvider(draft, firstHostProvider?.metadata?.name, availableProviders);
@@ -155,8 +160,11 @@ const actions: {
     draft,
     { payload: { existingPlans } }: PageAction<CreateVmMigration, PlanExistingPlans>,
   ) {
-    draft.existingPlans = existingPlans;
-    draft.validation.name = validatePlanName(draft.newPlan.metadata.name, existingPlans);
+    draft.existingResources.plans = existingPlans;
+    draft.validation.planName = validatePlanName(
+      draft.underConstruction.plan.metadata.name,
+      existingPlans,
+    );
     return draft;
   },
   [SET_AVAILABLE_TARGET_NAMESPACES](
@@ -165,27 +173,33 @@ const actions: {
       payload: { availableTargetNamespaces },
     }: PageAction<CreateVmMigration, PlanAvailableTargetNamespaces>,
   ) {
-    draft.availableTargetNamespaces = availableTargetNamespaces;
+    const {
+      existingResources,
+      validation,
+      underConstruction: { plan },
+    } = draft;
 
-    draft.validation.targetNamespace = validateTargetNamespace(
-      draft.newPlan.spec.targetNamespace,
+    existingResources.targetNamespaces = availableTargetNamespaces;
+
+    validation.targetNamespace = validateTargetNamespace(
+      plan.spec.targetNamespace,
       availableTargetNamespaces,
     );
-    if (draft.validation.targetNamespace === 'success') {
+    if (validation.targetNamespace === 'success') {
       return draft;
     }
 
     const resolvedProvider = resolveTargetProvider(
-      draft.newPlan.spec.provider?.destination?.name,
-      draft.availableProviders,
+      plan.spec.provider?.destination?.name,
+      existingResources.providers,
     );
-    draft.newPlan.spec.targetNamespace =
-      (isProviderLocalOpenshift(resolvedProvider) && draft.newPlan.metadata.namespace) ||
+    plan.spec.targetNamespace =
+      (isProviderLocalOpenshift(resolvedProvider) && plan.metadata.namespace) ||
       (availableTargetNamespaces.find((n) => n.name === DEFAULT_NAMESPACE) && DEFAULT_NAMESPACE) ||
       availableTargetNamespaces[0]?.name;
 
-    draft.validation.targetNamespace = validateTargetNamespace(
-      draft.newPlan.spec.targetNamespace,
+    validation.targetNamespace = validateTargetNamespace(
+      plan.spec.targetNamespace,
       availableTargetNamespaces,
     );
     return draft;
@@ -207,17 +221,20 @@ const actions: {
       ),
     ];
     // .filter(({ namespace }) => namespace === draft.newPlan.spec.targetNamespace),
-    draft.availableTargetNetworks = networks;
+    draft.existingResources.targetNetworks = networks;
     setTargetNetworks(draft);
     return draft;
   },
 };
 
-const setTargetNetworks = (draft: Draft<CreateVmMigrationPageState>) => {
-  draft.targetNetworks = draft.availableTargetNetworks
-    .filter(
-      ({ namespace, type }) => namespace === draft.newPlan.spec.targetNamespace || type === 'pod',
-    )
+const setTargetNetworks = (draft: Draft<CreateVmMigrationPageState>): void => {
+  const {
+    calculatedPerNamespace,
+    existingResources,
+    underConstruction: { plan },
+  } = draft;
+  calculatedPerNamespace.targetNetworks = existingResources.targetNetworks
+    .filter(({ namespace, type }) => namespace === plan.spec.targetNamespace || type === 'pod')
     .map(({ name }) => name);
 };
 
@@ -226,20 +243,33 @@ const setTargetProvider = (
   targetProviderName: string,
   availableProviders: V1beta1Provider[],
 ) => {
-  if (draft.newPlan.spec.provider?.destination?.name === targetProviderName) {
+  const {
+    calculatedPerNamespace,
+    existingResources,
+    validation,
+    underConstruction: { plan },
+    workArea,
+  } = draft;
+  if (plan.spec.provider?.destination?.name === targetProviderName) {
     // avoid side effects if no real change
     return draft;
   }
   // there might be no target provider in the namespace
   const resolvedTarget = resolveTargetProvider(targetProviderName, availableProviders);
-  draft.newPlan.spec.provider.destination = resolvedTarget && getObjectRef(resolvedTarget);
-  // assume the value is correct and wait until the namespaces will be loaded for further validation
-  draft.newPlan.spec.targetNamespace = undefined;
-  draft.validation.targetNamespace = 'default';
-  draft.availableTargetNamespaces = [];
-  draft.availableTargetNetworks = [];
-  draft.networkMappings = [];
-  draft.validation.targetProvider = resolvedTarget ? 'success' : 'error';
+  validation.targetProvider = resolvedTarget ? 'success' : 'error';
+  plan.spec.provider.destination = resolvedTarget && getObjectRef(resolvedTarget);
+
+  // reset props that depend on the target provider
+  plan.spec.targetNamespace = undefined;
+  // temporarily assume no namespace is OK - the validation will continue when new namespaces are loaded
+  validation.targetNamespace = 'default';
+  existingResources.targetNamespaces = [];
+  existingResources.targetNetworks = [];
+  existingResources.targetStorages = [];
+  calculatedPerNamespace.targetNetworks = [];
+  calculatedPerNamespace.targetStorages = [];
+  workArea.networkMappings = [];
+  workArea.storageMappings = [];
 };
 
 const resolveTargetProvider = (name: string, availableProviders: V1beta1Provider[]) =>
@@ -276,61 +306,73 @@ export const createInitialState = ({
   sourceProvider: V1beta1Provider;
   selectedVms: VmData[];
 }): CreateVmMigrationPageState => ({
-  newPlan: {
-    ...planTemplate,
-    metadata: {
-      ...planTemplate?.metadata,
-      name: `${sourceProvider.metadata.name}-${randomId().substring(0, 8)}`,
-      namespace,
-    },
-    spec: {
-      ...planTemplate?.spec,
-      provider: {
-        source: getObjectRef(sourceProvider),
-        destination: undefined,
+  underConstruction: {
+    plan: {
+      ...planTemplate,
+      metadata: {
+        ...planTemplate?.metadata,
+        name: `${sourceProvider.metadata.name}-${randomId().substring(0, 8)}`,
+        namespace,
       },
-      targetNamespace: undefined,
-      vms: selectedVms.map((data) => ({ name: data.name, id: toId(data) })),
+      spec: {
+        ...planTemplate?.spec,
+        provider: {
+          source: getObjectRef(sourceProvider),
+          destination: undefined,
+        },
+        targetNamespace: undefined,
+        vms: selectedVms.map((data) => ({ name: data.name, id: toId(data) })),
+      },
     },
-  },
-  newNetMap: {
-    ...networkMapTemplate,
-    metadata: {
-      ...networkMapTemplate?.metadata,
-      name: `${sourceProvider.metadata.name}-${randomId().substring(0, 8)}`,
-      namespace,
+    netMap: {
+      ...networkMapTemplate,
+      metadata: {
+        ...networkMapTemplate?.metadata,
+        name: `${sourceProvider.metadata.name}-${randomId().substring(0, 8)}`,
+        namespace,
+      },
     },
-  },
-  newStorageMap: {
-    ...storageMapTemplate,
-    metadata: {
-      ...storageMapTemplate?.metadata,
-      name: `${sourceProvider.metadata.name}-${randomId().substring(0, 8)}`,
-      namespace,
+    storageMap: {
+      ...storageMapTemplate,
+      metadata: {
+        ...storageMapTemplate?.metadata,
+        name: `${sourceProvider.metadata.name}-${randomId().substring(0, 8)}`,
+        namespace,
+      },
     },
   },
   validationError: null,
   apiError: null,
-  availableProviders: [],
-  selectedVms,
-  existingPlans: [],
+  existingResources: {
+    plans: [],
+    providers: [],
+    targetNamespaces: [],
+    targetNetworks: [{ name: 'foo2', type: 'multus' }],
+    targetStorages: [],
+  },
+  receivedAsParams: {
+    selectedVms,
+  },
   validation: {
-    name: 'default',
+    planName: 'default',
     targetNamespace: 'default',
     targetProvider: 'default',
   },
-  vmFieldsFactory: resourceFieldsForType(sourceProvider?.spec?.type as ProviderType),
-  availableTargetNamespaces: [],
-  sourceNetworks: ['foo', 'bar'],
-  targetNetworks: ['foo2', 'bar2'],
-  networkMappings: [{ source: 'foo', destination: 'foo2' }],
-  availableTargetNetworks: [{ name: 'foo2', type: 'multus' }],
-  networksUsedBySelectedVms: extractUniqueNetworks(selectedVms),
-  sourceStorages: [],
-  targetStorages: [],
-  storageMappings: [],
-  availableTargetStorages: {},
-  storagesUsedBySelectedVms: {},
+  calculatedOnce: {
+    vmFieldsFactory: resourceFieldsForType(sourceProvider?.spec?.type as ProviderType),
+    networksUsedBySelectedVms: extractUniqueNetworks(selectedVms),
+    storagesUsedBySelectedVms: {},
+  },
+  calculatedPerNamespace: {
+    targetNetworks: ['foo2', 'bar2'],
+    targetStorages: [],
+  },
+  workArea: {
+    sourceNetworks: ['foo', 'bar'],
+    networkMappings: [{ source: 'foo', destination: 'foo2' }],
+    sourceStorages: [],
+    storageMappings: [],
+  },
 });
 
 const extractUniqueNetworks = (vms: VmData[]): { [name: string]: unknown } => ({});
