@@ -11,6 +11,7 @@ import {
   V1beta1StorageMap,
 } from '@kubev2v/types';
 import { V1beta1NetworkMapSpecMapDestination } from '@kubev2v/types/dist/models/V1beta1NetworkMapSpecMapDestination';
+import { V1beta1NetworkMapSpecMapSource } from '@kubev2v/types/dist/models/V1beta1NetworkMapSpecMapSource';
 
 import { getIsTarget, Validation } from '../../utils';
 import { VmData } from '../details';
@@ -20,6 +21,7 @@ import {
   DEFAULT_NAMESPACE,
   PageAction,
   PlanAvailableProviders,
+  PlanAvailableSourceNetworks,
   PlanAvailableTargetNamespaces,
   PlanAvailableTargetNetworks,
   PlanExistingPlans,
@@ -28,6 +30,7 @@ import {
   PlanTargetProvider,
   POD_NETWORK,
   SET_AVAILABLE_PROVIDERS,
+  SET_AVAILABLE_SOURCE_NETWORKS,
   SET_AVAILABLE_TARGET_NAMESPACES,
   SET_AVAILABLE_TARGET_NETWORKS,
   SET_EXISTING_PLANS,
@@ -38,10 +41,7 @@ import {
 import { Mapping } from './MappingList';
 import {
   calculateNetworks,
-  calculateStorages,
-  clearCalculatedPerNamespaceSlice,
-  clearWorkAreaSlice,
-  resolveTargetProvider,
+  setTargetNamespace,
   setTargetProvider,
   validatePlanName,
   validateTargetNamespace,
@@ -60,30 +60,40 @@ export interface CreateVmMigrationPageState {
     targetNamespace: Validation;
     targetProvider: Validation;
   };
+  // data fetched from k8s or inventory
   existingResources: {
     providers: V1beta1Provider[];
     plans: V1beta1Plan[];
     targetNamespaces: OpenShiftNamespace[];
     targetNetworks: V1beta1NetworkMapSpecMapDestination[];
+    sourceNetworks: V1beta1NetworkMapSpecMapSource[];
     targetStorages: unknown[];
   };
+  // calculated on start from the received params
   calculatedOnce: {
     storagesUsedBySelectedVms: { [name: string]: unknown };
     networksUsedBySelectedVms: { [name: string]: unknown };
     vmFieldsFactory: [ResourceFieldFactory, FC<RowProps<VmData>>];
   };
+  // re-calculated on every target namespace change
   calculatedPerNamespace: {
+    // read-only
     targetStorages: string[];
     targetNetworks: string[];
-  };
-  receivedAsParams: {
-    selectedVms: VmData[];
-  };
-  workArea: {
+    // mutated
     sourceNetworks: string[];
     sourceStorages: string[];
     networkMappings: Mapping[];
     storageMappings: Mapping[];
+  };
+  receivedAsParams: {
+    selectedVms: VmData[];
+    sourceProvider: V1beta1Provider;
+    namespace: string;
+  };
+  // placeholder for helper data
+  workArea: {
+    targetProvider: V1beta1Provider;
   };
 }
 
@@ -102,22 +112,7 @@ const actions: {
     draft,
     { payload: { targetNamespace } }: PageAction<CreateVmMigration, PlanTargetNamespace>,
   ) {
-    const {
-      calculatedPerNamespace,
-      underConstruction: { plan },
-      workArea,
-    } = draft;
-
-    plan.spec.targetNamespace = targetNamespace;
-    draft.validation.targetNamespace = validateTargetNamespace(
-      targetNamespace,
-      draft.existingResources.targetNamespaces,
-    );
-
-    clearWorkAreaSlice(workArea);
-    clearCalculatedPerNamespaceSlice(calculatedPerNamespace);
-    calculateNetworks(draft);
-    calculateStorages(draft);
+    setTargetNamespace(draft, targetNamespace);
     return draft;
   },
   [SET_TARGET_PROVIDER](
@@ -147,7 +142,10 @@ const actions: {
         )
     ) {
       // the current provider is missing in the list of available providers
-      // possible cases: no provider set (yet), provider got removed in the meantime
+      // possible cases:
+      // 1. no provider set (yet)
+      // 2. provider got removed in the meantime
+      // 3. no host provider in the namespace
       const firstHostProvider = availableProviders.find((p) => isProviderLocalOpenshift(p));
       setTargetProvider(draft, firstHostProvider?.metadata?.name, availableProviders);
     }
@@ -174,6 +172,7 @@ const actions: {
       existingResources,
       validation,
       underConstruction: { plan },
+      workArea: { targetProvider },
     } = draft;
 
     existingResources.targetNamespaces = availableTargetNamespaces;
@@ -186,19 +185,15 @@ const actions: {
       return draft;
     }
 
-    const resolvedProvider = resolveTargetProvider(
-      plan.spec.provider?.destination?.name,
-      existingResources.providers,
-    );
-    plan.spec.targetNamespace =
-      (isProviderLocalOpenshift(resolvedProvider) && plan.metadata.namespace) ||
+    const targetNamespace =
+      // use the current namespace (inherited from source provider)
+      (isProviderLocalOpenshift(targetProvider) && plan.metadata.namespace) ||
+      // use 'default' if exists
       (availableTargetNamespaces.find((n) => n.name === DEFAULT_NAMESPACE) && DEFAULT_NAMESPACE) ||
+      // use the first from the list (if exists)
       availableTargetNamespaces[0]?.name;
 
-    validation.targetNamespace = validateTargetNamespace(
-      plan.spec.targetNamespace,
-      availableTargetNamespaces,
-    );
+    setTargetNamespace(draft, targetNamespace);
     return draft;
   },
   [SET_AVAILABLE_TARGET_NETWORKS](
@@ -208,6 +203,7 @@ const actions: {
     }: PageAction<CreateVmMigration, PlanAvailableTargetNetworks>,
   ) {
     const networks: V1beta1NetworkMapSpecMapDestination[] = [
+      // first network is used as default
       { type: 'pod', name: POD_NETWORK },
       ...availableTargetNetworks.map(
         ({ type, ...rest }) =>
@@ -217,9 +213,24 @@ const actions: {
           } as V1beta1NetworkMapSpecMapDestination),
       ),
     ];
-    // .filter(({ namespace }) => namespace === draft.newPlan.spec.targetNamespace),
     draft.existingResources.targetNetworks = networks;
-    calculateNetworks(draft);
+    draft.calculatedPerNamespace = {
+      ...draft.calculatedPerNamespace,
+      ...calculateNetworks(draft),
+    };
+    return draft;
+  },
+  [SET_AVAILABLE_SOURCE_NETWORKS](
+    draft,
+    {
+      payload: { availableSourceNetworks },
+    }: PageAction<CreateVmMigration, PlanAvailableSourceNetworks>,
+  ) {
+    draft.existingResources.sourceNetworks = availableSourceNetworks;
+    draft.calculatedPerNamespace = {
+      ...draft.calculatedPerNamespace,
+      ...calculateNetworks(draft),
+    };
     return draft;
   },
 };

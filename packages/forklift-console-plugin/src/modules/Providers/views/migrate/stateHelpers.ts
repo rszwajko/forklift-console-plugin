@@ -41,25 +41,60 @@ export const validateTargetNamespace = (
     ? 'success'
     : 'error';
 
-export const calculateNetworks = (draft: Draft<CreateVmMigrationPageState>): void => {
+export const calculateNetworks = (
+  draft: Draft<CreateVmMigrationPageState>,
+): Partial<CreateVmMigrationPageState['calculatedPerNamespace']> => {
   const {
-    calculatedPerNamespace,
+    calculatedPerNamespace: { targetNetworks, networkMappings },
     existingResources,
-    workArea,
     underConstruction: { plan },
   } = draft;
-  calculatedPerNamespace.targetNetworks = existingResources.targetNetworks
+  const targetNetworksPerNs = existingResources.targetNetworks
     .filter(({ namespace, type }) => namespace === plan.spec.targetNamespace || type === 'pod')
     .map(({ name }) => name);
-  const sourceNetworks = Object.keys(draft.calculatedOnce.networksUsedBySelectedVms);
-  const defaultDestination = calculatedPerNamespace.targetNetworks[0];
-  workArea.networkMappings = sourceNetworks.map((source) => ({
-    source,
-    destination: defaultDestination,
-  }));
+  const allSourceNetworks = Object.keys(draft.calculatedOnce.networksUsedBySelectedVms);
+  const defaultDestination = targetNetworks[0];
+
+  const validMappings = networkMappings.filter(
+    ({ source, destination }) =>
+      targetNetworksPerNs.find((net) => net === destination) &&
+      allSourceNetworks.find((net) => net === source),
+  );
+  if (validMappings.length === networkMappings.length && !networkMappings.length) {
+    // existing mappings are valid after this reload
+    // only refresh targetNetworks
+    return {
+      targetNetworks,
+    };
+  } else if (!networkMappings.length) {
+    // no mappings yet- generate using defaults
+    return {
+      // all source networks covered with defaults
+      sourceNetworks: [],
+      targetNetworks: targetNetworksPerNs,
+      networkMappings: allSourceNetworks.map((source) => ({
+        source,
+        destination: defaultDestination,
+      })),
+    };
+  } else {
+    // remove invalid mappings
+    // user will need to provide them manually (to avoid overriding user choice silently)
+    return {
+      // only networks that are not already in the mappings
+      sourceNetworks: allSourceNetworks.filter(
+        (net) => !validMappings.find(({ source }) => net === source),
+      ),
+      targetNetworks: targetNetworksPerNs,
+      networkMappings: validMappings,
+    };
+  }
+  return {};
 };
 
-export const calculateStorages = (draft: Draft<CreateVmMigrationPageState>): void => undefined;
+export const calculateStorages = (
+  draft: Draft<CreateVmMigrationPageState>,
+): Partial<CreateVmMigrationPageState['calculatedPerNamespace']> => ({});
 
 export const setTargetProvider = (
   draft: Draft<CreateVmMigrationPageState>,
@@ -67,17 +102,11 @@ export const setTargetProvider = (
   availableProviders: V1beta1Provider[],
 ) => {
   const {
-    calculatedPerNamespace,
     existingResources,
     validation,
     underConstruction: { plan },
     workArea,
   } = draft;
-
-  // there might be no target provider in the namespace
-  const resolvedTarget = resolveTargetProvider(targetProviderName, availableProviders);
-  validation.targetProvider = resolvedTarget ? 'success' : 'error';
-  plan.spec.provider.destination = resolvedTarget && getObjectRef(resolvedTarget);
 
   // reset props that depend on the target provider
   plan.spec.targetNamespace = undefined;
@@ -86,23 +115,46 @@ export const setTargetProvider = (
   existingResources.targetNamespaces = [];
   existingResources.targetNetworks = [];
   existingResources.targetStorages = [];
-  clearCalculatedPerNamespaceSlice(calculatedPerNamespace);
-  clearWorkAreaSlice(workArea);
+  draft.calculatedPerNamespace = initCalculatedPerNamespaceSlice();
+
+  // there might be no target provider in the namespace
+  const resolvedTarget = resolveTargetProvider(targetProviderName, availableProviders);
+  validation.targetProvider = resolvedTarget ? 'success' : 'error';
+  plan.spec.provider.destination = resolvedTarget && getObjectRef(resolvedTarget);
+  workArea.targetProvider = resolvedTarget;
 };
 
-export const clearCalculatedPerNamespaceSlice = (
-  calculatedPerNamespace: CreateVmMigrationPageState['calculatedPerNamespace'],
-) => {
-  calculatedPerNamespace.targetNetworks = [];
-  calculatedPerNamespace.targetStorages = [];
+export const setTargetNamespace = (
+  draft: Draft<CreateVmMigrationPageState>,
+  targetNamespace: string,
+): void => {
+  const {
+    underConstruction: { plan },
+  } = draft;
+
+  plan.spec.targetNamespace = targetNamespace;
+  draft.validation.targetNamespace = validateTargetNamespace(
+    targetNamespace,
+    draft.existingResources.targetNamespaces,
+  );
+
+  draft.calculatedPerNamespace = initCalculatedPerNamespaceSlice();
+  draft.calculatedPerNamespace = {
+    ...draft.calculatedPerNamespace,
+    ...calculateNetworks(draft),
+    ...calculateStorages(draft),
+  };
 };
 
-export const clearWorkAreaSlice = (workArea: CreateVmMigrationPageState['workArea']) => {
-  workArea.networkMappings = [];
-  workArea.storageMappings = [];
-  workArea.sourceStorages = [];
-  workArea.sourceStorages = [];
-};
+export const initCalculatedPerNamespaceSlice =
+  (): CreateVmMigrationPageState['calculatedPerNamespace'] => ({
+    targetNetworks: [],
+    targetStorages: [],
+    networkMappings: [],
+    storageMappings: [],
+    sourceStorages: [],
+    sourceNetworks: [],
+  });
 
 export const resolveTargetProvider = (name: string, availableProviders: V1beta1Provider[]) =>
   availableProviders.filter(getIsTarget).find((p) => p?.metadata?.name === name);
@@ -172,11 +224,14 @@ export const createInitialState = ({
     plans: [],
     providers: [],
     targetNamespaces: [],
-    targetNetworks: [{ name: 'foo2', type: 'multus' }],
+    targetNetworks: [],
+    sourceNetworks: [],
     targetStorages: [],
   },
   receivedAsParams: {
     selectedVms,
+    sourceProvider,
+    namespace,
   },
   validation: {
     planName: 'default',
@@ -189,14 +244,15 @@ export const createInitialState = ({
     storagesUsedBySelectedVms: {},
   },
   calculatedPerNamespace: {
-    targetNetworks: ['foo2', 'bar2'],
+    targetNetworks: [],
     targetStorages: [],
-  },
-  workArea: {
-    sourceNetworks: ['foo', 'bar'],
-    networkMappings: [{ source: 'foo', destination: 'foo2' }],
+    sourceNetworks: [],
+    networkMappings: [],
     sourceStorages: [],
     storageMappings: [],
+  },
+  workArea: {
+    targetProvider: undefined,
   },
 });
 

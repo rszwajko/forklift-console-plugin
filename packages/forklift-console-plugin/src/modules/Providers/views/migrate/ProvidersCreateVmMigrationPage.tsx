@@ -21,6 +21,7 @@ import { getResourceUrl } from '../../utils';
 
 import {
   setAvailableProviders,
+  setAvailableSourceNetworks,
   setAvailableTargetNamespaces,
   setAvailableTargetNetworks,
   setExistingPlans,
@@ -58,7 +59,7 @@ const ProvidersCreateVmMigrationPage: FC<{
     createInitialState,
   );
   const {
-    underConstruction: { plan },
+    workArea: { targetProvider },
   } = state;
 
   const [providers] = useK8sWatchResource<V1beta1Provider[]>({
@@ -67,7 +68,10 @@ const ProvidersCreateVmMigrationPage: FC<{
     isList: true,
     namespace,
   });
-  useEffect(() => dispatch(setAvailableProviders(providers ?? [])), [providers]);
+  useEffect(
+    () => dispatch(setAvailableProviders(Array.isArray(providers) ? providers : [])),
+    [providers],
+  );
 
   const [plans] = useK8sWatchResource<V1beta1Plan[]>({
     groupVersionKind: PlanModelGroupVersionKind,
@@ -75,19 +79,16 @@ const ProvidersCreateVmMigrationPage: FC<{
     isList: true,
     namespace,
   });
-  useEffect(() => dispatch(setExistingPlans(plans ?? [])), [plans]);
+  useEffect(() => dispatch(setExistingPlans(Array.isArray(plans) ? plans : [])), [plans]);
 
-  const targetProvider = providers?.find(
-    (p) => p?.metadata?.name === plan.spec?.provider?.destination?.name,
-  );
   const [namespaces] = useNamespaces(targetProvider);
   useEffect(() => dispatch(setAvailableTargetNamespaces(namespaces)), [namespaces]);
 
   const [targetNetworks] = useNetworks(targetProvider);
   useEffect(() => dispatch(setAvailableTargetNetworks(targetNetworks)), [targetNetworks]);
 
-  // const [sourceNetworks] = useNetworks(sourceProvider);
-  // useEffect(() => dispatch(setAvailableTargetNamespaces(sourceNetworks)), [sourceNetworks]);
+  const [sourceNetworks] = useNetworks(sourceProvider);
+  useEffect(() => dispatch(setAvailableSourceNetworks(sourceNetworks)), [sourceNetworks]);
 
   const [isLoading, toggleIsLoading] = useToggle();
   const onUpdate = toggleIsLoading;

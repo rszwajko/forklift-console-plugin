@@ -17,6 +17,7 @@ export const SET_AVAILABLE_TARGET_NAMESPACES = 'SET_AVAILABLE_TARGET_NAMESPACES'
 export const REPLACE_NETWORK_MAPPING = 'REPLACE_NETWORK_MAPPING';
 export const REPLACE_STORAGE_MAPPING = 'REPLACE_STORAGE_MAPPING';
 export const SET_AVAILABLE_TARGET_NETWORKS = 'SET_AVAILABLE_TARGET_NETWORKS';
+export const SET_AVAILABLE_SOURCE_NETWORKS = 'SET_AVAILABLE_SOURCE_NETWORKS';
 
 export type CreateVmMigration =
   | typeof SET_NAME
@@ -28,7 +29,8 @@ export type CreateVmMigration =
   | typeof SET_AVAILABLE_TARGET_NAMESPACES
   | typeof REPLACE_NETWORK_MAPPING
   | typeof REPLACE_STORAGE_MAPPING
-  | typeof SET_AVAILABLE_TARGET_NETWORKS;
+  | typeof SET_AVAILABLE_TARGET_NETWORKS
+  | typeof SET_AVAILABLE_SOURCE_NETWORKS;
 
 export interface PageAction<S, T> {
   type: S;
@@ -67,6 +69,10 @@ export interface PlanAvailableTargetNamespaces {
 
 export interface PlanAvailableTargetNetworks {
   availableTargetNetworks: V1beta1NetworkMapSpecMapSource[];
+}
+
+export interface PlanAvailableSourceNetworks {
+  availableSourceNetworks: V1beta1NetworkMapSpecMapSource[];
 }
 
 export interface PlanMapping {
@@ -150,4 +156,11 @@ export const setAvailableTargetNetworks = (
 ): PageAction<CreateVmMigration, PlanAvailableTargetNetworks> => ({
   type: 'SET_AVAILABLE_TARGET_NETWORKS',
   payload: { availableTargetNetworks },
+});
+
+export const setAvailableSourceNetworks = (
+  availableSourceNetworks: V1beta1NetworkMapSpecMapSource[],
+): PageAction<CreateVmMigration, PlanAvailableSourceNetworks> => ({
+  type: 'SET_AVAILABLE_SOURCE_NETWORKS',
+  payload: { availableSourceNetworks },
 });
