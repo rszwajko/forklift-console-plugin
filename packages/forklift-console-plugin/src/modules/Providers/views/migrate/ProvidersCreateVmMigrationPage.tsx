@@ -17,6 +17,7 @@ import { Button, Flex, FlexItem, PageSection } from '@patternfly/react-core';
 import { useToggle } from '../../hooks';
 import { useNamespaces } from '../../hooks/useNamespaces';
 import { useNetworks } from '../../hooks/useNetworks';
+import { useNicProfiles } from '../../hooks/useNicProfiles';
 import { getResourceUrl } from '../../utils';
 
 import {
@@ -25,6 +26,7 @@ import {
   setAvailableTargetNamespaces,
   setAvailableTargetNetworks,
   setExistingPlans,
+  setNicProfiles,
 } from './actions';
 import { PlansCreateForm } from './PlansCreateForm';
 import { useCreateVmMigrationData } from './ProvidersCreateVmMigrationContext';
@@ -89,6 +91,12 @@ const ProvidersCreateVmMigrationPage: FC<{
 
   const [sourceNetworks] = useNetworks(sourceProvider);
   useEffect(() => dispatch(setAvailableSourceNetworks(sourceNetworks)), [sourceNetworks]);
+
+  const [nicProfiles, nicProfilesLoading, nicProfilesError] = useNicProfiles(sourceProvider);
+  useEffect(
+    () => dispatch(setNicProfiles(nicProfiles, nicProfilesLoading, nicProfilesError)),
+    [nicProfiles, nicProfilesLoading, nicProfilesError],
+  );
 
   const [isLoading, toggleIsLoading] = useToggle();
   const onUpdate = toggleIsLoading;

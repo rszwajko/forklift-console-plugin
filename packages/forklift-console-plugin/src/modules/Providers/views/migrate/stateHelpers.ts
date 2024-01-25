@@ -19,6 +19,7 @@ import { OVirtVirtualMachinesCells } from '../details/tabs/VirtualMachines/OVirt
 import { vSphereVmFieldsMetadataFactory } from '../details/tabs/VirtualMachines/VSphereVirtualMachinesList';
 import { VSphereVirtualMachinesCells } from '../details/tabs/VirtualMachines/VSphereVirtualMachinesRow';
 
+import { getNetworksUsedBySelectedVms } from './getNetworksUsedBySelectedVMs';
 import { CreateVmMigrationPageState } from './reducer';
 
 export const validateUniqueName = (name: string, existingPlanNames: string[]) =>
@@ -52,7 +53,7 @@ export const calculateNetworks = (
   const targetNetworksPerNs = existingResources.targetNetworks
     .filter(({ namespace, type }) => namespace === plan.spec.targetNamespace || type === 'pod')
     .map(({ name }) => name);
-  const allSourceNetworks = Object.keys(draft.calculatedOnce.networksUsedBySelectedVms);
+  const allSourceNetworks = draft.calculatedOnce.networksUsedBySelectedVms;
   const defaultDestination = targetNetworks[0];
 
   const validMappings = networkMappings.filter(
@@ -60,11 +61,16 @@ export const calculateNetworks = (
       targetNetworksPerNs.find((net) => net === destination) &&
       allSourceNetworks.find((net) => net === source),
   );
-  if (validMappings.length === networkMappings.length && !networkMappings.length) {
+
+  const sourceNetworksToBeMapped = allSourceNetworks.filter(
+    (net) => !validMappings.find(({ source }) => net === source),
+  );
+
+  if (validMappings.length === networkMappings.length && networkMappings.length) {
     // existing mappings are valid after this reload
-    // only refresh targetNetworks
     return {
       targetNetworks,
+      sourceNetworks: sourceNetworksToBeMapped,
     };
   } else if (!networkMappings.length) {
     // no mappings yet- generate using defaults
@@ -82,9 +88,7 @@ export const calculateNetworks = (
     // user will need to provide them manually (to avoid overriding user choice silently)
     return {
       // only networks that are not already in the mappings
-      sourceNetworks: allSourceNetworks.filter(
-        (net) => !validMappings.find(({ source }) => net === source),
-      ),
+      sourceNetworks: sourceNetworksToBeMapped,
       targetNetworks: targetNetworksPerNs,
       networkMappings: validMappings,
     };
@@ -227,6 +231,7 @@ export const createInitialState = ({
     targetNetworks: [],
     sourceNetworks: [],
     targetStorages: [],
+    nickProfiles: [],
   },
   receivedAsParams: {
     selectedVms,
@@ -240,8 +245,9 @@ export const createInitialState = ({
   },
   calculatedOnce: {
     vmFieldsFactory: resourceFieldsForType(sourceProvider?.spec?.type as ProviderType),
-    networksUsedBySelectedVms: extractUniqueNetworks(selectedVms),
-    storagesUsedBySelectedVms: {},
+    networksUsedBySelectedVms:
+      sourceProvider.spec?.type !== 'ovirt' ? getNetworksUsedBySelectedVms(selectedVms, []) : [],
+    storagesUsedBySelectedVms: ['ovirt', 'openstack'].includes(sourceProvider.spec?.type) ? [] : [],
   },
   calculatedPerNamespace: {
     targetNetworks: [],
@@ -253,6 +259,9 @@ export const createInitialState = ({
   },
   workArea: {
     targetProvider: undefined,
+  },
+  loaded: {
+    nickProfiles: false,
   },
 });
 

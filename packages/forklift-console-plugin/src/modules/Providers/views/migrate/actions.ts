@@ -1,4 +1,4 @@
-import { OpenShiftNamespace, V1beta1Plan, V1beta1Provider } from '@kubev2v/types';
+import { OpenShiftNamespace, OVirtNicProfile, V1beta1Plan, V1beta1Provider } from '@kubev2v/types';
 import { V1beta1NetworkMapSpecMapSource } from '@kubev2v/types/dist/models/V1beta1NetworkMapSpecMapSource';
 
 import { Mapping } from './MappingList';
@@ -18,6 +18,7 @@ export const REPLACE_NETWORK_MAPPING = 'REPLACE_NETWORK_MAPPING';
 export const REPLACE_STORAGE_MAPPING = 'REPLACE_STORAGE_MAPPING';
 export const SET_AVAILABLE_TARGET_NETWORKS = 'SET_AVAILABLE_TARGET_NETWORKS';
 export const SET_AVAILABLE_SOURCE_NETWORKS = 'SET_AVAILABLE_SOURCE_NETWORKS';
+export const SET_NICK_PROFILES = 'SET_NICK_PROFILES';
 
 export type CreateVmMigration =
   | typeof SET_NAME
@@ -30,7 +31,8 @@ export type CreateVmMigration =
   | typeof REPLACE_NETWORK_MAPPING
   | typeof REPLACE_STORAGE_MAPPING
   | typeof SET_AVAILABLE_TARGET_NETWORKS
-  | typeof SET_AVAILABLE_SOURCE_NETWORKS;
+  | typeof SET_AVAILABLE_SOURCE_NETWORKS
+  | typeof SET_NICK_PROFILES;
 
 export interface PageAction<S, T> {
   type: S;
@@ -73,6 +75,12 @@ export interface PlanAvailableTargetNetworks {
 
 export interface PlanAvailableSourceNetworks {
   availableSourceNetworks: V1beta1NetworkMapSpecMapSource[];
+}
+
+export interface PlanNickProfiles {
+  nickProfiles: OVirtNicProfile[];
+  loading: boolean;
+  error?: Error;
 }
 
 export interface PlanMapping {
@@ -163,4 +171,13 @@ export const setAvailableSourceNetworks = (
 ): PageAction<CreateVmMigration, PlanAvailableSourceNetworks> => ({
   type: 'SET_AVAILABLE_SOURCE_NETWORKS',
   payload: { availableSourceNetworks },
+});
+
+export const setNicProfiles = (
+  nickProfiles: OVirtNicProfile[],
+  nicProfilesLoading: boolean,
+  nicProfilesError: Error,
+): PageAction<CreateVmMigration, PlanNickProfiles> => ({
+  type: 'SET_NICK_PROFILES',
+  payload: { nickProfiles, loading: nicProfilesLoading, error: nicProfilesError },
 });

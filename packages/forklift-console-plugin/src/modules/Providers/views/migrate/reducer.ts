@@ -5,6 +5,7 @@ import { isProviderLocalOpenshift } from 'src/utils/resources';
 import { ResourceFieldFactory, RowProps } from '@kubev2v/common';
 import {
   OpenShiftNamespace,
+  OVirtNicProfile,
   V1beta1NetworkMap,
   V1beta1Plan,
   V1beta1Provider,
@@ -26,6 +27,7 @@ import {
   PlanAvailableTargetNetworks,
   PlanExistingPlans,
   PlanName,
+  PlanNickProfiles,
   PlanTargetNamespace,
   PlanTargetProvider,
   POD_NETWORK,
@@ -35,9 +37,11 @@ import {
   SET_AVAILABLE_TARGET_NETWORKS,
   SET_EXISTING_PLANS,
   SET_NAME,
+  SET_NICK_PROFILES,
   SET_TARGET_NAMESPACE,
   SET_TARGET_PROVIDER,
 } from './actions';
+import { getNetworksUsedBySelectedVms } from './getNetworksUsedBySelectedVMs';
 import { Mapping } from './MappingList';
 import {
   calculateNetworks,
@@ -68,11 +72,17 @@ export interface CreateVmMigrationPageState {
     targetNetworks: V1beta1NetworkMapSpecMapDestination[];
     sourceNetworks: V1beta1NetworkMapSpecMapSource[];
     targetStorages: unknown[];
+    nickProfiles: OVirtNicProfile[];
   };
-  // calculated on start from the received params
+  loaded: {
+    nickProfiles: boolean;
+  };
   calculatedOnce: {
-    storagesUsedBySelectedVms: { [name: string]: unknown };
-    networksUsedBySelectedVms: { [name: string]: unknown };
+    // calculated on start (exception:for ovirt/openstack we need to fetch disks)
+    storagesUsedBySelectedVms: string[];
+    // calculated on start (exception:for ovirt we need to fetch nic profiles)
+    networksUsedBySelectedVms: string[];
+    // calculated on start from the received params
     vmFieldsFactory: [ResourceFieldFactory, FC<RowProps<VmData>>];
   };
   // re-calculated on every target namespace change
@@ -101,7 +111,7 @@ const actions: {
   [name: string]: (
     draft: Draft<CreateVmMigrationPageState>,
     action: PageAction<CreateVmMigration, unknown>,
-  ) => CreateVmMigrationPageState;
+  ) => CreateVmMigrationPageState | void;
 } = {
   [SET_NAME](draft, { payload: { name } }: PageAction<CreateVmMigration, PlanName>) {
     draft.underConstruction.plan.metadata.name = name;
@@ -232,6 +242,35 @@ const actions: {
       ...calculateNetworks(draft),
     };
     return draft;
+  },
+  [SET_NICK_PROFILES](
+    draft,
+    { payload: { nickProfiles, loading } }: PageAction<CreateVmMigration, PlanNickProfiles>,
+  ) {
+    const {
+      existingResources,
+      calculatedOnce,
+      receivedAsParams: { selectedVms },
+      loaded,
+    } = draft;
+
+    if (loaded.nickProfiles) {
+      return;
+    }
+
+    if (!loading) {
+      loaded.nickProfiles = true;
+
+      existingResources.nickProfiles = nickProfiles;
+      calculatedOnce.networksUsedBySelectedVms = getNetworksUsedBySelectedVms(
+        selectedVms,
+        nickProfiles,
+      );
+      draft.calculatedPerNamespace = {
+        ...draft.calculatedPerNamespace,
+        ...calculateNetworks(draft),
+      };
+    }
   },
 };
 

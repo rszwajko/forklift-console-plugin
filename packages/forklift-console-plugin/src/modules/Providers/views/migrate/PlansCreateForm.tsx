@@ -57,8 +57,14 @@ export const PlansCreateForm = ({
       providers: availableProviders,
       targetNamespaces: availableTargetNamespaces,
     },
-    workArea: { sourceNetworks, networkMappings, storageMappings, sourceStorages },
-    calculatedPerNamespace: { targetNetworks, targetStorages },
+    calculatedPerNamespace: {
+      targetNetworks,
+      targetStorages,
+      sourceNetworks,
+      networkMappings,
+      storageMappings,
+      sourceStorages,
+    },
   },
   dispatch,
 }: {
