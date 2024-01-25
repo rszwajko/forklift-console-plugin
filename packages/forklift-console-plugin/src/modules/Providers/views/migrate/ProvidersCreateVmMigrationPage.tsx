@@ -16,7 +16,7 @@ import { Button, Flex, FlexItem, PageSection } from '@patternfly/react-core';
 
 import { useToggle } from '../../hooks';
 import { useNamespaces } from '../../hooks/useNamespaces';
-import { useNetworks } from '../../hooks/useNetworks';
+import { useOpenShiftNetworks, useSourceNetworks } from '../../hooks/useNetworks';
 import { useNicProfiles } from '../../hooks/useNicProfiles';
 import { getResourceUrl } from '../../utils';
 
@@ -86,10 +86,10 @@ const ProvidersCreateVmMigrationPage: FC<{
   const [namespaces] = useNamespaces(targetProvider);
   useEffect(() => dispatch(setAvailableTargetNamespaces(namespaces)), [namespaces]);
 
-  const [targetNetworks] = useNetworks(targetProvider);
+  const [targetNetworks] = useOpenShiftNetworks(targetProvider);
   useEffect(() => dispatch(setAvailableTargetNetworks(targetNetworks)), [targetNetworks]);
 
-  const [sourceNetworks] = useNetworks(sourceProvider);
+  const [sourceNetworks] = useSourceNetworks(sourceProvider);
   useEffect(() => dispatch(setAvailableSourceNetworks(sourceNetworks)), [sourceNetworks]);
 
   const [nicProfiles, nicProfilesLoading, nicProfilesError] = useNicProfiles(sourceProvider);

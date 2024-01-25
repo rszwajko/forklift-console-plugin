@@ -1,26 +1,22 @@
-import { useMemo } from 'react';
-
 import {
-  OpenshiftResource,
-  OpenstackResource,
-  OvaResource,
-  OVirtResource,
+  OpenShiftNetworkAttachmentDefinition,
+  OpenstackNetwork,
+  OVirtNetwork,
   V1beta1Provider,
-  VSphereResource,
+  VSphereNetwork,
 } from '@kubev2v/types';
-import { V1beta1NetworkMapSpecMapSource } from '@kubev2v/types/dist/models/V1beta1NetworkMapSpecMapSource';
 
 import useProviderInventory from './useProviderInventory';
 
-type InventoryNetwork = OpenshiftResource &
-  OpenstackResource &
-  OvaResource &
-  OVirtResource &
-  VSphereResource;
+export type InventoryNetwork =
+  | OpenShiftNetworkAttachmentDefinition
+  | OpenstackNetwork
+  | OVirtNetwork
+  | VSphereNetwork;
 
-export const useNetworks = (
+export const useSourceNetworks = (
   provider: V1beta1Provider,
-): [V1beta1NetworkMapSpecMapSource[], boolean, Error] => {
+): [InventoryNetwork[], boolean, Error] => {
   const {
     inventory: networks,
     loading,
@@ -30,11 +26,21 @@ export const useNetworks = (
     subPath: provider?.spec?.type === 'openshift' ? '/networkattachmentdefinitions' : '/networks',
   });
 
-  const unifiedNetworks: V1beta1NetworkMapSpecMapSource[] = useMemo(
-    () =>
-      networks?.map(({ id, uid, name, namespace }) => ({ id: id ?? uid, name, namespace })) ?? [],
-    [networks],
-  );
+  return [!loading && !error && Array.isArray(networks) ? networks : [], loading, error];
+};
 
-  return [!loading && !error ? unifiedNetworks : [], loading, error];
+export const useOpenShiftNetworks = (
+  provider: V1beta1Provider,
+): [OpenShiftNetworkAttachmentDefinition[], boolean, Error] => {
+  const isOpenShift = provider?.spec?.type === 'openshift';
+  const {
+    inventory: networks,
+    loading,
+    error,
+  } = useProviderInventory<OpenShiftNetworkAttachmentDefinition[]>({
+    provider,
+    subPath: isOpenShift ? '/networkattachmentdefinitions' : '',
+  });
+
+  return [!loading && !error && Array.isArray(networks) ? networks : [], loading, error];
 };

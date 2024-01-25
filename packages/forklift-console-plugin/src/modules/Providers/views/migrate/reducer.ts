@@ -5,15 +5,15 @@ import { isProviderLocalOpenshift } from 'src/utils/resources';
 import { ResourceFieldFactory, RowProps } from '@kubev2v/common';
 import {
   OpenShiftNamespace,
+  OpenshiftResource,
   OVirtNicProfile,
   V1beta1NetworkMap,
   V1beta1Plan,
   V1beta1Provider,
   V1beta1StorageMap,
 } from '@kubev2v/types';
-import { V1beta1NetworkMapSpecMapDestination } from '@kubev2v/types/dist/models/V1beta1NetworkMapSpecMapDestination';
-import { V1beta1NetworkMapSpecMapSource } from '@kubev2v/types/dist/models/V1beta1NetworkMapSpecMapSource';
 
+import { InventoryNetwork } from '../../hooks/useNetworks';
 import { getIsTarget, Validation } from '../../utils';
 import { VmData } from '../details';
 
@@ -30,7 +30,6 @@ import {
   PlanNickProfiles,
   PlanTargetNamespace,
   PlanTargetProvider,
-  POD_NETWORK,
   SET_AVAILABLE_PROVIDERS,
   SET_AVAILABLE_SOURCE_NETWORKS,
   SET_AVAILABLE_TARGET_NAMESPACES,
@@ -69,8 +68,8 @@ export interface CreateVmMigrationPageState {
     providers: V1beta1Provider[];
     plans: V1beta1Plan[];
     targetNamespaces: OpenShiftNamespace[];
-    targetNetworks: V1beta1NetworkMapSpecMapDestination[];
-    sourceNetworks: V1beta1NetworkMapSpecMapSource[];
+    targetNetworks: OpenshiftResource[];
+    sourceNetworks: InventoryNetwork[];
     targetStorages: unknown[];
     nickProfiles: OVirtNicProfile[];
   };
@@ -81,18 +80,22 @@ export interface CreateVmMigrationPageState {
     // calculated on start (exception:for ovirt/openstack we need to fetch disks)
     storagesUsedBySelectedVms: string[];
     // calculated on start (exception:for ovirt we need to fetch nic profiles)
-    networksUsedBySelectedVms: string[];
-    // calculated on start from the received params
+    networkIdsUsedBySelectedVms: string[];
+    sourceNetworkLabelToId: { [label: string]: string };
+    // calculated on start
     vmFieldsFactory: [ResourceFieldFactory, FC<RowProps<VmData>>];
   };
   // re-calculated on every target namespace change
   calculatedPerNamespace: {
     // read-only
     targetStorages: string[];
-    targetNetworks: string[];
-    // mutated
-    sourceNetworks: string[];
+    // read-only, human-readable
+    targetNetworkLabels: string[];
+    targetNetworkLabelToId: { [label: string]: string };
+    // mutated, human-readable
+    sourceNetworkLabels: string[];
     sourceStorages: string[];
+    // both source and destination human-readable
     networkMappings: Mapping[];
     storageMappings: Mapping[];
   };
@@ -212,18 +215,16 @@ const actions: {
       payload: { availableTargetNetworks },
     }: PageAction<CreateVmMigration, PlanAvailableTargetNetworks>,
   ) {
-    const networks: V1beta1NetworkMapSpecMapDestination[] = [
-      // first network is used as default
-      { type: 'pod', name: POD_NETWORK },
-      ...availableTargetNetworks.map(
-        ({ type, ...rest }) =>
-          ({
-            ...rest,
-            type: type ?? 'multus',
-          } as V1beta1NetworkMapSpecMapDestination),
-      ),
-    ];
-    draft.existingResources.targetNetworks = networks;
+    // const networks: OpenShiftNetworkAttachmentDefinition[] = [
+    // first network is used as default
+    //   { type: 'pod', name: POD_NETWORK },
+    //   ...availableTargetNetworks.map(({ type, ...rest }) => ({
+    //     ...rest,
+    //     type: type ?? 'multus',
+    //   })),
+    // ];
+    draft.existingResources.targetNetworks = availableTargetNetworks;
+
     draft.calculatedPerNamespace = {
       ...draft.calculatedPerNamespace,
       ...calculateNetworks(draft),
@@ -237,6 +238,29 @@ const actions: {
     }: PageAction<CreateVmMigration, PlanAvailableSourceNetworks>,
   ) {
     draft.existingResources.sourceNetworks = availableSourceNetworks;
+    draft.calculatedOnce.sourceNetworkLabelToId = Object.fromEntries(
+      draft.existingResources.sourceNetworks
+        .map((net) => {
+          switch (net.providerType) {
+            case 'openshift': {
+              return [`${net.namespace}/${net.name}`, net.uid];
+            }
+            case 'openstack': {
+              return [net.name, net.id];
+            }
+            case 'ovirt': {
+              return [net.path, net.id];
+            }
+            case 'vsphere': {
+              return [net.name, net.id];
+            }
+            default: {
+              return undefined;
+            }
+          }
+        })
+        .filter(Boolean),
+    );
     draft.calculatedPerNamespace = {
       ...draft.calculatedPerNamespace,
       ...calculateNetworks(draft),
@@ -262,7 +286,7 @@ const actions: {
       loaded.nickProfiles = true;
 
       existingResources.nickProfiles = nickProfiles;
-      calculatedOnce.networksUsedBySelectedVms = getNetworksUsedBySelectedVms(
+      calculatedOnce.networkIdsUsedBySelectedVms = getNetworksUsedBySelectedVms(
         selectedVms,
         nickProfiles,
       );

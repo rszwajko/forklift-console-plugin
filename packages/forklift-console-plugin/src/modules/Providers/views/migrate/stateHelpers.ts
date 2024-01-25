@@ -19,6 +19,7 @@ import { OVirtVirtualMachinesCells } from '../details/tabs/VirtualMachines/OVirt
 import { vSphereVmFieldsMetadataFactory } from '../details/tabs/VirtualMachines/VSphereVirtualMachinesList';
 import { VSphereVirtualMachinesCells } from '../details/tabs/VirtualMachines/VSphereVirtualMachinesRow';
 
+import { POD_NETWORK } from './actions';
 import { getNetworksUsedBySelectedVms } from './getNetworksUsedBySelectedVMs';
 import { CreateVmMigrationPageState } from './reducer';
 
@@ -46,20 +47,24 @@ export const calculateNetworks = (
   draft: Draft<CreateVmMigrationPageState>,
 ): Partial<CreateVmMigrationPageState['calculatedPerNamespace']> => {
   const {
-    calculatedPerNamespace: { targetNetworks, networkMappings },
+    calculatedPerNamespace: { networkMappings },
     existingResources,
     underConstruction: { plan },
   } = draft;
-  const targetNetworksPerNs = existingResources.targetNetworks
-    .filter(({ namespace, type }) => namespace === plan.spec.targetNamespace || type === 'pod')
-    .map(({ name }) => name);
-  const allSourceNetworks = draft.calculatedOnce.networksUsedBySelectedVms;
-  const defaultDestination = targetNetworks[0];
+
+  const targetNetworkNameToUid = Object.fromEntries(
+    existingResources.targetNetworks
+      .filter(({ namespace }) => namespace === plan.spec.targetNamespace)
+      .map((net) => [net.name, net.uid]),
+  );
+  const targetNetworkLabels = Object.keys(targetNetworkNameToUid).sort();
+  const defaultDestination = POD_NETWORK;
+
+  const allSourceNetworks = draft.calculatedOnce.networkIdsUsedBySelectedVms;
 
   const validMappings = networkMappings.filter(
     ({ source, destination }) =>
-      targetNetworksPerNs.find((net) => net === destination) &&
-      allSourceNetworks.find((net) => net === source),
+      targetNetworkNameToUid[destination] && allSourceNetworks.find((net) => net === source),
   );
 
   const sourceNetworksToBeMapped = allSourceNetworks.filter(
@@ -69,15 +74,15 @@ export const calculateNetworks = (
   if (validMappings.length === networkMappings.length && networkMappings.length) {
     // existing mappings are valid after this reload
     return {
-      targetNetworks,
-      sourceNetworks: sourceNetworksToBeMapped,
+      targetNetworkLabels,
+      sourceNetworkLabels: sourceNetworksToBeMapped,
     };
   } else if (!networkMappings.length) {
     // no mappings yet- generate using defaults
     return {
       // all source networks covered with defaults
-      sourceNetworks: [],
-      targetNetworks: targetNetworksPerNs,
+      sourceNetworkLabels: [],
+      targetNetworkLabels,
       networkMappings: allSourceNetworks.map((source) => ({
         source,
         destination: defaultDestination,
@@ -88,8 +93,8 @@ export const calculateNetworks = (
     // user will need to provide them manually (to avoid overriding user choice silently)
     return {
       // only networks that are not already in the mappings
-      sourceNetworks: sourceNetworksToBeMapped,
-      targetNetworks: targetNetworksPerNs,
+      sourceNetworkLabels: sourceNetworksToBeMapped,
+      targetNetworkLabels,
       networkMappings: validMappings,
     };
   }
@@ -152,12 +157,13 @@ export const setTargetNamespace = (
 
 export const initCalculatedPerNamespaceSlice =
   (): CreateVmMigrationPageState['calculatedPerNamespace'] => ({
-    targetNetworks: [],
+    targetNetworkLabels: [],
     targetStorages: [],
     networkMappings: [],
     storageMappings: [],
     sourceStorages: [],
-    sourceNetworks: [],
+    sourceNetworkLabels: [],
+    targetNetworkLabelToId: {},
   });
 
 export const resolveTargetProvider = (name: string, availableProviders: V1beta1Provider[]) =>
@@ -245,14 +251,16 @@ export const createInitialState = ({
   },
   calculatedOnce: {
     vmFieldsFactory: resourceFieldsForType(sourceProvider?.spec?.type as ProviderType),
-    networksUsedBySelectedVms:
+    networkIdsUsedBySelectedVms:
       sourceProvider.spec?.type !== 'ovirt' ? getNetworksUsedBySelectedVms(selectedVms, []) : [],
+    sourceNetworkLabelToId: {},
     storagesUsedBySelectedVms: ['ovirt', 'openstack'].includes(sourceProvider.spec?.type) ? [] : [],
   },
   calculatedPerNamespace: {
-    targetNetworks: [],
+    targetNetworkLabels: [],
+    targetNetworkLabelToId: {},
     targetStorages: [],
-    sourceNetworks: [],
+    sourceNetworkLabels: [],
     networkMappings: [],
     sourceStorages: [],
     storageMappings: [],
@@ -261,7 +269,7 @@ export const createInitialState = ({
     targetProvider: undefined,
   },
   loaded: {
-    nickProfiles: false,
+    nickProfiles: sourceProvider.spec?.type !== 'ovirt',
   },
 });
 

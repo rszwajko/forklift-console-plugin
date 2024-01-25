@@ -1,5 +1,12 @@
-import { OpenShiftNamespace, OVirtNicProfile, V1beta1Plan, V1beta1Provider } from '@kubev2v/types';
-import { V1beta1NetworkMapSpecMapSource } from '@kubev2v/types/dist/models/V1beta1NetworkMapSpecMapSource';
+import {
+  OpenShiftNamespace,
+  OpenShiftNetworkAttachmentDefinition,
+  OVirtNicProfile,
+  V1beta1Plan,
+  V1beta1Provider,
+} from '@kubev2v/types';
+
+import { InventoryNetwork } from '../../hooks/useNetworks';
 
 import { Mapping } from './MappingList';
 
@@ -70,11 +77,11 @@ export interface PlanAvailableTargetNamespaces {
 }
 
 export interface PlanAvailableTargetNetworks {
-  availableTargetNetworks: V1beta1NetworkMapSpecMapSource[];
+  availableTargetNetworks: OpenShiftNetworkAttachmentDefinition[];
 }
 
 export interface PlanAvailableSourceNetworks {
-  availableSourceNetworks: V1beta1NetworkMapSpecMapSource[];
+  availableSourceNetworks: InventoryNetwork[];
 }
 
 export interface PlanNickProfiles {
@@ -160,14 +167,14 @@ export const replaceNetworkMapping = ({
 });
 
 export const setAvailableTargetNetworks = (
-  availableTargetNetworks: V1beta1NetworkMapSpecMapSource[],
+  availableTargetNetworks: OpenShiftNetworkAttachmentDefinition[],
 ): PageAction<CreateVmMigration, PlanAvailableTargetNetworks> => ({
   type: 'SET_AVAILABLE_TARGET_NETWORKS',
   payload: { availableTargetNetworks },
 });
 
 export const setAvailableSourceNetworks = (
-  availableSourceNetworks: V1beta1NetworkMapSpecMapSource[],
+  availableSourceNetworks: InventoryNetwork[],
 ): PageAction<CreateVmMigration, PlanAvailableSourceNetworks> => ({
   type: 'SET_AVAILABLE_SOURCE_NETWORKS',
   payload: { availableSourceNetworks },

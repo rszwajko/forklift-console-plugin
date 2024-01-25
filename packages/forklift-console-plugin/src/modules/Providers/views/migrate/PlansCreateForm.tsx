@@ -58,9 +58,9 @@ export const PlansCreateForm = ({
       targetNamespaces: availableTargetNamespaces,
     },
     calculatedPerNamespace: {
-      targetNetworks,
+      targetNetworkLabels: targetNetworks,
       targetStorages,
-      sourceNetworks,
+      sourceNetworkLabels: sourceNetworks,
       networkMappings,
       storageMappings,
       sourceStorages,
