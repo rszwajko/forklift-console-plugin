@@ -110,6 +110,8 @@ export interface CreateVmMigrationPageState {
   };
 }
 
+let counter = 0;
+
 const actions: {
   [name: string]: (
     draft: Draft<CreateVmMigrationPageState>,
@@ -144,8 +146,13 @@ const actions: {
   },
   [SET_AVAILABLE_PROVIDERS](
     draft,
-    { payload: { availableProviders } }: PageAction<CreateVmMigration, PlanAvailableProviders>,
+    {
+      payload: { availableProviders, loading, error },
+    }: PageAction<CreateVmMigration, PlanAvailableProviders>,
   ) {
+    if (loading || error) {
+      return draft;
+    }
     draft.existingResources.providers = availableProviders;
     if (
       !availableProviders
@@ -166,8 +173,13 @@ const actions: {
   },
   [SET_EXISTING_PLANS](
     draft,
-    { payload: { existingPlans } }: PageAction<CreateVmMigration, PlanExistingPlans>,
+    {
+      payload: { existingPlans, loading, error },
+    }: PageAction<CreateVmMigration, PlanExistingPlans>,
   ) {
+    if (loading || error) {
+      return draft;
+    }
     draft.existingResources.plans = existingPlans;
     draft.validation.planName = validatePlanName(
       draft.underConstruction.plan.metadata.name,
@@ -178,7 +190,7 @@ const actions: {
   [SET_AVAILABLE_TARGET_NAMESPACES](
     draft,
     {
-      payload: { availableTargetNamespaces },
+      payload: { availableTargetNamespaces, loading, error },
     }: PageAction<CreateVmMigration, PlanAvailableTargetNamespaces>,
   ) {
     const {
@@ -187,6 +199,9 @@ const actions: {
       underConstruction: { plan },
       workArea: { targetProvider },
     } = draft;
+    if (loading || error) {
+      return;
+    }
 
     existingResources.targetNamespaces = availableTargetNamespaces;
 
@@ -212,17 +227,12 @@ const actions: {
   [SET_AVAILABLE_TARGET_NETWORKS](
     draft,
     {
-      payload: { availableTargetNetworks },
+      payload: { availableTargetNetworks, loading, error },
     }: PageAction<CreateVmMigration, PlanAvailableTargetNetworks>,
   ) {
-    // const networks: OpenShiftNetworkAttachmentDefinition[] = [
-    // first network is used as default
-    //   { type: 'pod', name: POD_NETWORK },
-    //   ...availableTargetNetworks.map(({ type, ...rest }) => ({
-    //     ...rest,
-    //     type: type ?? 'multus',
-    //   })),
-    // ];
+    if (loading || error) {
+      return draft;
+    }
     draft.existingResources.targetNetworks = availableTargetNetworks;
 
     draft.calculatedPerNamespace = {
@@ -234,10 +244,14 @@ const actions: {
   [SET_AVAILABLE_SOURCE_NETWORKS](
     draft,
     {
-      payload: { availableSourceNetworks },
+      payload: { availableSourceNetworks, loading, error },
     }: PageAction<CreateVmMigration, PlanAvailableSourceNetworks>,
   ) {
+    if (loading || error) {
+      return draft;
+    }
     draft.existingResources.sourceNetworks = availableSourceNetworks;
+    console.warn('source networks', counter++, availableSourceNetworks);
     draft.calculatedOnce.sourceNetworkLabelToId = Object.fromEntries(
       draft.existingResources.sourceNetworks
         .map((net) => {
@@ -269,32 +283,26 @@ const actions: {
   },
   [SET_NICK_PROFILES](
     draft,
-    { payload: { nickProfiles, loading } }: PageAction<CreateVmMigration, PlanNickProfiles>,
+    { payload: { nickProfiles, loading, error } }: PageAction<CreateVmMigration, PlanNickProfiles>,
   ) {
     const {
       existingResources,
       calculatedOnce,
       receivedAsParams: { selectedVms },
-      loaded,
     } = draft;
-
-    if (loaded.nickProfiles) {
+    if (loading || error) {
       return;
     }
 
-    if (!loading) {
-      loaded.nickProfiles = true;
-
-      existingResources.nickProfiles = nickProfiles;
-      calculatedOnce.networkIdsUsedBySelectedVms = getNetworksUsedBySelectedVms(
-        selectedVms,
-        nickProfiles,
-      );
-      draft.calculatedPerNamespace = {
-        ...draft.calculatedPerNamespace,
-        ...calculateNetworks(draft),
-      };
-    }
+    existingResources.nickProfiles = nickProfiles;
+    calculatedOnce.networkIdsUsedBySelectedVms = getNetworksUsedBySelectedVms(
+      selectedVms,
+      nickProfiles,
+    );
+    draft.calculatedPerNamespace = {
+      ...draft.calculatedPerNamespace,
+      ...calculateNetworks(draft),
+    };
   },
 };
 

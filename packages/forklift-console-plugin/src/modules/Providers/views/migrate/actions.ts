@@ -66,22 +66,32 @@ export interface PlanTargetNamespace {
 
 export interface PlanAvailableProviders {
   availableProviders: V1beta1Provider[];
+  loading: boolean;
+  error?: Error;
 }
 
 export interface PlanExistingPlans {
   existingPlans: V1beta1Plan[];
+  loading: boolean;
+  error?: Error;
 }
 
 export interface PlanAvailableTargetNamespaces {
   availableTargetNamespaces: OpenShiftNamespace[];
+  loading: boolean;
+  error?: Error;
 }
 
 export interface PlanAvailableTargetNetworks {
   availableTargetNetworks: OpenShiftNetworkAttachmentDefinition[];
+  loading: boolean;
+  error?: Error;
 }
 
 export interface PlanAvailableSourceNetworks {
   availableSourceNetworks: InventoryNetwork[];
+  loading: boolean;
+  error?: Error;
 }
 
 export interface PlanNickProfiles {
@@ -127,27 +137,37 @@ export const setPlanName = (name: string): PageAction<CreateVmMigration, PlanNam
 
 export const setAvailableProviders = (
   availableProviders: V1beta1Provider[],
+  loaded: boolean,
+  error: Error,
 ): PageAction<CreateVmMigration, PlanAvailableProviders> => ({
   type: 'SET_AVAILABLE_PROVIDERS',
   payload: {
     availableProviders,
+    loading: !loaded,
+    error,
   },
 });
 
 export const setExistingPlans = (
   existingPlans: V1beta1Plan[],
+  loaded: boolean,
+  error: Error,
 ): PageAction<CreateVmMigration, PlanExistingPlans> => ({
   type: 'SET_EXISTING_PLANS',
   payload: {
     existingPlans,
+    loading: !loaded,
+    error,
   },
 });
 
 export const setAvailableTargetNamespaces = (
   availableTargetNamespaces: OpenShiftNamespace[],
+  loading: boolean,
+  error?: Error,
 ): PageAction<CreateVmMigration, PlanAvailableTargetNamespaces> => ({
   type: 'SET_AVAILABLE_TARGET_NAMESPACES',
-  payload: { availableTargetNamespaces },
+  payload: { availableTargetNamespaces, loading, error },
 });
 
 export const replaceStorageMapping = ({
@@ -168,16 +188,20 @@ export const replaceNetworkMapping = ({
 
 export const setAvailableTargetNetworks = (
   availableTargetNetworks: OpenShiftNetworkAttachmentDefinition[],
+  loading: boolean,
+  error?: Error,
 ): PageAction<CreateVmMigration, PlanAvailableTargetNetworks> => ({
   type: 'SET_AVAILABLE_TARGET_NETWORKS',
-  payload: { availableTargetNetworks },
+  payload: { availableTargetNetworks, loading, error },
 });
 
 export const setAvailableSourceNetworks = (
   availableSourceNetworks: InventoryNetwork[],
+  loading: boolean,
+  error?: Error,
 ): PageAction<CreateVmMigration, PlanAvailableSourceNetworks> => ({
   type: 'SET_AVAILABLE_SOURCE_NETWORKS',
-  payload: { availableSourceNetworks },
+  payload: { availableSourceNetworks, loading, error },
 });
 
 export const setNicProfiles = (

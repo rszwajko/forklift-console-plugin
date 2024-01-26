@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { OVirtNicProfile, V1beta1Provider } from '@kubev2v/types';
 
 import useProviderInventory from './useProviderInventory';
@@ -6,7 +8,7 @@ import useProviderInventory from './useProviderInventory';
  * Works only for oVirt
  */
 export const useNicProfiles = (provider: V1beta1Provider): [OVirtNicProfile[], boolean, Error] => {
-  const isOVirt = provider.spec?.type === 'ovirt';
+  const isOVirt = provider?.spec?.type === 'ovirt';
   const {
     inventory: nicProfiles,
     loading,
@@ -16,9 +18,10 @@ export const useNicProfiles = (provider: V1beta1Provider): [OVirtNicProfile[], b
     subPath: isOVirt ? '/nicprofiles?detail=1' : '',
   });
 
-  if (isOVirt) {
-    return [[], false, undefined];
-  }
+  const stable = useMemo(
+    () => (!isOVirt ? [] : Array.isArray(nicProfiles) ? nicProfiles : []),
+    [isOVirt, nicProfiles],
+  );
 
-  return [!loading && !error && Array.isArray(nicProfiles) ? nicProfiles : [], loading, error];
+  return [stable, loading, error];
 };

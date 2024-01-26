@@ -3,7 +3,13 @@ import { Draft } from 'immer';
 import { v4 as randomId } from 'uuid';
 
 import { DefaultRow, ResourceFieldFactory, RowProps, withTr } from '@kubev2v/common';
-import { OpenShiftNamespace, ProviderType, V1beta1Plan, V1beta1Provider } from '@kubev2v/types';
+import {
+  OpenShiftNamespace,
+  ProviderModelGroupVersionKind as ProviderGVK,
+  ProviderType,
+  V1beta1Plan,
+  V1beta1Provider,
+} from '@kubev2v/types';
 
 import { getIsTarget, validateK8sName } from '../../utils';
 import { networkMapTemplate, planTemplate, storageMapTemplate } from '../create/templates';
@@ -186,8 +192,12 @@ export const getObjectRef = (
 
 export const createInitialState = ({
   namespace,
-  sourceProvider,
-  selectedVms,
+  sourceProvider = {
+    metadata: { name: 'unknown', namespace: 'unknown' },
+    apiVersion: `${ProviderGVK.group}/${ProviderGVK.version}`,
+    kind: ProviderGVK.kind,
+  },
+  selectedVms = [],
 }: {
   namespace: string;
   sourceProvider: V1beta1Provider;

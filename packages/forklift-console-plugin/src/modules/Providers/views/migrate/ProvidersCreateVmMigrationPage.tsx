@@ -64,33 +64,60 @@ const ProvidersCreateVmMigrationPage: FC<{
     workArea: { targetProvider },
   } = state;
 
-  const [providers] = useK8sWatchResource<V1beta1Provider[]>({
+  const [providers, providersLoaded, providerError] = useK8sWatchResource<V1beta1Provider[]>({
     groupVersionKind: ProviderModelGroupVersionKind,
     namespaced: true,
     isList: true,
     namespace,
   });
   useEffect(
-    () => dispatch(setAvailableProviders(Array.isArray(providers) ? providers : [])),
+    () =>
+      dispatch(
+        setAvailableProviders(
+          Array.isArray(providers) ? providers : [],
+          providersLoaded,
+          providerError,
+        ),
+      ),
     [providers],
   );
 
-  const [plans] = useK8sWatchResource<V1beta1Plan[]>({
+  const [plans, plansLoaded, plansError] = useK8sWatchResource<V1beta1Plan[]>({
     groupVersionKind: PlanModelGroupVersionKind,
     namespaced: true,
     isList: true,
     namespace,
   });
-  useEffect(() => dispatch(setExistingPlans(Array.isArray(plans) ? plans : [])), [plans]);
+  useEffect(
+    () => dispatch(setExistingPlans(Array.isArray(plans) ? plans : [], plansLoaded, plansError)),
+    [plans, plansLoaded, plansError],
+  );
 
-  const [namespaces] = useNamespaces(targetProvider);
-  useEffect(() => dispatch(setAvailableTargetNamespaces(namespaces)), [namespaces]);
+  const [namespaces, nsLoading, nsError] = useNamespaces(targetProvider);
+  useEffect(
+    () => dispatch(setAvailableTargetNamespaces(namespaces, nsLoading, nsError)),
+    [namespaces, nsLoading, nsError],
+  );
 
-  const [targetNetworks] = useOpenShiftNetworks(targetProvider);
-  useEffect(() => dispatch(setAvailableTargetNetworks(targetNetworks)), [targetNetworks]);
+  const [targetNetworks, targetNetworksLoading, targetNetworksError] =
+    useOpenShiftNetworks(targetProvider);
+  useEffect(
+    () =>
+      dispatch(
+        setAvailableTargetNetworks(targetNetworks, targetNetworksLoading, targetNetworksError),
+      ),
+    [targetNetworks, targetNetworksLoading, targetNetworksError],
+  );
 
-  const [sourceNetworks] = useSourceNetworks(sourceProvider);
-  useEffect(() => dispatch(setAvailableSourceNetworks(sourceNetworks)), [sourceNetworks]);
+  const [sourceNetworks, sourceNetworksLoading, sourceNetworksError] =
+    useSourceNetworks(sourceProvider);
+  useEffect(
+    () =>
+      dispatch(
+        setAvailableSourceNetworks(sourceNetworks, sourceNetworksLoading, sourceNetworksError),
+      ),
+    [sourceNetworks, sourceNetworksLoading, sourceNetworksError],
+  );
 
   const [nicProfiles, nicProfilesLoading, nicProfilesError] = useNicProfiles(sourceProvider);
   useEffect(
