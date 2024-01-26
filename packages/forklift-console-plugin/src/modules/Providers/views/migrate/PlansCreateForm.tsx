@@ -58,9 +58,9 @@ export const PlansCreateForm = ({
       targetNamespaces: availableTargetNamespaces,
     },
     calculatedPerNamespace: {
-      targetNetworkLabels: targetNetworks,
+      targetNetworks,
       targetStorages,
-      sourceNetworkLabels: sourceNetworks,
+      sourceNetworks,
       networkMappings,
       storageMappings,
       sourceStorages,
@@ -248,6 +248,7 @@ export const PlansCreateForm = ({
                     groupVersionKind={NetworkMapModelGroupVersionKind}
                     namespace={netMap.metadata?.namespace}
                     name={netMap.metadata?.name}
+                    className="forklift-page-resource-link-in-description-item"
                   />
                 </span>
               </DescriptionListTerm>
@@ -259,8 +260,11 @@ export const PlansCreateForm = ({
                   }
                   deleteMapping={(current) => dispatch(replaceNetworkMapping({ current }))}
                   availableDestinations={targetNetworks}
-                  availableSources={sourceNetworks}
+                  sources={sourceNetworks}
                   mappings={networkMappings}
+                  generalSourcesLabel={t('Other networks present on the source provider ')}
+                  usedSourcesLabel={t('Networks used by the selected VMs')}
+                  noSourcesLabel={t('No networks in this category')}
                 />
               </DescriptionListDescription>
             </DescriptionListGroup>
@@ -272,6 +276,7 @@ export const PlansCreateForm = ({
                     groupVersionKind={StorageMapModelGroupVersionKind}
                     namespace={storageMap.metadata?.namespace}
                     name={storageMap.metadata?.name}
+                    className="forklift-page-resource-link-in-description-item"
                   />
                 </span>
               </DescriptionListTerm>
@@ -283,8 +288,11 @@ export const PlansCreateForm = ({
                   }
                   deleteMapping={(current) => dispatch(replaceStorageMapping({ current }))}
                   availableDestinations={targetStorages}
-                  availableSources={sourceStorages}
+                  sources={[]}
                   mappings={storageMappings}
+                  generalSourcesLabel={t('Other storages present on the source provider ')}
+                  usedSourcesLabel={t('Storages used by the selected VMs')}
+                  noSourcesLabel={t('No storages in this category')}
                 />
               </DescriptionListDescription>
             </DescriptionListGroup>

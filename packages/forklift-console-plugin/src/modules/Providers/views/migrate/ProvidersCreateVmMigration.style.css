@@ -10,3 +10,7 @@
     /* <Form isWidthLimited>*/
     max-width: 55rem;
 }
+
+.forklift-page-resource-link-in-description-item {
+    padding-left: 8px;
+}

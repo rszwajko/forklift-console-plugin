@@ -44,6 +44,7 @@ import { getNetworksUsedBySelectedVms } from './getNetworksUsedBySelectedVMs';
 import { Mapping } from './MappingList';
 import {
   calculateNetworks,
+  mapSourceNetworksToLabels,
   setTargetNamespace,
   setTargetProvider,
   validatePlanName,
@@ -90,12 +91,17 @@ export interface CreateVmMigrationPageState {
     // read-only
     targetStorages: string[];
     // read-only, human-readable
-    targetNetworkLabels: string[];
+    targetNetworks: string[];
     targetNetworkLabelToId: { [label: string]: string };
-    // mutated, human-readable
-    sourceNetworkLabels: string[];
+    sourceNetworks: {
+      // read-only
+      label: string;
+      usedBySelectedVms: boolean;
+      // mutated via UI
+      isMapped: boolean;
+    }[];
     sourceStorages: string[];
-    // both source and destination human-readable
+    // mutated, both source and destination human-readable
     networkMappings: Mapping[];
     storageMappings: Mapping[];
   };
@@ -153,6 +159,7 @@ const actions: {
     if (loading || error) {
       return draft;
     }
+    console.warn(SET_AVAILABLE_PROVIDERS, availableProviders);
     draft.existingResources.providers = availableProviders;
     if (
       !availableProviders
@@ -180,6 +187,7 @@ const actions: {
     if (loading || error) {
       return draft;
     }
+    console.warn(SET_EXISTING_PLANS, existingPlans);
     draft.existingResources.plans = existingPlans;
     draft.validation.planName = validatePlanName(
       draft.underConstruction.plan.metadata.name,
@@ -202,7 +210,7 @@ const actions: {
     if (loading || error) {
       return;
     }
-
+    console.warn(SET_AVAILABLE_TARGET_NAMESPACES, availableTargetNamespaces);
     existingResources.targetNamespaces = availableTargetNamespaces;
 
     validation.targetNamespace = validateTargetNamespace(
@@ -233,6 +241,7 @@ const actions: {
     if (loading || error) {
       return draft;
     }
+    console.warn(SET_AVAILABLE_TARGET_NETWORKS, availableTargetNetworks);
     draft.existingResources.targetNetworks = availableTargetNetworks;
 
     draft.calculatedPerNamespace = {
@@ -250,31 +259,10 @@ const actions: {
     if (loading || error) {
       return draft;
     }
+    console.warn(SET_AVAILABLE_SOURCE_NETWORKS, counter++, availableSourceNetworks);
     draft.existingResources.sourceNetworks = availableSourceNetworks;
-    console.warn('source networks', counter++, availableSourceNetworks);
-    draft.calculatedOnce.sourceNetworkLabelToId = Object.fromEntries(
-      draft.existingResources.sourceNetworks
-        .map((net) => {
-          switch (net.providerType) {
-            case 'openshift': {
-              return [`${net.namespace}/${net.name}`, net.uid];
-            }
-            case 'openstack': {
-              return [net.name, net.id];
-            }
-            case 'ovirt': {
-              return [net.path, net.id];
-            }
-            case 'vsphere': {
-              return [net.name, net.id];
-            }
-            default: {
-              return undefined;
-            }
-          }
-        })
-        .filter(Boolean),
-    );
+    draft.calculatedOnce.sourceNetworkLabelToId =
+      mapSourceNetworksToLabels(availableSourceNetworks);
     draft.calculatedPerNamespace = {
       ...draft.calculatedPerNamespace,
       ...calculateNetworks(draft),
@@ -293,7 +281,7 @@ const actions: {
     if (loading || error) {
       return;
     }
-
+    console.warn(SET_NICK_PROFILES, nickProfiles);
     existingResources.nickProfiles = nickProfiles;
     calculatedOnce.networkIdsUsedBySelectedVms = getNetworksUsedBySelectedVms(
       selectedVms,

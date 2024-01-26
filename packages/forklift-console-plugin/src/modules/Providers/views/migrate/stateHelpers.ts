@@ -11,6 +11,7 @@ import {
   V1beta1Provider,
 } from '@kubev2v/types';
 
+import { InventoryNetwork } from '../../hooks/useNetworks';
 import { getIsTarget, validateK8sName } from '../../utils';
 import { networkMapTemplate, planTemplate, storageMapTemplate } from '../create/templates';
 import { toId, VmData } from '../details';
@@ -56,6 +57,7 @@ export const calculateNetworks = (
     calculatedPerNamespace: { networkMappings },
     existingResources,
     underConstruction: { plan },
+    calculatedOnce: { sourceNetworkLabelToId, networkIdsUsedBySelectedVms },
   } = draft;
 
   const targetNetworkNameToUid = Object.fromEntries(
@@ -63,48 +65,37 @@ export const calculateNetworks = (
       .filter(({ namespace }) => namespace === plan.spec.targetNamespace)
       .map((net) => [net.name, net.uid]),
   );
-  const targetNetworkLabels = Object.keys(targetNetworkNameToUid).sort();
+  const targetNetworkLabels = [POD_NETWORK, ...Object.keys(targetNetworkNameToUid).sort()];
   const defaultDestination = POD_NETWORK;
-
-  const allSourceNetworks = draft.calculatedOnce.networkIdsUsedBySelectedVms;
 
   const validMappings = networkMappings.filter(
     ({ source, destination }) =>
-      targetNetworkNameToUid[destination] && allSourceNetworks.find((net) => net === source),
+      (targetNetworkNameToUid[destination] || destination === POD_NETWORK) &&
+      sourceNetworkLabelToId[source],
   );
 
-  const sourceNetworksToBeMapped = allSourceNetworks.filter(
-    (net) => !validMappings.find(({ source }) => net === source),
-  );
+  const sourceNetworks = Object.keys(sourceNetworkLabelToId)
+    .sort()
+    .map((label) => ({
+      label,
+      isMapped: validMappings.some(({ source }) => source === label),
+      usedBySelectedVms: networkIdsUsedBySelectedVms.some(
+        (id) => id === sourceNetworkLabelToId[label],
+      ),
+    }));
 
-  if (validMappings.length === networkMappings.length && networkMappings.length) {
-    // existing mappings are valid after this reload
-    return {
-      targetNetworkLabels,
-      sourceNetworkLabels: sourceNetworksToBeMapped,
-    };
-  } else if (!networkMappings.length) {
-    // no mappings yet- generate using defaults
-    return {
-      // all source networks covered with defaults
-      sourceNetworkLabels: [],
-      targetNetworkLabels,
-      networkMappings: allSourceNetworks.map((source) => ({
-        source,
-        destination: defaultDestination,
-      })),
-    };
-  } else {
-    // remove invalid mappings
-    // user will need to provide them manually (to avoid overriding user choice silently)
-    return {
-      // only networks that are not already in the mappings
-      sourceNetworkLabels: sourceNetworksToBeMapped,
-      targetNetworkLabels,
-      networkMappings: validMappings,
-    };
-  }
-  return {};
+  return {
+    targetNetworks: targetNetworkLabels,
+    sourceNetworks,
+    networkMappings: networkMappings.length
+      ? validMappings
+      : sourceNetworks
+          .filter(({ usedBySelectedVms }) => usedBySelectedVms)
+          .map(({ label }) => ({
+            source: label,
+            destination: defaultDestination,
+          })),
+  };
 };
 
 export const calculateStorages = (
@@ -163,12 +154,12 @@ export const setTargetNamespace = (
 
 export const initCalculatedPerNamespaceSlice =
   (): CreateVmMigrationPageState['calculatedPerNamespace'] => ({
-    targetNetworkLabels: [],
+    targetNetworks: [],
     targetStorages: [],
     networkMappings: [],
     storageMappings: [],
     sourceStorages: [],
-    sourceNetworkLabels: [],
+    sourceNetworks: [],
     targetNetworkLabelToId: {},
   });
 
@@ -267,10 +258,10 @@ export const createInitialState = ({
     storagesUsedBySelectedVms: ['ovirt', 'openstack'].includes(sourceProvider.spec?.type) ? [] : [],
   },
   calculatedPerNamespace: {
-    targetNetworkLabels: [],
+    targetNetworks: [],
     targetNetworkLabelToId: {},
     targetStorages: [],
-    sourceNetworkLabels: [],
+    sourceNetworks: [],
     networkMappings: [],
     sourceStorages: [],
     storageMappings: [],
@@ -302,4 +293,54 @@ export const resourceFieldsForType = (
     default:
       return [() => [], DefaultRow];
   }
+};
+
+export const mapSourceNetworksToLabels = (
+  sources: InventoryNetwork[],
+): { [label: string]: string } => {
+  const tuples = sources
+    .map((net) => {
+      switch (net.providerType) {
+        case 'openshift': {
+          return [`${net.namespace}/${net.name}`, net.uid];
+        }
+        case 'openstack': {
+          return [net.name, net.id];
+        }
+        case 'ovirt': {
+          return [net.path, net.id];
+        }
+        case 'vsphere': {
+          return [net.name, net.id];
+        }
+        default: {
+          return undefined;
+        }
+      }
+    })
+    .filter(Boolean);
+  const labelToId: { [label: string]: string } = tuples.reduce((acc, [label, id]) => {
+    if (acc[label] && acc[label] === id) {
+      //already included
+      return acc;
+    } else if (acc[label]) {
+      // resolve conflict
+      return {
+        ...acc,
+        // existing entry: add suffix with ID
+        [label]: undefined,
+        [`${label}  (ID: ${acc[label]})`]: acc[label],
+        // new entry: create with suffix
+        [`${label}  (ID: ${id})`]: id,
+      };
+    } else {
+      // happy path
+      return {
+        ...acc,
+        [label]: id,
+      };
+    }
+  }, {});
+
+  return labelToId;
 };

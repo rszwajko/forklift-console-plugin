@@ -10,6 +10,8 @@ import {
   DataListItemCells,
   DataListItemRow,
   Select,
+  SelectGroup,
+  SelectOption,
   SelectVariant,
 } from '@patternfly/react-core';
 import { MinusCircleIcon, PlusCircleIcon } from '@patternfly/react-icons';
@@ -25,42 +27,66 @@ export interface Mapping {
 
 interface MappingListProps {
   mappings: Mapping[];
-  availableSources: string[];
+  sources: {
+    label: string;
+    usedBySelectedVms: boolean;
+    isMapped: boolean;
+  }[];
   availableDestinations: string[];
   replaceMapping: (val: { current: Mapping; next: Mapping }) => void;
   deleteMapping: (mapping: Mapping) => void;
   addMapping: (mapping: Mapping) => void;
+  usedSourcesLabel: string;
+  generalSourcesLabel: string;
+  noSourcesLabel: string;
 }
 
 export const MappingList: FC<MappingListProps> = ({
   mappings,
-  availableSources,
+  sources,
   availableDestinations,
   replaceMapping,
   deleteMapping,
   addMapping,
+  usedSourcesLabel,
+  generalSourcesLabel,
+  noSourcesLabel,
 }) => {
   const { t } = useForkliftTranslation();
+  const usedSources = sources.filter(({ usedBySelectedVms }) => usedBySelectedVms);
+  const generalSources = sources.filter(({ usedBySelectedVms }) => !usedBySelectedVms);
+  const allMapped = sources.every(({ isMapped }) => isMapped);
   return (
     <>
       <DataList isCompact aria-label="">
-        {mappings.map((item, index) => (
+        {mappings.map(({ source, destination }, index) => (
           <MappingItem
-            {...item}
+            source={source}
+            destination={destination}
+            destinations={availableDestinations}
+            generalSources={generalSources}
+            usedSources={usedSources}
             replaceMapping={replaceMapping}
             deleteMapping={deleteMapping}
             index={index}
             key={index}
+            generalSourcesLabel={generalSourcesLabel}
+            usedSourcesLabel={usedSourcesLabel}
+            noSourcesLabel={noSourcesLabel}
           />
         ))}
       </DataList>
       <Button
         onClick={() =>
-          addMapping({ source: availableSources?.[0], destination: availableDestinations?.[0] })
+          addMapping({
+            source: usedSources?.[0]?.label ?? generalSources?.[0]?.label,
+            // assume that the default exists and is first in the list
+            destination: availableDestinations?.[0],
+          })
         }
         type="button"
         variant="link"
-        isDisabled={!availableSources?.length}
+        isDisabled={allMapped}
         icon={<PlusCircleIcon />}
       >
         {t('Add mapping')}
@@ -72,6 +98,20 @@ export const MappingList: FC<MappingListProps> = ({
 interface MappingItemProps {
   source: string;
   destination: string;
+  destinations: string[];
+  generalSources: {
+    label: string;
+    usedBySelectedVms: boolean;
+    isMapped: boolean;
+  }[];
+  usedSources: {
+    label: string;
+    usedBySelectedVms: boolean;
+    isMapped: boolean;
+  }[];
+  usedSourcesLabel: string;
+  generalSourcesLabel: string;
+  noSourcesLabel: string;
   index: number;
   replaceMapping: (val: { current: Mapping; next: Mapping }) => void;
   deleteMapping: (mapping: Mapping) => void;
@@ -79,6 +119,12 @@ interface MappingItemProps {
 const MappingItem: FC<MappingItemProps> = ({
   source,
   destination,
+  destinations,
+  generalSources,
+  usedSources,
+  usedSourcesLabel,
+  generalSourcesLabel,
+  noSourcesLabel,
   index,
   replaceMapping,
   deleteMapping,
@@ -96,7 +142,8 @@ const MappingItem: FC<MappingItemProps> = ({
                 variant={SelectVariant.single}
                 aria-label=""
                 onToggle={setToggleSrcOpen}
-                onSelect={(event, value: string) =>
+                onSelect={(event, value: string, isPlaceholder: boolean) =>
+                  !isPlaceholder &&
                   replaceMapping({
                     current: { source, destination },
                     next: { source: value, destination },
@@ -105,7 +152,15 @@ const MappingItem: FC<MappingItemProps> = ({
                 selections={source}
                 isOpen={isSrcOpen}
                 aria-labelledby=""
-              />
+                isGrouped
+              >
+                <SelectGroup label={usedSourcesLabel} key="usedSources">
+                  {toGroup(usedSources, noSourcesLabel, source)}
+                </SelectGroup>
+                <SelectGroup label={generalSourcesLabel} key="generalSources">
+                  {toGroup(generalSources, noSourcesLabel, source)}
+                </SelectGroup>
+              </Select>
             </DataListCell>,
             <DataListCell key="destination">
               <Select
@@ -118,10 +173,14 @@ const MappingItem: FC<MappingItemProps> = ({
                     next: { source, destination: value },
                   })
                 }
-                selections={source}
+                selections={destination}
                 isOpen={isTrgOpen}
                 aria-labelledby=""
-              />
+              >
+                {destinations.map((label) => (
+                  <SelectOption value={label} key={label} />
+                ))}
+              </Select>
             </DataListCell>,
           ]}
         />
@@ -142,3 +201,16 @@ const MappingItem: FC<MappingItemProps> = ({
     </DataListItem>
   );
 };
+
+const toGroup = (
+  sources: MappingListProps['sources'],
+  noSourcesLabel: string,
+  selectedSource: string,
+) =>
+  sources.length !== 0 ? (
+    sources.map(({ label, isMapped }) => (
+      <SelectOption value={label} key={label} isDisabled={isMapped && label !== selectedSource} />
+    ))
+  ) : (
+    <SelectOption value={noSourcesLabel} isNoResultsOption />
+  );
