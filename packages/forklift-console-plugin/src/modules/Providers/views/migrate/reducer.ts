@@ -25,30 +25,38 @@ import {
   PlanAvailableSourceNetworks,
   PlanAvailableTargetNamespaces,
   PlanAvailableTargetNetworks,
+  PlanCrateNetMap,
+  PlanExistingNetMaps,
   PlanExistingPlans,
   PlanName,
   PlanNickProfiles,
   PlanTargetNamespace,
   PlanTargetProvider,
+  POD_NETWORK,
   SET_AVAILABLE_PROVIDERS,
   SET_AVAILABLE_SOURCE_NETWORKS,
   SET_AVAILABLE_TARGET_NAMESPACES,
   SET_AVAILABLE_TARGET_NETWORKS,
+  SET_EXISTING_NET_MAPS,
   SET_EXISTING_PLANS,
   SET_NAME,
+  SET_NET_MAP,
   SET_NICK_PROFILES,
   SET_TARGET_NAMESPACE,
   SET_TARGET_PROVIDER,
+  START_CREATE,
 } from './actions';
 import { getNetworksUsedBySelectedVms } from './getNetworksUsedBySelectedVMs';
 import { Mapping } from './MappingList';
 import {
   calculateNetworks,
+  generateName,
   mapSourceNetworksToLabels,
   setTargetNamespace,
   setTargetProvider,
   validatePlanName,
   validateTargetNamespace,
+  validateUniqueName,
 } from './stateHelpers';
 
 export interface CreateVmMigrationPageState {
@@ -73,9 +81,8 @@ export interface CreateVmMigrationPageState {
     sourceNetworks: InventoryNetwork[];
     targetStorages: unknown[];
     nickProfiles: OVirtNicProfile[];
-  };
-  loaded: {
-    nickProfiles: boolean;
+    netMaps: V1beta1NetworkMap[];
+    createdNetMap?: V1beta1NetworkMap;
   };
   calculatedOnce: {
     // calculated on start (exception:for ovirt/openstack we need to fetch disks)
@@ -114,9 +121,12 @@ export interface CreateVmMigrationPageState {
   workArea: {
     targetProvider: V1beta1Provider;
   };
+  flow: {
+    editingDone: boolean;
+    netMapCreated: boolean;
+    storageMapCreated: boolean;
+  };
 }
-
-let counter = 0;
 
 const actions: {
   [name: string]: (
@@ -125,6 +135,9 @@ const actions: {
   ) => CreateVmMigrationPageState | void;
 } = {
   [SET_NAME](draft, { payload: { name } }: PageAction<CreateVmMigration, PlanName>) {
+    if (draft.flow.editingDone) {
+      return;
+    }
     draft.underConstruction.plan.metadata.name = name;
     draft.validation.planName = validatePlanName(name, draft.existingResources.plans);
     return draft;
@@ -133,7 +146,9 @@ const actions: {
     draft,
     { payload: { targetNamespace } }: PageAction<CreateVmMigration, PlanTargetNamespace>,
   ) {
-    setTargetNamespace(draft, targetNamespace);
+    if (!draft.flow.editingDone) {
+      setTargetNamespace(draft, targetNamespace);
+    }
     return draft;
   },
   [SET_TARGET_PROVIDER](
@@ -143,9 +158,10 @@ const actions: {
     const {
       underConstruction: { plan },
       existingResources,
+      flow: { editingDone },
     } = draft;
     // avoid side effects if no real change
-    if (plan.spec.provider?.destination?.name !== targetProviderName) {
+    if (!editingDone && plan.spec.provider?.destination?.name !== targetProviderName) {
       setTargetProvider(draft, targetProviderName, existingResources.providers);
     }
     return draft;
@@ -156,7 +172,7 @@ const actions: {
       payload: { availableProviders, loading, error },
     }: PageAction<CreateVmMigration, PlanAvailableProviders>,
   ) {
-    if (loading || error) {
+    if (loading || error || draft.flow.editingDone) {
       return draft;
     }
     console.warn(SET_AVAILABLE_PROVIDERS, availableProviders);
@@ -184,7 +200,7 @@ const actions: {
       payload: { existingPlans, loading, error },
     }: PageAction<CreateVmMigration, PlanExistingPlans>,
   ) {
-    if (loading || error) {
+    if (loading || error || draft.flow.editingDone) {
       return draft;
     }
     console.warn(SET_EXISTING_PLANS, existingPlans);
@@ -206,8 +222,9 @@ const actions: {
       validation,
       underConstruction: { plan },
       workArea: { targetProvider },
+      flow: { editingDone },
     } = draft;
-    if (loading || error) {
+    if (loading || error || editingDone) {
       return;
     }
     console.warn(SET_AVAILABLE_TARGET_NAMESPACES, availableTargetNamespaces);
@@ -238,7 +255,7 @@ const actions: {
       payload: { availableTargetNetworks, loading, error },
     }: PageAction<CreateVmMigration, PlanAvailableTargetNetworks>,
   ) {
-    if (loading || error) {
+    if (loading || error || draft.flow.editingDone) {
       return draft;
     }
     console.warn(SET_AVAILABLE_TARGET_NETWORKS, availableTargetNetworks);
@@ -256,10 +273,10 @@ const actions: {
       payload: { availableSourceNetworks, loading, error },
     }: PageAction<CreateVmMigration, PlanAvailableSourceNetworks>,
   ) {
-    if (loading || error) {
+    if (loading || error || draft.flow.editingDone) {
       return draft;
     }
-    console.warn(SET_AVAILABLE_SOURCE_NETWORKS, counter++, availableSourceNetworks);
+    console.warn(SET_AVAILABLE_SOURCE_NETWORKS, availableSourceNetworks);
     draft.existingResources.sourceNetworks = availableSourceNetworks;
     draft.calculatedOnce.sourceNetworkLabelToId =
       mapSourceNetworksToLabels(availableSourceNetworks);
@@ -277,8 +294,9 @@ const actions: {
       existingResources,
       calculatedOnce,
       receivedAsParams: { selectedVms },
+      flow: { editingDone },
     } = draft;
-    if (loading || error) {
+    if (loading || error || editingDone) {
       return;
     }
     console.warn(SET_NICK_PROFILES, nickProfiles);
@@ -291,6 +309,52 @@ const actions: {
       ...draft.calculatedPerNamespace,
       ...calculateNetworks(draft),
     };
+  },
+  [SET_EXISTING_NET_MAPS](
+    {
+      existingResources,
+      underConstruction: { netMap },
+      receivedAsParams: { sourceProvider },
+      flow: { editingDone },
+    },
+    {
+      payload: { existingNetMaps, loading, error },
+    }: PageAction<CreateVmMigration, PlanExistingNetMaps>,
+  ) {
+    if (loading || error || editingDone) {
+      return;
+    }
+    console.warn(SET_EXISTING_NET_MAPS, existingNetMaps);
+    existingResources.netMaps = existingNetMaps;
+    const names = existingNetMaps.map((n) => n.metadata?.name).filter(Boolean);
+    while (!validateUniqueName(netMap.metadata.name, names)) {
+      netMap.metadata.name = generateName(sourceProvider.metadata.name);
+    }
+  },
+  [START_CREATE]({
+    flow,
+    underConstruction: { plan, netMap },
+    calculatedOnce: { sourceNetworkLabelToId },
+    calculatedPerNamespace: { networkMappings },
+  }) {
+    console.warn(START_CREATE);
+    flow.editingDone = true;
+    netMap.spec.map = networkMappings.map(({ source, destination }) => ({
+      source: {
+        id: sourceNetworkLabelToId[source],
+      },
+      destination:
+        destination === POD_NETWORK
+          ? { type: 'pod' }
+          : { name: destination, namespace: plan.spec.targetNamespace, type: 'multus' },
+    }));
+  },
+  [SET_NET_MAP](
+    draft,
+    { payload: { netMap, error } }: PageAction<CreateVmMigration, PlanCrateNetMap>,
+  ) {
+    draft.existingResources.createdNetMap = netMap;
+    draft.flow.netMapCreated = true;
   },
 };
 

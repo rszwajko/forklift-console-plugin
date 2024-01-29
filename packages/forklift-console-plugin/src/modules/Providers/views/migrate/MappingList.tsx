@@ -39,6 +39,7 @@ interface MappingListProps {
   usedSourcesLabel: string;
   generalSourcesLabel: string;
   noSourcesLabel: string;
+  isDisabled: boolean;
 }
 
 export const MappingList: FC<MappingListProps> = ({
@@ -51,6 +52,7 @@ export const MappingList: FC<MappingListProps> = ({
   usedSourcesLabel,
   generalSourcesLabel,
   noSourcesLabel,
+  isDisabled,
 }) => {
   const { t } = useForkliftTranslation();
   const usedSources = sources.filter(({ usedBySelectedVms }) => usedBySelectedVms);
@@ -73,6 +75,7 @@ export const MappingList: FC<MappingListProps> = ({
             generalSourcesLabel={generalSourcesLabel}
             usedSourcesLabel={usedSourcesLabel}
             noSourcesLabel={noSourcesLabel}
+            isDisabled={isDisabled}
           />
         ))}
       </DataList>
@@ -86,7 +89,7 @@ export const MappingList: FC<MappingListProps> = ({
         }
         type="button"
         variant="link"
-        isDisabled={allMapped}
+        isDisabled={allMapped || isDisabled}
         icon={<PlusCircleIcon />}
       >
         {t('Add mapping')}
@@ -115,6 +118,7 @@ interface MappingItemProps {
   index: number;
   replaceMapping: (val: { current: Mapping; next: Mapping }) => void;
   deleteMapping: (mapping: Mapping) => void;
+  isDisabled: boolean;
 }
 const MappingItem: FC<MappingItemProps> = ({
   source,
@@ -128,6 +132,7 @@ const MappingItem: FC<MappingItemProps> = ({
   index,
   replaceMapping,
   deleteMapping,
+  isDisabled,
 }) => {
   const { t } = useForkliftTranslation();
   const [isSrcOpen, setToggleSrcOpen] = useToggle(false);
@@ -151,6 +156,7 @@ const MappingItem: FC<MappingItemProps> = ({
                 }
                 selections={source}
                 isOpen={isSrcOpen}
+                isDisabled={isDisabled}
                 aria-labelledby=""
                 isGrouped
               >
@@ -175,6 +181,7 @@ const MappingItem: FC<MappingItemProps> = ({
                 }
                 selections={destination}
                 isOpen={isTrgOpen}
+                isDisabled={isDisabled}
                 aria-labelledby=""
               >
                 {destinations.map((label) => (
@@ -195,6 +202,7 @@ const MappingItem: FC<MappingItemProps> = ({
             aria-label={t('Delete mapping')}
             key="delete-action"
             icon={<MinusCircleIcon />}
+            isDisabled={isDisabled}
           />
         </DataListAction>
       </DataListItemRow>

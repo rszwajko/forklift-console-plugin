@@ -1,17 +1,20 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useRef } from 'react';
 import { useHistory } from 'react-router';
 import SectionHeading from 'src/components/headers/SectionHeading';
 import { useForkliftTranslation } from 'src/utils/i18n';
 import { useImmerReducer } from 'use-immer';
 
 import {
+  NetworkMapModel,
+  NetworkMapModelGroupVersionKind,
   PlanModelGroupVersionKind,
   ProviderModelGroupVersionKind,
   ProviderModelRef,
+  V1beta1NetworkMap,
   V1beta1Plan,
   V1beta1Provider,
 } from '@kubev2v/types';
-import { useK8sWatchResource } from '@openshift-console/dynamic-plugin-sdk';
+import { k8sCreate, useK8sWatchResource } from '@openshift-console/dynamic-plugin-sdk';
 import { Button, Flex, FlexItem, PageSection } from '@patternfly/react-core';
 
 import { useToggle } from '../../hooks';
@@ -25,8 +28,11 @@ import {
   setAvailableSourceNetworks,
   setAvailableTargetNamespaces,
   setAvailableTargetNetworks,
+  setExistingNetMaps,
   setExistingPlans,
+  setNetMap,
   setNicProfiles,
+  startCreate,
 } from './actions';
 import { PlansCreateForm } from './PlansCreateForm';
 import { useCreateVmMigrationData } from './ProvidersCreateVmMigrationContext';
@@ -71,14 +77,7 @@ const ProvidersCreateVmMigrationPage: FC<{
     namespace,
   });
   useEffect(
-    () =>
-      dispatch(
-        setAvailableProviders(
-          Array.isArray(providers) ? providers : [],
-          providersLoaded,
-          providerError,
-        ),
-      ),
+    () => dispatch(setAvailableProviders(providers, providersLoaded, providerError)),
     [providers],
   );
 
@@ -89,8 +88,19 @@ const ProvidersCreateVmMigrationPage: FC<{
     namespace,
   });
   useEffect(
-    () => dispatch(setExistingPlans(Array.isArray(plans) ? plans : [], plansLoaded, plansError)),
+    () => dispatch(setExistingPlans(plans, plansLoaded, plansError)),
     [plans, plansLoaded, plansError],
+  );
+
+  const [netMaps, netMapsLoaded, netMapsError] = useK8sWatchResource<V1beta1NetworkMap[]>({
+    groupVersionKind: NetworkMapModelGroupVersionKind,
+    namespaced: true,
+    isList: true,
+    namespace,
+  });
+  useEffect(
+    () => dispatch(setExistingNetMaps(netMaps, netMapsLoaded, netMapsError)),
+    [netMaps, netMapsLoaded, netMapsError],
   );
 
   const [namespaces, nsLoading, nsError] = useNamespaces(targetProvider);
@@ -125,6 +135,34 @@ const ProvidersCreateVmMigrationPage: FC<{
     [nicProfiles, nicProfilesLoading, nicProfilesError],
   );
 
+  const mounted = useRef(true);
+  useEffect(
+    () => () => {
+      mounted.current = false;
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!state.flow.editingDone || !mounted.current) {
+      return;
+    }
+    const create = async (netMap: V1beta1NetworkMap) => {
+      const created = await k8sCreate({
+        model: NetworkMapModel,
+        data: netMap,
+      });
+      if (mounted.current) {
+        dispatch(setNetMap({ netMap: created }));
+      }
+    };
+    try {
+      create(state.underConstruction.netMap);
+    } catch (error) {
+      dispatch(setNetMap({ error }));
+    }
+  }, [state.flow.editingDone, state.underConstruction.netMap]);
+
   const [isLoading, toggleIsLoading] = useToggle();
   const onUpdate = toggleIsLoading;
 
@@ -143,7 +181,14 @@ const ProvidersCreateVmMigrationPage: FC<{
 
       <Flex>
         <FlexItem>
-          <Button variant="primary" isDisabled={true} isLoading={isLoading}>
+          <Button
+            variant="primary"
+            isDisabled={Object.values(state.validation).some(
+              (validation) => validation === 'error',
+            )}
+            isLoading={isLoading}
+            onClick={() => dispatch(startCreate())}
+          >
             {t('Create and edit')}
           </Button>
         </FlexItem>

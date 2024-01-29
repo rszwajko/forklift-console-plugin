@@ -30,8 +30,8 @@ import { POD_NETWORK } from './actions';
 import { getNetworksUsedBySelectedVms } from './getNetworksUsedBySelectedVMs';
 import { CreateVmMigrationPageState } from './reducer';
 
-export const validateUniqueName = (name: string, existingPlanNames: string[]) =>
-  existingPlanNames.every((existingName) => existingName !== name);
+export const validateUniqueName = (name: string, existingNames: string[]) =>
+  existingNames.every((existingName) => existingName !== name);
 
 export const validatePlanName = (name: string, existingPlans: V1beta1Plan[]) =>
   validateK8sName(name) &&
@@ -110,7 +110,7 @@ export const setTargetProvider = (
   const {
     existingResources,
     validation,
-    underConstruction: { plan },
+    underConstruction: { plan, netMap },
     workArea,
   } = draft;
 
@@ -127,6 +127,7 @@ export const setTargetProvider = (
   const resolvedTarget = resolveTargetProvider(targetProviderName, availableProviders);
   validation.targetProvider = resolvedTarget ? 'success' : 'error';
   plan.spec.provider.destination = resolvedTarget && getObjectRef(resolvedTarget);
+  netMap.spec.provider.destination = resolvedTarget && getObjectRef(resolvedTarget);
   workArea.targetProvider = resolvedTarget;
 };
 
@@ -199,7 +200,7 @@ export const createInitialState = ({
       ...planTemplate,
       metadata: {
         ...planTemplate?.metadata,
-        name: `${sourceProvider.metadata.name}-${randomId().substring(0, 8)}`,
+        name: generateName(sourceProvider.metadata.name),
         namespace,
       },
       spec: {
@@ -216,15 +217,22 @@ export const createInitialState = ({
       ...networkMapTemplate,
       metadata: {
         ...networkMapTemplate?.metadata,
-        name: `${sourceProvider.metadata.name}-${randomId().substring(0, 8)}`,
+        name: generateName(sourceProvider.metadata.name),
         namespace,
+      },
+      spec: {
+        ...networkMapTemplate?.spec,
+        provider: {
+          source: getObjectRef(sourceProvider),
+          destination: undefined,
+        },
       },
     },
     storageMap: {
       ...storageMapTemplate,
       metadata: {
         ...storageMapTemplate?.metadata,
-        name: `${sourceProvider.metadata.name}-${randomId().substring(0, 8)}`,
+        name: generateName(sourceProvider.metadata.name),
         namespace,
       },
     },
@@ -239,6 +247,8 @@ export const createInitialState = ({
     sourceNetworks: [],
     targetStorages: [],
     nickProfiles: [],
+    netMaps: [],
+    createdNetMap: undefined,
   },
   receivedAsParams: {
     selectedVms,
@@ -269,10 +279,14 @@ export const createInitialState = ({
   workArea: {
     targetProvider: undefined,
   },
-  loaded: {
-    nickProfiles: sourceProvider.spec?.type !== 'ovirt',
+  flow: {
+    editingDone: false,
+    netMapCreated: false,
+    storageMapCreated: false,
   },
 });
+
+export const generateName = (base: string) => `${base}-${randomId().substring(0, 8)}`;
 
 export const extractUniqueNetworks = (vms: VmData[]): { [name: string]: unknown } => ({});
 
