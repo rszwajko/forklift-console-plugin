@@ -342,8 +342,11 @@ export const mapSourceNetworksToLabels = (
     })
     .filter(Boolean);
   const labelToId: { [label: string]: string } = tuples.reduce((acc, [label, id]) => {
-    if (acc[label] && acc[label] === id) {
-      //already included
+    if (acc[label] === id) {
+      //already included - no collisions
+      return acc;
+    } else if (acc[withSuffix(label, id)] === id) {
+      //already included with suffix - there was a collision before
       return acc;
     } else if (acc[label]) {
       // resolve conflict
@@ -351,9 +354,9 @@ export const mapSourceNetworksToLabels = (
         ...acc,
         // existing entry: add suffix with ID
         [label]: undefined,
-        [`${label}  (ID: ${acc[label]})`]: acc[label],
+        [withSuffix(label, acc[label])]: acc[label],
         // new entry: create with suffix
-        [`${label}  (ID: ${id})`]: id,
+        [withSuffix(label, id)]: id,
       };
     } else {
       // happy path
@@ -366,3 +369,5 @@ export const mapSourceNetworksToLabels = (
 
   return labelToId;
 };
+
+const withSuffix = (label: string, id: string) => `${label}  (ID: ${id}})`;
