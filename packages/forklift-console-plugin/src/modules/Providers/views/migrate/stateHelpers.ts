@@ -263,8 +263,7 @@ export const createInitialState = ({
       },
     },
   },
-  validationError: null,
-  apiError: null,
+
   existingResources: {
     plans: [],
     providers: [],
@@ -308,9 +307,8 @@ export const createInitialState = ({
   },
   flow: {
     editingDone: false,
-    netMapCreated: false,
-    storageMapCreated: false,
-    planCreated: false,
+    validationError: undefined,
+    apiError: undefined,
   },
 });
 
