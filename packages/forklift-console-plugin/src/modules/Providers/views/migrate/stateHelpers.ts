@@ -10,6 +10,7 @@ import {
   withTr,
 } from '@kubev2v/common';
 import {
+  IoK8sApimachineryPkgApisMetaV1ObjectMeta,
   OpenShiftNamespace,
   ProviderModelGroupVersionKind as ProviderGVK,
   ProviderType,
@@ -119,7 +120,7 @@ export const setTargetProvider = (
   const {
     existingResources,
     validation,
-    underConstruction: { plan, netMap },
+    underConstruction: { plan, netMap, storageMap },
     workArea,
   } = draft;
 
@@ -137,6 +138,7 @@ export const setTargetProvider = (
   validation.targetProvider = resolvedTarget ? 'success' : 'error';
   plan.spec.provider.destination = resolvedTarget && getObjectRef(resolvedTarget);
   netMap.spec.provider.destination = resolvedTarget && getObjectRef(resolvedTarget);
+  storageMap.spec.provider.destination = resolvedTarget && getObjectRef(resolvedTarget);
   workArea.targetProvider = resolvedTarget;
 };
 
@@ -179,7 +181,15 @@ export const resolveTargetProvider = (name: string, availableProviders: V1beta1P
 // based on the method used in legacy/src/common/helpers
 // and mocks/src/definitions/utils
 export const getObjectRef = (
-  { apiVersion, kind, metadata: { name, namespace, uid } = {} }: V1beta1Provider = {
+  {
+    apiVersion,
+    kind,
+    metadata: { name, namespace, uid } = {},
+  }: {
+    apiVersion: string;
+    kind: string;
+    metadata?: IoK8sApimachineryPkgApisMetaV1ObjectMeta;
+  } = {
     apiVersion: undefined,
     kind: undefined,
   },
@@ -244,6 +254,13 @@ export const createInitialState = ({
         name: generateName(sourceProvider.metadata.name),
         namespace,
       },
+      spec: {
+        ...storageMapTemplate?.spec,
+        provider: {
+          source: getObjectRef(sourceProvider),
+          destination: undefined,
+        },
+      },
     },
   },
   validationError: null,
@@ -293,6 +310,7 @@ export const createInitialState = ({
     editingDone: false,
     netMapCreated: false,
     storageMapCreated: false,
+    planCreated: false,
   },
 });
 
