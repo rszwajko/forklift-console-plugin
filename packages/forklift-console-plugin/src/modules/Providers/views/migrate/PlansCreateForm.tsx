@@ -249,7 +249,7 @@ export const PlansCreateForm = ({
                     namespace={netMap.metadata?.namespace}
                     name={netMap.metadata?.name}
                     className="forklift-page-resource-link-in-description-item"
-                    linkTo={flow.netMapCreated}
+                    linkTo={false}
                   />
                 </span>
               </DescriptionListTerm>
@@ -279,7 +279,7 @@ export const PlansCreateForm = ({
                     namespace={storageMap.metadata?.namespace}
                     name={storageMap.metadata?.name}
                     className="forklift-page-resource-link-in-description-item"
-                    linkTo={flow.storageMapCreated}
+                    linkTo={false}
                   />
                 </span>
               </DescriptionListTerm>
