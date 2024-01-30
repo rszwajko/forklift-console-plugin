@@ -5,6 +5,7 @@ import {
   V1beta1NetworkMap,
   V1beta1Plan,
   V1beta1Provider,
+  V1beta1StorageMap,
 } from '@kubev2v/types';
 
 import { InventoryNetwork } from '../../hooks/useNetworks';
@@ -30,6 +31,8 @@ export const SET_NICK_PROFILES = 'SET_NICK_PROFILES';
 export const SET_EXISTING_NET_MAPS = 'SET_EXISTING_NET_MAPS';
 export const START_CREATE = 'START_CREATE';
 export const SET_NET_MAP = 'SET_NET_MAP';
+export const SET_STORAGE_MAP = 'SET_STORAGE_MAP';
+export const SET_PLAN = 'SET_PLAN';
 
 export type CreateVmMigration =
   | typeof SET_NAME
@@ -46,7 +49,9 @@ export type CreateVmMigration =
   | typeof SET_NICK_PROFILES
   | typeof SET_EXISTING_NET_MAPS
   | typeof START_CREATE
-  | typeof SET_NET_MAP;
+  | typeof SET_NET_MAP
+  | typeof SET_STORAGE_MAP
+  | typeof SET_PLAN;
 
 export interface PageAction<S, T> {
   type: S;
@@ -115,6 +120,16 @@ export interface PlanNickProfiles {
 
 export interface PlanCrateNetMap {
   netMap?: V1beta1NetworkMap;
+  error?: Error;
+}
+
+export interface PlanCrateStorageMap {
+  storageMap?: V1beta1StorageMap;
+  error?: Error;
+}
+
+export interface PlanCratePlan {
+  plan?: V1beta1Plan;
   error?: Error;
 }
 
@@ -255,4 +270,20 @@ export const setNetMap = ({
 }: PlanCrateNetMap): PageAction<CreateVmMigration, PlanCrateNetMap> => ({
   type: 'SET_NET_MAP',
   payload: { netMap, error },
+});
+
+export const setStorageMap = ({
+  storageMap,
+  error,
+}: PlanCrateStorageMap): PageAction<CreateVmMigration, PlanCrateStorageMap> => ({
+  type: 'SET_STORAGE_MAP',
+  payload: { storageMap, error },
+});
+
+export const setPlan = ({
+  plan,
+  error,
+}: PlanCratePlan): PageAction<CreateVmMigration, PlanCratePlan> => ({
+  type: 'SET_PLAN',
+  payload: { plan, error },
 });

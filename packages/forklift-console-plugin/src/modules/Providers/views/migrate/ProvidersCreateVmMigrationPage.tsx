@@ -7,12 +7,15 @@ import { useImmerReducer } from 'use-immer';
 import {
   NetworkMapModel,
   NetworkMapModelGroupVersionKind,
+  PlanModel,
   PlanModelGroupVersionKind,
   ProviderModelGroupVersionKind,
   ProviderModelRef,
+  StorageMapModel,
   V1beta1NetworkMap,
   V1beta1Plan,
   V1beta1Provider,
+  V1beta1StorageMap,
 } from '@kubev2v/types';
 import { k8sCreate, useK8sWatchResource } from '@openshift-console/dynamic-plugin-sdk';
 import { Button, Flex, FlexItem, PageSection } from '@patternfly/react-core';
@@ -32,6 +35,8 @@ import {
   setExistingPlans,
   setNetMap,
   setNicProfiles,
+  setPlan,
+  setStorageMap,
   startCreate,
 } from './actions';
 import { PlansCreateForm } from './PlansCreateForm';
@@ -158,9 +163,54 @@ const ProvidersCreateVmMigrationPage: FC<{
     };
 
     create(state.underConstruction.netMap).catch((error) => {
-      dispatch(setNetMap({ error }));
+      mounted.current && dispatch(setNetMap({ error }));
     });
   }, [state.flow.editingDone, state.underConstruction.netMap]);
+
+  useEffect(() => {
+    if (!state.flow.editingDone || !mounted.current) {
+      return;
+    }
+    const create = async (storageMap: V1beta1StorageMap) => {
+      const created = await k8sCreate({
+        model: StorageMapModel,
+        data: storageMap,
+      });
+      if (mounted.current) {
+        dispatch(setStorageMap({ storageMap: created }));
+      }
+    };
+
+    create(state.underConstruction.storageMap).catch((error) => {
+      mounted.current && dispatch(setStorageMap({ error }));
+    });
+  }, [state.flow.editingDone, state.underConstruction.storageMap]);
+
+  useEffect(() => {
+    if (!state.flow.netMapCreated || !state.flow.storageMapCreated || !mounted.current) {
+      return;
+    }
+    const create = async (plan: V1beta1Plan) => {
+      const created = await k8sCreate({
+        model: PlanModel,
+        data: plan,
+      });
+      if (mounted.current) {
+        setPlan({ plan: created });
+        // history.push(
+        //   getResourceUrl({
+        //     reference: PlanModelRef,
+        //     namespace,
+        //     name: plan.metadata.name,
+        //   }),
+        // );
+      }
+    };
+
+    create(state.underConstruction.plan).catch((error) => {
+      mounted.current && dispatch(setPlan({ error }));
+    });
+  }, [state.flow.netMapCreated, state.flow.storageMapCreated, state.underConstruction.plan]);
 
   const [isLoading, toggleIsLoading] = useToggle();
   const onUpdate = toggleIsLoading;

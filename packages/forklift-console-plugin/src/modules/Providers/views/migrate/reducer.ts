@@ -26,6 +26,8 @@ import {
   PlanAvailableTargetNamespaces,
   PlanAvailableTargetNetworks,
   PlanCrateNetMap,
+  PlanCratePlan,
+  PlanCrateStorageMap,
   PlanExistingNetMaps,
   PlanExistingPlans,
   PlanName,
@@ -42,6 +44,8 @@ import {
   SET_NAME,
   SET_NET_MAP,
   SET_NICK_PROFILES,
+  SET_PLAN,
+  SET_STORAGE_MAP,
   SET_TARGET_NAMESPACE,
   SET_TARGET_PROVIDER,
   START_CREATE,
@@ -51,6 +55,7 @@ import { Mapping } from './MappingList';
 import {
   calculateNetworks,
   generateName,
+  getObjectRef,
   mapSourceNetworksToLabels,
   setTargetNamespace,
   setTargetProvider,
@@ -83,6 +88,8 @@ export interface CreateVmMigrationPageState {
     nickProfiles: OVirtNicProfile[];
     netMaps: V1beta1NetworkMap[];
     createdNetMap?: V1beta1NetworkMap;
+    createdStorageMap?: V1beta1StorageMap;
+    createdPlan?: V1beta1Plan;
   };
   calculatedOnce: {
     // calculated on start (exception:for ovirt/openstack we need to fetch disks)
@@ -125,6 +132,7 @@ export interface CreateVmMigrationPageState {
     editingDone: boolean;
     netMapCreated: boolean;
     storageMapCreated: boolean;
+    planCreated: boolean;
   };
 }
 
@@ -333,7 +341,7 @@ const actions: {
   },
   [START_CREATE]({
     flow,
-    underConstruction: { plan, netMap },
+    underConstruction: { plan, netMap, storageMap },
     calculatedOnce: { sourceNetworkLabelToId },
     calculatedPerNamespace: { networkMappings },
   }) {
@@ -348,10 +356,24 @@ const actions: {
           ? { type: 'pod' }
           : { name: destination, namespace: plan.spec.targetNamespace, type: 'multus' },
     }));
+    storageMap.spec.map = [];
   },
   [SET_NET_MAP](draft, { payload: { netMap } }: PageAction<CreateVmMigration, PlanCrateNetMap>) {
     draft.existingResources.createdNetMap = netMap;
+    draft.underConstruction.plan.spec.map.network = getObjectRef(netMap);
     draft.flow.netMapCreated = true;
+  },
+  [SET_STORAGE_MAP](
+    draft,
+    { payload: { storageMap } }: PageAction<CreateVmMigration, PlanCrateStorageMap>,
+  ) {
+    draft.existingResources.createdStorageMap = storageMap;
+    draft.underConstruction.plan.spec.map.storage = getObjectRef(storageMap);
+    draft.flow.storageMapCreated = true;
+  },
+  [SET_PLAN](draft, { payload: { plan } }: PageAction<CreateVmMigration, PlanCratePlan>) {
+    draft.existingResources.createdPlan = plan;
+    draft.flow.planCreated = true;
   },
 };
 
