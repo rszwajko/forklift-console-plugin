@@ -34,6 +34,8 @@ import { DetailsItem, getIsTarget } from '../../utils';
 import { concernsMatcher, featuresMatcher, VmData } from '../details';
 
 import {
+  addNetworkMapping,
+  deleteNetworkMapping,
   PageAction,
   replaceNetworkMapping,
   replaceStorageMapping,
@@ -255,11 +257,11 @@ export const PlansCreateForm = ({
               </DescriptionListTerm>
               <DescriptionListDescription className="forklift-page-mapping-list">
                 <MappingList
-                  addMapping={(newMapping) => dispatch(replaceNetworkMapping({ next: newMapping }))}
+                  addMapping={() => dispatch(addNetworkMapping())}
                   replaceMapping={({ current, next }) =>
                     dispatch(replaceNetworkMapping({ current, next }))
                   }
-                  deleteMapping={(current) => dispatch(replaceNetworkMapping({ current }))}
+                  deleteMapping={(current) => dispatch(deleteNetworkMapping({ ...current }))}
                   availableDestinations={targetNetworks}
                   sources={sourceNetworks}
                   mappings={networkMappings}
@@ -285,11 +287,11 @@ export const PlansCreateForm = ({
               </DescriptionListTerm>
               <DescriptionListDescription className="forklift-page-mapping-list">
                 <MappingList
-                  addMapping={(newMapping) => dispatch(replaceStorageMapping({ next: newMapping }))}
+                  addMapping={() => dispatch(addNetworkMapping())}
                   replaceMapping={({ current, next }) =>
                     dispatch(replaceStorageMapping({ current, next }))
                   }
-                  deleteMapping={(current) => dispatch(replaceStorageMapping({ current }))}
+                  deleteMapping={() => undefined}
                   availableDestinations={targetStorages}
                   sources={[]}
                   mappings={storageMappings}
