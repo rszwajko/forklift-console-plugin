@@ -18,8 +18,10 @@ import { getIsTarget, Validation } from '../../utils';
 import { VmData } from '../details';
 
 import {
+  ADD_NETWORK_MAPPING,
   CreateVmMigration,
   DEFAULT_NAMESPACE,
+  DELETE_NETWORK_MAPPING,
   PageAction,
   PlanAvailableProviders,
   PlanAvailableSourceNetworks,
@@ -28,11 +30,13 @@ import {
   PlanError,
   PlanExistingNetMaps,
   PlanExistingPlans,
+  PlanMapping,
   PlanName,
   PlanNickProfiles,
   PlanTargetNamespace,
   PlanTargetProvider,
   POD_NETWORK,
+  REPLACE_NETWORK_MAPPING,
   SET_AVAILABLE_PROVIDERS,
   SET_AVAILABLE_SOURCE_NETWORKS,
   SET_AVAILABLE_TARGET_NAMESPACES,
@@ -354,6 +358,74 @@ const actions: {
   [SET_ERROR]({ flow }, { payload: { error } }: PageAction<CreateVmMigration, PlanError>) {
     console.warn(SET_ERROR);
     flow.apiError = error;
+  },
+  [ADD_NETWORK_MAPPING]({ calculatedPerNamespace: cpn }) {
+    const firstUsedByVms = cpn.sourceNetworks.find(
+      ({ usedBySelectedVms, isMapped }) => usedBySelectedVms && !isMapped,
+    );
+    const firstGeneral = cpn.sourceNetworks.find(
+      ({ usedBySelectedVms, isMapped }) => !usedBySelectedVms && !isMapped,
+    );
+    const nextSource = firstUsedByVms || firstGeneral;
+    const nextDest = cpn.targetNetworks[0];
+
+    console.warn(ADD_NETWORK_MAPPING, nextSource, nextDest);
+    if (nextDest && nextSource) {
+      cpn.sourceNetworks = cpn.sourceNetworks.map((m) => ({
+        ...m,
+        isMapped: m.label === nextSource.label ? true : m.isMapped,
+      }));
+      cpn.networkMappings = [
+        ...cpn.networkMappings,
+        { source: nextSource.label, destination: cpn.targetNetworks[0] },
+      ];
+    }
+  },
+  [DELETE_NETWORK_MAPPING](
+    { calculatedPerNamespace: cpn },
+    { payload: { source } }: PageAction<CreateVmMigration, Mapping>,
+  ) {
+    const currentSource = cpn.sourceNetworks.find(
+      ({ label, isMapped }) => label === source && isMapped,
+    );
+    console.warn(DELETE_NETWORK_MAPPING, source, currentSource);
+    if (currentSource) {
+      cpn.sourceNetworks = cpn.sourceNetworks.map((m) => ({
+        ...m,
+        isMapped: m.label === source ? false : m.isMapped,
+      }));
+      cpn.networkMappings = cpn.networkMappings.filter(
+        ({ source }) => source !== currentSource.label,
+      );
+    }
+  },
+  [REPLACE_NETWORK_MAPPING](
+    { calculatedPerNamespace: cpn },
+    { payload: { current, next } }: PageAction<CreateVmMigration, PlanMapping>,
+  ) {
+    console.warn(REPLACE_NETWORK_MAPPING, current, next);
+    const currentSource = cpn.sourceNetworks.find(
+      ({ label, isMapped }) => label === current.source && isMapped,
+    );
+    const nextSource = cpn.sourceNetworks.find(({ label }) => label === next.source);
+    const nextDest = cpn.targetNetworks.find((label) => label === next.destination);
+    const sourceChanged = currentSource.label !== nextSource.label;
+    const destinationChanged = current.destination !== nextDest;
+
+    if (!currentSource || !nextSource || !nextDest || (!sourceChanged && !destinationChanged)) {
+      return;
+    }
+
+    if (sourceChanged) {
+      const labelToMappingState = { [currentSource.label]: false, [nextSource.label]: true };
+      cpn.sourceNetworks = cpn.sourceNetworks.map((m) => ({
+        ...m,
+        isMapped: labelToMappingState[m.label] ?? m.isMapped,
+      }));
+    }
+
+    const mappingIndex = cpn.networkMappings.findIndex(({ source }) => source === current.source);
+    mappingIndex > -1 && cpn.networkMappings.splice(mappingIndex, 1, next);
   },
 };
 

@@ -61,7 +61,6 @@ export const calculateNetworks = (
   draft: Draft<CreateVmMigrationPageState>,
 ): Partial<CreateVmMigrationPageState['calculatedPerNamespace']> => {
   const {
-    calculatedPerNamespace: { networkMappings },
     existingResources,
     underConstruction: { plan },
     calculatedOnce: { sourceNetworkLabelToId, networkIdsUsedBySelectedVms },
@@ -78,33 +77,28 @@ export const calculateNetworks = (
   ];
   const defaultDestination = POD_NETWORK;
 
-  const validMappings = networkMappings.filter(
-    ({ source, destination }) =>
-      (targetNetworkNameToUid[destination] || destination === POD_NETWORK) &&
-      sourceNetworkLabelToId[source],
-  );
-
   const sourceNetworks = Object.keys(sourceNetworkLabelToId)
     .sort((a, b) => universalComparator(a, b, 'en'))
-    .map((label) => ({
-      label,
-      isMapped: validMappings.some(({ source }) => source === label),
-      usedBySelectedVms: networkIdsUsedBySelectedVms.some(
+    .map((label) => {
+      const usedBySelectedVms = networkIdsUsedBySelectedVms.some(
         (id) => id === sourceNetworkLabelToId[label],
-      ),
-    }));
+      );
+      return {
+        label,
+        usedBySelectedVms,
+        isMapped: usedBySelectedVms,
+      };
+    });
 
   return {
     targetNetworks: targetNetworkLabels,
     sourceNetworks,
-    networkMappings: networkMappings.length
-      ? validMappings
-      : sourceNetworks
-          .filter(({ usedBySelectedVms }) => usedBySelectedVms)
-          .map(({ label }) => ({
-            source: label,
-            destination: defaultDestination,
-          })),
+    networkMappings: sourceNetworks
+      .filter(({ usedBySelectedVms }) => usedBySelectedVms)
+      .map(({ label }) => ({
+        source: label,
+        destination: defaultDestination,
+      })),
   };
 };
 
