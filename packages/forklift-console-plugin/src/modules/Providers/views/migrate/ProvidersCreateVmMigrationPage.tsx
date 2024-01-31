@@ -5,8 +5,6 @@ import { useForkliftTranslation } from 'src/utils/i18n';
 
 import { Alert, Button, Flex, FlexItem, PageSection } from '@patternfly/react-core';
 
-import { useToggle } from '../../hooks';
-
 import { startCreate } from './actions';
 import { PlansCreateForm } from './PlansCreateForm';
 import { useFetchEffects } from './useFetchEffects';
@@ -20,8 +18,7 @@ const ProvidersCreateVmMigrationPage: FC<{
   const [state, dispatch, emptyContext] = useFetchEffects(namespace);
   useSaveEffect(state, dispatch);
 
-  const [isLoading, toggleIsLoading] = useToggle();
-  const onUpdate = toggleIsLoading;
+  const isLoading = state.flow.editingDone && !state.flow.apiError;
 
   if (emptyContext) {
     // display empty node and wait for redirect triggered from useEffect
@@ -59,7 +56,7 @@ const ProvidersCreateVmMigrationPage: FC<{
           </Button>
         </FlexItem>
         <FlexItem>
-          <Button variant="secondary" onClick={onUpdate} isDisabled={true} isLoading={isLoading}>
+          <Button variant="secondary" isDisabled={true} isLoading={isLoading}>
             {t('Create and start')}
           </Button>
         </FlexItem>
