@@ -66,6 +66,7 @@ import {
 import { getNetworksUsedBySelectedVms } from './getNetworksUsedBySelectedVMs';
 import { getStoragesUsedBySelectedVms } from './getStoragesUsedBySelectedVMs';
 import { Mapping } from './MappingList';
+import { addMapping, deleteMapping, replaceMapping } from './mappingStateHelpers';
 import { mapSourceNetworksToLabels, mapSourceStoragesToLabels } from './mapSourceToLabels';
 import {
   calculateNetworks,
@@ -120,20 +121,8 @@ export interface CreateVmMigrationPageState {
     // read-only, human-readable
     targetNetworks: string[];
     targetNetworkLabelToId: { [label: string]: string };
-    sourceNetworks: {
-      // read-only
-      label: string;
-      usedBySelectedVms: boolean;
-      // mutated via UI
-      isMapped: boolean;
-    }[];
-    sourceStorages: {
-      // read-only
-      label: string;
-      usedBySelectedVms: boolean;
-      // mutated via UI
-      isMapped: boolean;
-    }[];
+    sourceNetworks: MappingSource[];
+    sourceStorages: MappingSource[];
     // mutated, both source and destination human-readable
     networkMappings: Mapping[];
     storageMappings: Mapping[];
@@ -152,6 +141,14 @@ export interface CreateVmMigrationPageState {
     validationError: Error | null;
     apiError?: Error;
   };
+}
+
+export interface MappingSource {
+  // read-only
+  label: string;
+  usedBySelectedVms: boolean;
+  // mutated via UI
+  isMapped: boolean;
 }
 
 const actions: {
@@ -444,25 +441,16 @@ const actions: {
     flow.apiError = error;
   },
   [ADD_NETWORK_MAPPING]({ calculatedPerNamespace: cpn }) {
-    const firstUsedByVms = cpn.sourceNetworks.find(
-      ({ usedBySelectedVms, isMapped }) => usedBySelectedVms && !isMapped,
+    const { sources, mappings } = addMapping(
+      cpn.sourceNetworks,
+      cpn.targetNetworks,
+      cpn.networkMappings,
     );
-    const firstGeneral = cpn.sourceNetworks.find(
-      ({ usedBySelectedVms, isMapped }) => !usedBySelectedVms && !isMapped,
-    );
-    const nextSource = firstUsedByVms || firstGeneral;
-    const nextDest = cpn.targetNetworks[0];
 
-    console.warn(ADD_NETWORK_MAPPING, nextSource, nextDest);
-    if (nextDest && nextSource) {
-      cpn.sourceNetworks = cpn.sourceNetworks.map((m) => ({
-        ...m,
-        isMapped: m.label === nextSource.label ? true : m.isMapped,
-      }));
-      cpn.networkMappings = [
-        ...cpn.networkMappings,
-        { source: nextSource.label, destination: nextDest },
-      ];
+    console.warn(ADD_NETWORK_MAPPING, sources, mappings);
+    if (sources && mappings) {
+      cpn.sourceNetworks = sources;
+      cpn.networkMappings = mappings;
     }
   },
   [DELETE_NETWORK_MAPPING](
@@ -488,67 +476,43 @@ const actions: {
     { payload: { current, next } }: PageAction<CreateVmMigration, PlanMapping>,
   ) {
     console.warn(REPLACE_NETWORK_MAPPING, current, next);
-    const currentSource = cpn.sourceNetworks.find(
-      ({ label, isMapped }) => label === current.source && isMapped,
+    const { sources, mappings } = replaceMapping(
+      cpn.sourceNetworks,
+      current,
+      next,
+      cpn.targetNetworks,
+      cpn.networkMappings,
     );
-    const nextSource = cpn.sourceNetworks.find(({ label }) => label === next.source);
-    const nextDest = cpn.targetNetworks.find((label) => label === next.destination);
-    const sourceChanged = currentSource.label !== nextSource.label;
-    const destinationChanged = current.destination !== nextDest;
-
-    if (!currentSource || !nextSource || !nextDest || (!sourceChanged && !destinationChanged)) {
-      return;
+    if (sources) {
+      cpn.sourceNetworks = sources;
     }
-
-    if (sourceChanged) {
-      const labelToMappingState = { [currentSource.label]: false, [nextSource.label]: true };
-      cpn.sourceNetworks = cpn.sourceNetworks.map((m) => ({
-        ...m,
-        isMapped: labelToMappingState[m.label] ?? m.isMapped,
-      }));
+    if (mappings) {
+      cpn.networkMappings = mappings;
     }
-
-    const mappingIndex = cpn.networkMappings.findIndex(({ source }) => source === current.source);
-    mappingIndex > -1 && cpn.networkMappings.splice(mappingIndex, 1, next);
   },
   [ADD_STORAGE_MAPPING]({ calculatedPerNamespace: cpn }) {
-    const firstUsedByVms = cpn.sourceStorages.find(
-      ({ usedBySelectedVms, isMapped }) => usedBySelectedVms && !isMapped,
+    const { sources, mappings } = addMapping(
+      cpn.sourceStorages,
+      cpn.targetStorages,
+      cpn.storageMappings,
     );
-    const firstGeneral = cpn.sourceStorages.find(
-      ({ usedBySelectedVms, isMapped }) => !usedBySelectedVms && !isMapped,
-    );
-    const nextSource = firstUsedByVms || firstGeneral;
-    const nextDest = cpn.targetStorages[0];
 
-    console.warn(ADD_STORAGE_MAPPING, nextSource, nextDest);
-    if (nextDest && nextSource) {
-      cpn.sourceStorages = cpn.sourceStorages.map((m) => ({
-        ...m,
-        isMapped: m.label === nextSource.label ? true : m.isMapped,
-      }));
-      cpn.storageMappings = [
-        ...cpn.storageMappings,
-        { source: nextSource.label, destination: nextDest },
-      ];
+    console.warn(ADD_STORAGE_MAPPING, sources, mappings);
+    if (sources && mappings) {
+      cpn.sourceStorages = sources;
+      cpn.storageMappings = mappings;
     }
   },
   [DELETE_STORAGE_MAPPING](
     { calculatedPerNamespace: cpn },
     { payload: { source } }: PageAction<CreateVmMigration, Mapping>,
   ) {
-    const currentSource = cpn.sourceStorages.find(
-      ({ label, isMapped }) => label === source && isMapped,
-    );
-    console.warn(DELETE_STORAGE_MAPPING, source, currentSource);
-    if (currentSource) {
-      cpn.sourceStorages = cpn.sourceStorages.map((m) => ({
-        ...m,
-        isMapped: m.label === source ? false : m.isMapped,
-      }));
-      cpn.storageMappings = cpn.storageMappings.filter(
-        ({ source }) => source !== currentSource.label,
-      );
+    const { sources, mappings } = deleteMapping(cpn.sourceStorages, source, cpn.storageMappings);
+
+    console.warn(DELETE_STORAGE_MAPPING, source, sources);
+    if (sources && mappings) {
+      cpn.sourceStorages = sources;
+      cpn.storageMappings = mappings;
     }
   },
   [REPLACE_STORAGE_MAPPING](
@@ -556,28 +520,19 @@ const actions: {
     { payload: { current, next } }: PageAction<CreateVmMigration, PlanMapping>,
   ) {
     console.warn(REPLACE_STORAGE_MAPPING, current, next);
-    const currentSource = cpn.sourceStorages.find(
-      ({ label, isMapped }) => label === current.source && isMapped,
+    const { sources, mappings } = replaceMapping(
+      cpn.sourceStorages,
+      current,
+      next,
+      cpn.targetStorages,
+      cpn.storageMappings,
     );
-    const nextSource = cpn.sourceStorages.find(({ label }) => label === next.source);
-    const nextDest = cpn.targetStorages.find((label) => label === next.destination);
-    const sourceChanged = currentSource.label !== nextSource.label;
-    const destinationChanged = current.destination !== nextDest;
-
-    if (!currentSource || !nextSource || !nextDest || (!sourceChanged && !destinationChanged)) {
-      return;
+    if (sources) {
+      cpn.sourceStorages = sources;
     }
-
-    if (sourceChanged) {
-      const labelToMappingState = { [currentSource.label]: false, [nextSource.label]: true };
-      cpn.sourceStorages = cpn.sourceStorages.map((m) => ({
-        ...m,
-        isMapped: labelToMappingState[m.label] ?? m.isMapped,
-      }));
+    if (mappings) {
+      cpn.storageMappings = mappings;
     }
-
-    const mappingIndex = cpn.storageMappings.findIndex(({ source }) => source === current.source);
-    mappingIndex > -1 && cpn.storageMappings.splice(mappingIndex, 1, next);
   },
 };
 
