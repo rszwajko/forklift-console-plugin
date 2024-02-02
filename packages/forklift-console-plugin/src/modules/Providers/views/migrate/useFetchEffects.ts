@@ -38,8 +38,9 @@ import {
   setNicProfiles,
 } from './actions';
 import { useCreateVmMigrationData } from './ProvidersCreateVmMigrationContext';
-import { CreateVmMigrationPageState, reducer } from './reducer';
+import { reducer } from './reducer';
 import { createInitialState } from './stateHelpers';
+import { CreateVmMigrationPageState } from './types';
 
 export const useFetchEffects = (): [
   CreateVmMigrationPageState,

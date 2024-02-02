@@ -47,7 +47,7 @@ import {
 } from './actions';
 import { EditableDescriptionItem } from './EditableDescriptionItem';
 import { MappingList } from './MappingList';
-import { CreateVmMigrationPageState } from './reducer';
+import { CreateVmMigrationPageState } from './types';
 
 export const PlansCreateForm = ({
   state: {

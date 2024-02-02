@@ -14,7 +14,7 @@ import {
 import { InventoryNetwork } from '../../hooks/useNetworks';
 import { InventoryStorage } from '../../hooks/useStorages';
 
-import { Mapping } from './MappingList';
+import { Mapping } from './types';
 
 export const POD_NETWORK = 'Pod Networking';
 export const DEFAULT_NAMESPACE = 'default';

@@ -16,8 +16,8 @@ import { k8sCreate, K8sModel, k8sPatch } from '@openshift-console/dynamic-plugin
 import { getResourceUrl } from '../../utils';
 
 import { setError } from './actions';
-import { CreateVmMigrationPageState } from './reducer';
 import { getObjectRef } from './stateHelpers';
+import { CreateVmMigrationPageState } from './types';
 
 const createStorage = (storageMap: V1beta1StorageMap) =>
   k8sCreate({

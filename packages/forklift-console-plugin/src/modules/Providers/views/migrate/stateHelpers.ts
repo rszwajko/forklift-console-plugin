@@ -35,7 +35,7 @@ import { VSphereVirtualMachinesCells } from '../details/tabs/VirtualMachines/VSp
 import { POD_NETWORK } from './actions';
 import { getNetworksUsedBySelectedVms } from './getNetworksUsedBySelectedVMs';
 import { getStoragesUsedBySelectedVms } from './getStoragesUsedBySelectedVMs';
-import { CreateVmMigrationPageState } from './reducer';
+import { CreateVmMigrationPageState } from './types';
 
 export const validateUniqueName = (name: string, existingNames: string[]) =>
   existingNames.every((existingName) => existingName !== name);
