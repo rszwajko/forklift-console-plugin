@@ -37,21 +37,21 @@ const ProvidersCreateVmMigrationPage: FC = () => {
 
   return (
     <PageSection variant="light">
-      <Alert
-        className="co-alert forklift--create-vm-migration-plan--alert"
-        customIcon={<BellIcon />}
-        variant="info"
-        title={t('How to create a migration plan')}
-      >
-        <Trans t={t} ns="plugin__forklift-console-plugin">
-          To migrate virtual machines select target provider, namespace, mappings and click the{' '}
-          <strong>Create</strong> button to crete the plan.
-        </Trans>
-      </Alert>
+      <PlansCreateForm state={state} dispatch={dispatch}>
+        <Alert
+          className="co-alert forklift--create-vm-migration-plan--alert"
+          customIcon={<BellIcon />}
+          variant="info"
+          title={t('How to create a migration plan')}
+        >
+          <Trans t={t} ns="plugin__forklift-console-plugin">
+            To migrate virtual machines select target provider, namespace, mappings and click the{' '}
+            <strong>Create</strong> button to crete the plan.
+          </Trans>
+        </Alert>
 
-      <SectionHeading text={t('Select migration target')} />
-
-      <PlansCreateForm state={state} dispatch={dispatch} />
+        <SectionHeading text={t('Select migration target')} />
+      </PlansCreateForm>
       {state.flow.apiError && (
         <Alert
           className="co-alert co-alert--margin-top"
@@ -73,18 +73,14 @@ const ProvidersCreateVmMigrationPage: FC = () => {
         <FlexItem>
           <Button
             variant="primary"
-            isDisabled={Object.values(state.validation).some(
-              (validation) => validation === 'error',
-            )}
+            isDisabled={
+              !!state.flow.apiError ||
+              Object.values(state.validation).some((validation) => validation === 'error')
+            }
             isLoading={isLoading}
             onClick={() => dispatch(startCreate())}
           >
-            {t('Create and edit')}
-          </Button>
-        </FlexItem>
-        <FlexItem>
-          <Button variant="secondary" isDisabled={true} isLoading={isLoading}>
-            {t('Create and start')}
+            {t('Create')}
           </Button>
         </FlexItem>
         <FlexItem>

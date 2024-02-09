@@ -7,6 +7,8 @@ import {
   Mapping,
   NET_MAP_NAME_REGENERATED,
   NetworkAlerts,
+  STORAGE_MAP_NAME_REGENERATED,
+  StorageAlerts,
 } from '../types';
 
 import {
@@ -28,6 +30,7 @@ import {
   PlanError,
   PlanExistingNetMaps,
   PlanExistingPlans,
+  PlanExistingStorageMaps,
   PlanMapping,
   PlanName,
   PlanNickProfiles,
@@ -47,6 +50,7 @@ import {
   SET_DISKS,
   SET_EXISTING_NET_MAPS,
   SET_EXISTING_PLANS,
+  SET_EXISTING_STORAGE_MAPS,
   SET_NAME,
   SET_NICK_PROFILES,
   SET_TARGET_NAMESPACE,
@@ -59,14 +63,13 @@ import { getStoragesUsedBySelectedVms } from './getStoragesUsedBySelectedVMs';
 import {
   addIfMissing,
   alreadyInUseBySelectedVms,
-  generateName,
+  generateUniqueName,
   recalculateNetworks,
   recalculateStorages,
   setTargetNamespace,
   setTargetProvider,
   validatePlanName,
   validateTargetNamespace,
-  validateUniqueName,
 } from './helpers';
 import { mapSourceNetworksToLabels, mapSourceStoragesToLabels } from './mapSourceToLabels';
 
@@ -338,12 +341,44 @@ const handlers: {
     console.warn(SET_EXISTING_NET_MAPS, existingNetMaps);
     existingResources.netMaps = existingNetMaps;
     const oldName = netMap.metadata.name;
-    const names = existingNetMaps.map((n) => n.metadata?.name).filter(Boolean);
-    while (!validateUniqueName(netMap.metadata.name, names)) {
-      netMap.metadata.name = generateName(sourceProvider.metadata.name);
-    }
+
+    netMap.metadata.name = generateUniqueName(
+      oldName,
+      sourceProvider.metadata.name,
+      existingNetMaps,
+    );
     if (oldName !== netMap.metadata.name) {
       addIfMissing<NetworkAlerts>(NET_MAP_NAME_REGENERATED, alerts.networkMappings.warnings);
+    }
+  },
+  [SET_EXISTING_STORAGE_MAPS](
+    {
+      existingResources,
+      underConstruction: { storageMap },
+      receivedAsParams: { sourceProvider },
+      flow: { editingDone },
+      alerts,
+    },
+    {
+      payload: { existingStorageMaps, loading },
+    }: PageAction<CreateVmMigration, PlanExistingStorageMaps>,
+  ) {
+    // triggered from useEffect on any data change
+    if (loading || editingDone) {
+      return;
+    }
+    console.warn(SET_EXISTING_STORAGE_MAPS, existingStorageMaps);
+    existingResources.storageMaps = existingStorageMaps;
+    const oldName = storageMap.metadata.name;
+
+    storageMap.metadata.name = generateUniqueName(
+      oldName,
+      sourceProvider.metadata.name,
+      existingStorageMaps,
+    );
+
+    if (oldName !== storageMap.metadata.name) {
+      addIfMissing<StorageAlerts>(STORAGE_MAP_NAME_REGENERATED, alerts.storageMappings.warnings);
     }
   },
   [START_CREATE]({

@@ -63,6 +63,22 @@ const buildNetworkMessages = (
     title: t('Network mappings have been re-generated'),
     body: t('All discovered networks have been mapped to the default network.'),
   },
+  MULTIPLE_NIC_ON_THE_SAME_NETWORK: {
+    title: t('Multiple NICs on the same network'),
+    body: t('Selected VMs have multiple NICs on the same network.'),
+  },
+  OVIRT_NIC_WITH_EMPTY_PROFILE: {
+    title: t('Missing network profile'),
+    body: t('All NICs detected on the selected VMs require a valid NIC profile.'),
+  },
+  UNMAPPED_NETWORKS: {
+    title: t('Incomplete mapping'),
+    body: t('All networks detected on the selected VMs require a mapping.'),
+  },
+  MULTIPLE_NIC_MAPPED_TO_POD_NETWORKING: {
+    title: t('Multiple NICs on the same VM mapped to Pod Networking'),
+    body: t('Only one NIC on a VM can be mapped to Pod Networking'),
+  },
 });
 const buildStorageMessages = (
   t: (key: string) => string,
@@ -71,9 +87,18 @@ const buildStorageMessages = (
     title: t('Storage mappings have been re-generated'),
     body: t('All discovered storages have been mapped to the default storage.'),
   },
+  STORAGE_MAP_NAME_REGENERATED: {
+    title: t('Storage Map name re-generated'),
+    body: t('New name was generated for the Storage Map due to naming conflict.'),
+  },
+  UNMAPPED_STORAGES: {
+    title: t('Incomplete mapping'),
+    body: t('All storages detected on the selected VMs require a mapping.'),
+  },
 });
 
 export const PlansCreateForm = ({
+  children,
   state: {
     underConstruction: { plan, netMap, storageMap },
     validation,
@@ -99,6 +124,7 @@ export const PlansCreateForm = ({
   },
   dispatch,
 }: {
+  children?;
   state: CreateVmMigrationPageState;
   dispatch: (action: PageAction<unknown, unknown>) => void;
 }) => {
@@ -137,6 +163,7 @@ export const PlansCreateForm = ({
         }
       >
         <DrawerContentBody>
+          {children}
           <DescriptionList
             className="forklift-create-provider-edit-section"
             columnModifier={{
@@ -160,6 +187,7 @@ export const PlansCreateForm = ({
                     id="planName"
                     value={plan.metadata.name}
                     validated={validation.planName}
+                    isDisabled={flow.editingDone}
                     onChange={(value) => dispatch(setPlanName(value?.trim() ?? ''))}
                   />
                 </FormGroup>
@@ -170,6 +198,7 @@ export const PlansCreateForm = ({
                 content={plan.metadata.name}
                 ariaEditLabel={t('Edit plan name')}
                 onEdit={() => setIsNameEdited(true)}
+                isDisabled={flow.editingDone}
               />
             )}
             <DetailsItem
@@ -211,6 +240,7 @@ export const PlansCreateForm = ({
                     onChange={(value) => dispatch(setPlanTargetProvider(value))}
                     validated={validation.targetProvider}
                     id="targetProvider"
+                    isDisabled={flow.editingDone}
                   >
                     {[
                       <FormSelectOption
@@ -247,6 +277,7 @@ export const PlansCreateForm = ({
                 }
                 ariaEditLabel={t('Edit target provider')}
                 onEdit={() => setIsTargetProviderEdited(true)}
+                isDisabled={flow.editingDone}
               />
             )}
             {isTargetNamespaceEdited ||
@@ -264,6 +295,7 @@ export const PlansCreateForm = ({
                     onChange={(value) => dispatch(setPlanTargetNamespace(value))}
                     validated={validation.targetNamespace}
                     id="targetNamespace"
+                    isDisabled={flow.editingDone}
                   >
                     {[
                       <FormSelectOption
@@ -302,6 +334,7 @@ export const PlansCreateForm = ({
                 }
                 ariaEditLabel={t('Edit target namespace')}
                 onEdit={() => setIsTargetNamespaceEdited(true)}
+                isDisabled={flow.editingDone}
               />
             )}
             <DescriptionListGroup>

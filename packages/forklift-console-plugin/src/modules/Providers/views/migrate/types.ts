@@ -57,6 +57,7 @@ export interface CreateVmMigrationPageState {
     nickProfiles: OVirtNicProfile[];
     disks: (OVirtDisk | OpenstackVolume)[];
     netMaps: V1beta1NetworkMap[];
+    storageMaps: V1beta1StorageMap[];
   };
   calculatedOnce: {
     // calculated on start (exception:for ovirt/openstack we need to fetch disks)
@@ -115,10 +116,28 @@ export interface Mapping {
   destination: string;
 }
 
-export const NET_MAP_NAME_REGENERATED = 'NET_MAP_NAME_REGENERATED';
 export const NEXT_VALID_PROVIDER_SELECTED = 'NEXT_VALID_PROVIDER_SELECTED';
+
+export const NET_MAP_NAME_REGENERATED = 'NET_MAP_NAME_REGENERATED';
 export const NETWORK_MAPPING_REGENERATED = 'NETWORK_MAPPING_REGENERATED';
+export const OVIRT_NIC_WITH_EMPTY_PROFILE = 'OVIRT_NIC_WITH_EMPTY_PROFILE';
+export const MULTIPLE_NIC_ON_THE_SAME_NETWORK = 'MULTIPLE_NIC_ON_THE_SAME_NETWORK';
+export const UNMAPPED_NETWORKS = 'UNMAPPED_NETWORKS';
+export const MULTIPLE_NIC_MAPPED_TO_POD_NETWORKING = 'MULTIPLE_NIC_MAPPED_TO_POD_NETWORKING';
+
 export const STORAGE_MAPPING_REGENERATED = 'STORAGE_MAPPING_REGENERATED';
-export type NetworkAlerts = typeof NET_MAP_NAME_REGENERATED | typeof NETWORK_MAPPING_REGENERATED;
-export type StorageAlerts = typeof STORAGE_MAPPING_REGENERATED;
+export const STORAGE_MAP_NAME_REGENERATED = 'STORAGE_MAP_NAME_REGENERATED';
+export const UNMAPPED_STORAGES = 'UNMAPPED_STORAGES';
+
+export type NetworkAlerts =
+  | typeof NET_MAP_NAME_REGENERATED
+  | typeof NETWORK_MAPPING_REGENERATED
+  | typeof UNMAPPED_NETWORKS
+  | typeof OVIRT_NIC_WITH_EMPTY_PROFILE
+  | typeof MULTIPLE_NIC_ON_THE_SAME_NETWORK
+  | typeof MULTIPLE_NIC_MAPPED_TO_POD_NETWORKING;
+export type StorageAlerts =
+  | typeof STORAGE_MAPPING_REGENERATED
+  | typeof STORAGE_MAP_NAME_REGENERATED
+  | typeof UNMAPPED_STORAGES;
 export type GeneralAlerts = typeof NEXT_VALID_PROVIDER_SELECTED;

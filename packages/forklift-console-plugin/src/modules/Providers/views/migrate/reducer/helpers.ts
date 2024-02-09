@@ -235,3 +235,16 @@ export const alreadyInUseBySelectedVms = ({
   sourceProvider.spec?.url === targetProvider?.spec?.url &&
   sourceProvider.spec?.type === 'openshift' &&
   namespacesUsedBySelectedVms.some((name) => name === namespace);
+
+export const generateUniqueName = (
+  startName: string,
+  baseName: string,
+  existingMaps: { metadata?: IoK8sApimachineryPkgApisMetaV1ObjectMeta }[],
+) => {
+  const names = existingMaps.map((n) => n.metadata?.name).filter(Boolean);
+  let currentName: string = startName;
+  while (!validateUniqueName(currentName, names)) {
+    currentName = generateName(baseName);
+  }
+  return currentName;
+};
