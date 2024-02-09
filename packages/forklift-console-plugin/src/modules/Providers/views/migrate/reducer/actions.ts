@@ -147,8 +147,8 @@ export interface PlanAvailableSourceStorages {
   error?: Error;
 }
 
-export interface PlanNickProfiles {
-  nickProfiles: OVirtNicProfile[];
+export interface PlanNicProfiles {
+  nicProfiles: OVirtNicProfile[];
   loading: boolean;
   error?: Error;
 }
@@ -346,12 +346,12 @@ export const setAvailableTargetStorages = (
 });
 
 export const setNicProfiles = (
-  nickProfiles: OVirtNicProfile[],
+  nicProfiles: OVirtNicProfile[],
   nicProfilesLoading: boolean,
   nicProfilesError: Error,
-): PageAction<CreateVmMigration, PlanNickProfiles> => ({
+): PageAction<CreateVmMigration, PlanNicProfiles> => ({
   type: 'SET_NICK_PROFILES',
-  payload: { nickProfiles, loading: nicProfilesLoading, error: nicProfilesError },
+  payload: { nicProfiles: nicProfiles, loading: nicProfilesLoading, error: nicProfilesError },
 });
 
 export const setDisks = (

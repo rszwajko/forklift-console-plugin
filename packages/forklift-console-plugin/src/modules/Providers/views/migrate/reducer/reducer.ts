@@ -5,8 +5,11 @@ import { getIsTarget } from '../../../utils';
 import {
   CreateVmMigrationPageState,
   Mapping,
+  MULTIPLE_NICS_ON_THE_SAME_NETWORK,
   NET_MAP_NAME_REGENERATED,
   NetworkAlerts,
+  STORAGE_MAP_NAME_REGENERATED,
+  StorageAlerts,
 } from '../types';
 
 import {
@@ -28,9 +31,10 @@ import {
   PlanError,
   PlanExistingNetMaps,
   PlanExistingPlans,
+  PlanExistingStorageMaps,
   PlanMapping,
   PlanName,
-  PlanNickProfiles,
+  PlanNicProfiles,
   PlanTargetNamespace,
   PlanTargetProvider,
   POD_NETWORK,
@@ -47,6 +51,7 @@ import {
   SET_DISKS,
   SET_EXISTING_NET_MAPS,
   SET_EXISTING_PLANS,
+  SET_EXISTING_STORAGE_MAPS,
   SET_NAME,
   SET_NICK_PROFILES,
   SET_TARGET_NAMESPACE,
@@ -56,17 +61,19 @@ import {
 import { addMapping, deleteMapping, replaceMapping } from './changeMapping';
 import { getNetworksUsedBySelectedVms } from './getNetworksUsedBySelectedVMs';
 import { getStoragesUsedBySelectedVms } from './getStoragesUsedBySelectedVMs';
+import { hasMultipleNicsOnTheSameNetwork } from './hasMultipleNicsOnTheSameNetwork';
 import {
   addIfMissing,
   alreadyInUseBySelectedVms,
-  generateName,
+  executeNetworkMappingValidation,
+  executeStorageMappingValidation,
+  generateUniqueName,
   recalculateNetworks,
   recalculateStorages,
   setTargetNamespace,
   setTargetProvider,
   validatePlanName,
   validateTargetNamespace,
-  validateUniqueName,
 } from './helpers';
 import { mapSourceNetworksToLabels, mapSourceStoragesToLabels } from './mapSourceToLabels';
 
@@ -282,25 +289,29 @@ const handlers: {
   },
   [SET_NICK_PROFILES](
     draft,
-    { payload: { nickProfiles, loading } }: PageAction<CreateVmMigration, PlanNickProfiles>,
+    { payload: { nicProfiles, loading } }: PageAction<CreateVmMigration, PlanNicProfiles>,
   ) {
     const {
       existingResources,
       calculatedOnce,
       receivedAsParams: { selectedVms },
       flow: { editingDone },
+      alerts,
     } = draft;
     if (loading || editingDone) {
       return;
     }
-    console.warn(SET_NICK_PROFILES, nickProfiles);
-    existingResources.nickProfiles = nickProfiles;
+    console.warn(SET_NICK_PROFILES, nicProfiles);
+    existingResources.nicProfiles = nicProfiles;
     draft.flow.nicProfilesLoaded = true;
 
     calculatedOnce.networkIdsUsedBySelectedVms = getNetworksUsedBySelectedVms(
       selectedVms,
-      nickProfiles,
+      nicProfiles,
     );
+    if (hasMultipleNicsOnTheSameNetwork(selectedVms, nicProfiles)) {
+      addIfMissing(MULTIPLE_NICS_ON_THE_SAME_NETWORK, alerts.networkMappings.warnings);
+    }
     recalculateNetworks(draft);
   },
   [SET_DISKS](draft, { payload: { disks, loading } }: PageAction<CreateVmMigration, PlanDisks>) {
@@ -338,12 +349,44 @@ const handlers: {
     console.warn(SET_EXISTING_NET_MAPS, existingNetMaps);
     existingResources.netMaps = existingNetMaps;
     const oldName = netMap.metadata.name;
-    const names = existingNetMaps.map((n) => n.metadata?.name).filter(Boolean);
-    while (!validateUniqueName(netMap.metadata.name, names)) {
-      netMap.metadata.name = generateName(sourceProvider.metadata.name);
-    }
+
+    netMap.metadata.name = generateUniqueName(
+      oldName,
+      sourceProvider.metadata.name,
+      existingNetMaps,
+    );
     if (oldName !== netMap.metadata.name) {
       addIfMissing<NetworkAlerts>(NET_MAP_NAME_REGENERATED, alerts.networkMappings.warnings);
+    }
+  },
+  [SET_EXISTING_STORAGE_MAPS](
+    {
+      existingResources,
+      underConstruction: { storageMap },
+      receivedAsParams: { sourceProvider },
+      flow: { editingDone },
+      alerts,
+    },
+    {
+      payload: { existingStorageMaps, loading },
+    }: PageAction<CreateVmMigration, PlanExistingStorageMaps>,
+  ) {
+    // triggered from useEffect on any data change
+    if (loading || editingDone) {
+      return;
+    }
+    console.warn(SET_EXISTING_STORAGE_MAPS, existingStorageMaps);
+    existingResources.storageMaps = existingStorageMaps;
+    const oldName = storageMap.metadata.name;
+
+    storageMap.metadata.name = generateUniqueName(
+      oldName,
+      sourceProvider.metadata.name,
+      existingStorageMaps,
+    );
+
+    if (oldName !== storageMap.metadata.name) {
+      addIfMissing<StorageAlerts>(STORAGE_MAP_NAME_REGENERATED, alerts.storageMappings.warnings);
     }
   },
   [START_CREATE]({
@@ -376,7 +419,8 @@ const handlers: {
     console.warn(SET_API_ERROR);
     flow.apiError = error;
   },
-  [ADD_NETWORK_MAPPING]({ calculatedPerNamespace: cpn }) {
+  [ADD_NETWORK_MAPPING](draft) {
+    const { calculatedPerNamespace: cpn } = draft;
     const { sources, mappings } = addMapping(
       cpn.sourceNetworks,
       cpn.targetNetworks,
@@ -388,11 +432,10 @@ const handlers: {
       cpn.sourceNetworks = sources;
       cpn.networkMappings = mappings;
     }
+    executeNetworkMappingValidation(draft);
   },
-  [DELETE_NETWORK_MAPPING](
-    { calculatedPerNamespace: cpn },
-    { payload: { source } }: PageAction<CreateVmMigration, Mapping>,
-  ) {
+  [DELETE_NETWORK_MAPPING](draft, { payload: { source } }: PageAction<CreateVmMigration, Mapping>) {
+    const { calculatedPerNamespace: cpn } = draft;
     // triggered by the user
     const currentSource = cpn.sourceNetworks.find(
       ({ label, isMapped }) => label === source && isMapped,
@@ -407,11 +450,13 @@ const handlers: {
         ({ source }) => source !== currentSource.label,
       );
     }
+    executeNetworkMappingValidation(draft);
   },
   [REPLACE_NETWORK_MAPPING](
-    { calculatedPerNamespace: cpn },
+    draft,
     { payload: { current, next } }: PageAction<CreateVmMigration, PlanMapping>,
   ) {
+    const { calculatedPerNamespace: cpn } = draft;
     // triggered by the user
     console.warn(REPLACE_NETWORK_MAPPING, current, next);
     const { sources, mappings } = replaceMapping(
@@ -427,8 +472,10 @@ const handlers: {
     if (mappings) {
       cpn.networkMappings = mappings;
     }
+    executeNetworkMappingValidation(draft);
   },
-  [ADD_STORAGE_MAPPING]({ calculatedPerNamespace: cpn }) {
+  [ADD_STORAGE_MAPPING](draft) {
+    const { calculatedPerNamespace: cpn } = draft;
     const { sources, mappings } = addMapping(
       cpn.sourceStorages,
       cpn.targetStorages,
@@ -440,11 +487,10 @@ const handlers: {
       cpn.sourceStorages = sources;
       cpn.storageMappings = mappings;
     }
+    executeStorageMappingValidation(draft);
   },
-  [DELETE_STORAGE_MAPPING](
-    { calculatedPerNamespace: cpn },
-    { payload: { source } }: PageAction<CreateVmMigration, Mapping>,
-  ) {
+  [DELETE_STORAGE_MAPPING](draft, { payload: { source } }: PageAction<CreateVmMigration, Mapping>) {
+    const { calculatedPerNamespace: cpn } = draft;
     // triggered by the user
     const { sources, mappings } = deleteMapping(cpn.sourceStorages, source, cpn.storageMappings);
 
@@ -453,11 +499,13 @@ const handlers: {
       cpn.sourceStorages = sources;
       cpn.storageMappings = mappings;
     }
+    executeStorageMappingValidation(draft);
   },
   [REPLACE_STORAGE_MAPPING](
-    { calculatedPerNamespace: cpn },
+    draft,
     { payload: { current, next } }: PageAction<CreateVmMigration, PlanMapping>,
   ) {
+    const { calculatedPerNamespace: cpn } = draft;
     // triggered by the user
     console.warn(REPLACE_STORAGE_MAPPING, current, next);
     const { sources, mappings } = replaceMapping(
@@ -473,6 +521,7 @@ const handlers: {
     if (mappings) {
       cpn.storageMappings = mappings;
     }
+    executeStorageMappingValidation(draft);
   },
   [REMOVE_ALERT](
     { alerts: { networkMappings, storageMappings, general } },
