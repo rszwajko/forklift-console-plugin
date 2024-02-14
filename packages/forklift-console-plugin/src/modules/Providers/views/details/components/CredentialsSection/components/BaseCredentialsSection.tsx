@@ -28,6 +28,7 @@ export interface ListComponentProps {
 
 export interface EditComponentProps {
   secret: V1Secret;
+  url?: string;
   onChange: (newValue: V1Secret) => void;
 }
 
